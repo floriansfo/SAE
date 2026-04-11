@@ -78,7 +78,7 @@ class Ascenseur:
             texte_rect = texte.get_rect(center=bouton_rect.center)
             ecran.blit(texte, texte_rect)
             if not debloque and i!= niveau:
-                prix = {2: 100, 3: 200, 4: 300, 5: 400, 6: 500}.get(i, 999)
+                prix = {2: 100, 3: 200, 4: 350, 5: 500, 6: 750}.get(i, 999)
                 prix_texte = self.font.render(f"{prix}p", True, (255,200,50))
                 ecran.blit(prix_texte, prix_texte.get_rect(center=(bouton_rect.centerx, bouton_rect.bottom-14)))
             elif debloque and i != niveau:

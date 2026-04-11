@@ -8,752 +8,529 @@ import pickle
 import filtre
 import overlay
 import monstre
-import random  
+import random
 import math
 import sauvegarde
 import nuit
 import boutique
 import assets
+import reseau
+import affichage
 
 from prerequis import *
-from prerequis import texture
 from lumiere import Lumiere
-from cartegen import generemap, generer_objets
+from cartegen import generemap, generer_objets, tango, Objet
 from vaisseau import generer_vaisseau
 from joueur import Joueur
-from arme import Arme
 from vaisseau import LIT, BOUTIQUE
 
-pygame.init()
-ecran = pygame.display.Info()
-pygame.display.set_caption("D-RED")
-
-def lancer(ecran, mode = "solo", ip=None, save=None):
-    monstre.init_texture()
-    LARGEUR, HAUTEUR = ecran.get_size()
-    clock = pygame.time.Clock()
-    if mode != "solo":
-        multi = 5.0
-    else:
-        multi = 3.0
-    #Asset musque ..
-    police, hudmode, hudinventaire, inventaire, coeur =overlay.overlay_HUD()
-    pygame.mixer.music.load(assets.ASSETS['musique_jeu'])
-    pygame.mixer.music.play(-1)
-
-    #Serveur
-    IPSERV = "51.38.115.211"
-    #Reseaux
-    socket_jeu = None
-    joueursup = {} #Dico qui stock id et tout le reste
-    connect = False
-    buffer = b"" #Memoire pour les messages reseauwx
-    #Si on va pas en solo on lance le multi
-    if mode != "solo":
-        socket_jeu = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if mode == "hote":
-            print("Mode Hote: Envoi carte au serveur {IPSERV}...")
-            #Ecran d'attente
-            ecran.fill((0,0,0))
-            font = pygame.font.SysFont("ressource/police.ttf", 36)
-            text = font.render("Generation de la carte...", True, (255,255,255))
-            ecran.blit(text, (LARGEUR//2 - 200, HAUTEUR//2))
-            pygame.display.flip()
-            #Configurer le serveur
-            try:
-                #Connexion au serveur
-                socket_jeu.connect((IPSERV, 5555))
-                #Dit au serv qu'on est host
-                socket_jeu.send(b"HOST")
-                connect = True
-                #L'hote genere la carte avec seed pour clien est meme
-                partie = random.randint(0, 999999)
-                random.seed(partie)
-                carte, salles, pos = generemap()
-                #Envoie la carte et seed au client
-                data = pickle.dumps({"carte": carte, "salles": salles, "pos": pos, "seed": partie})
-                tailledata = len(data).to_bytes(4, byteorder='big')
-                socket_jeu.sendall(tailledata + data)
-                #Attend confirme du serv
-                socket_jeu.recv(1024)
-                #Generation objet avec seed similaire
-                random.seed(partie)
-                objets = generer_objets(carte, salles,multi)
-                idjoueur = "HOTE"
-                print("Carte enregistré avec succes")
-            except Exception as e:
-                print(f"Erreur de reseau hote: {e}")
-                return
-        elif mode == "client":
-            if ip:
-                cible = ip
+class Partie:
+    def __init__(self, ecran, mode="solo", ip = None, save = None):
+        self.ecran = ecran
+        self.LARGEUR, self.HAUTEUR = ecran.get_size()
+        self.mode = mode
+        if mode != "solo":
+            self.multi = 5.0
+        else:
+            self.multi = 3.0
+        #UI Son
+        self.police, self.hudmode, self.hudinventaire, self.inventaire, self.coeur = overlay.overlay_HUD()
+        pygame.mixer.music.load(assets.ASSETS['musique_jeu'])
+        pygame.mixer.music.play(-1)
+        #Serveur
+        self.IPSERV = "51.38.115.211"
+        self.socket_jeu = None
+        self.joueursup = {}
+        self.connect = False
+        self.buffer = b""
+ 
+        #Si on va pas en solo on lance le multi
+        if mode != "solo":
+            self.socket_jeu = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            if mode == "hote":
+                print("Mode Hote: Envoi carte au serveur {self.IPSERV}...")
+                #Ecran d'attente
+                self.ecran.fill((0,0,0))
+                font = pygame.font.SysFont("ressource/police.ttf", 36)
+                text = font.render("Generation de la carte...", True, (255,255,255))
+                self.ecran.blit(text, (self.LARGEUR//2 - 200, self.HAUTEUR//2))
+                pygame.display.flip()
+                #Configurer le serveur
+                try:
+                    #Connexion au serveur
+                    self.socket_jeu.connect((self.IPSERV, 5555))
+                    #Dit au serv qu'on est host
+                    self.socket_jeu.send(b"HOST")
+                    self.connect = True
+                    #L'hote genere la carte avec seed pour clien est meme
+                    self.partie = random.randint(0, 999999)
+                    random.seed(self.partie)
+                    self.carte, self.salles, self.pos = generemap()
+                    #Envoie la carte et seed au client
+                    data = pickle.dumps({"carte": self.carte, "salles": self.salles, "pos": self.pos, "seed": self.partie})
+                    tailledata = len(data).to_bytes(4, byteorder='big')
+                    self.socket_jeu.sendall(tailledata + data)
+                    #Attend confirme du serv
+                    self.socket_jeu.recv(1024)
+                    #Generation objet avec seed similaire
+                    random.seed(self.partie)
+                    self.objets = generer_objets(self.carte, self.salles, self.multi)
+                    print("Carte enregistré avec succes")
+                except Exception as e:
+                    print(f"Erreur de reseau hote: {e}")
+            elif mode == "client":
+                if ip:
+                    cible = ip
+                else:
+                    cible = self.IPSERV
+                print(f"Mode Client: connexion au serveur {cible}...")
+                try:
+                    #Connexion au serv
+                    self.socket_jeu.connect((cible, 5555))
+                    #On dit au serv qu'on esy Client
+                    self.socket_jeu.send(b"CLIENT")
+                    self.connect = True
+                    print("Chargement de la carte..")
+                    #Reçoit la carte de l'hote
+                    taillerecu = self.socket_jeu.recv(4)
+                    tailledata = int.from_bytes(taillerecu, byteorder='big')
+                    #Telechargement de la carte
+                    paquets = []
+                    recu = 0
+                    while recu < tailledata:
+                        paquet = self.socket_jeu.recv(min(4096, tailledata - recu))
+                        if not paquet:
+                            raise Exception("Connexion perdue")
+                        paquets.append(paquet)
+                        recu += len(paquet)
+                    #Decodage de la carte reçue
+                    data = b''.join(paquets)
+                    donneesmap = pickle.loads(data)
+                    self.carte = donneesmap["carte"]
+                    self.salles = donneesmap["salles"]
+                    self.pos = donneesmap["pos"]
+                    #Application de la seed pour avoir meme objet
+                    self.partie = donneesmap["seed"]
+                    random.seed(self.partie)
+                    self.objets = generer_objets(self.carte, self.salles, self.multi)
+                except Exception as e:
+                    print(f"Erreur de chargement de la carte: {e}")
+            if self.socket_jeu:
+            #Empeche le jeu de buger quand on attend un mess reseau
+                self.socket_jeu.setblocking(False)
+        else:
+            #Partie solo
+            if save:
+                self.partie = save["seed"]
             else:
-                cible = IPSERV
-            print(f"Mode Client: connexion au serveur {cible}...")
-            try:
-                #Connexion au serv
-                socket_jeu.connect((cible, 5555))
-                #On dit au serv qu'on esy Client
-                socket_jeu.send(b"CLIENT")
-                connect = True
-                idjoueur = "CLIENT"
-                print("Chargement de la carte..")
-                #Reçoit la carte de l'hote
-                taillerecu = socket_jeu.recv(4)
-                tailledata = int.from_bytes(taillerecu, byteorder='big')
-                #Telechargement de la carte
-                paquets = []
-                recu = 0
-                while recu < tailledata:
-                    paquet = socket_jeu.recv(min(4096, tailledata - recu))
-                    if not paquet:
-                        raise Exception("Connexion perdue")
-                    paquets.append(paquet)
-                    recu += len(paquet)
-                #Decodage de la carte reçue
-                data = b''.join(paquets)
-                donneesmap = pickle.loads(data)
-                carte = donneesmap["carte"]
-                salles = donneesmap["salles"]
-                pos = donneesmap["pos"]
-                #Application de la seed pour avoir meme objet
-                partie = donneesmap["seed"]
-                random.seed(partie)
-                objets = generer_objets(carte, salles,multi)
-            except Exception as e:
-                print(f"Erreur de chargement de la carte: {e}")
-                return
-        #Empeche le jeu de buger quand on attend un mess reseau
-        socket_jeu.setblocking(False)
-    else:
-        #Partie solo
+                self.partie = random.randint(0, 999999)
+            if save:
+                chargeetage = save["niveau_actuel"]
+            else:
+                chargeetage = 0
+            if chargeetage == 0:
+                self.carte, self.salles, self.pos = generer_vaisseau()
+                self.objets = generer_objets(self.carte, [], 0)
+            else:
+                random.seed(self.partie+chargeetage)
+                self.carte, self.salles, self.pos = generemap()
+                self.objets = generer_objets(self.carte, self.salles, self.multi)
+
+        #Assets et menu
+        self.animationjoueur = assets.ASSETS['animationjoueur']
+        self.lumieremarche = Lumiere(self.LARGEUR, self.HAUTEUR)
+        self.menu = ascenseur.Ascenseur(self.LARGEUR, self.HAUTEUR)
+        self.menupause = pause.EcranPause(self.LARGEUR, self.HAUTEUR)
+        self.menusommeil = nuit.Sommeil(self.LARGEUR, self.HAUTEUR)
+        self.menuboutique = boutique.Boutique(self.LARGEUR, self.HAUTEUR)
+        #Parametre Boutique
+        self.surboutique = False
+        self.boutiqueouverte = False
+        self.piecessol = []
+        #Parametre temps
+        self.jour = 1
+        self.heure = 0
+        self.enpause = False
+        #Parametre ascenceur
+        self.ouvertemenu = False
+        self.surascenceur = False
+        self.sauvegarde_etage = {}
+        self.niveau_actuel = 0
+        self.modifs_etage = {}
+        self.sauvegarde_etage[0] = {"carte": self.carte, "salles": self.salles, "objets": self.objets, "pos": self.pos}
+        #Joueur
+        px, py = int(self.pos[0]), int(self.pos[1])
+        self.joueur = Joueur(px*ZOOM+(ZOOM//2), py*ZOOM+(ZOOM//2))
+
+        #Restauration depuis une sauvegarde
         if save:
-            partie = save["seed"]
-        else:
-            partie = random.randint(0, 999999)
-        chargeetage = 0
-        if save:
-            chargeetage = save["niveau_actuel"]
-        if chargeetage == 0:
-            carte, salles, pos = generer_vaisseau()
-            objets = generer_objets(carte, [], 0)
-        else:
-            random.seed(partie+chargeetage)
-            carte, salles, pos = generemap()
-            objets = generer_objets(carte, salles,multi)
+            modifs_etage = {int(k): v for k, v in save["modifs"].items()}
+            self.joueur.rect.centerx = save["joueur"]["x"]
+            self.joueur.rect.centery = save["joueur"]["y"]
+            self.joueur.hp = save["joueur"]["hp"]
+            self.joueur.munition = save["joueur"]["munition"]
+            self.joueur.arsenal = save["joueur"]["arsenal"]
+            self.joueur.endurance = save["joueur"]["endurance"]
+            self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(0, {}))
+            self.sauvegarde_etage[0]["objets"] = self.objets
+            if save["niveau_actuel"] != 0:
+                self.niveau_actuel = save["niveau_actuel"]
+                random.seed(self.partie + self.niveau_actuel)
+                self.carte, self.salles, self.pos = generemap()
+                self.objets = generer_objets(self.carte, self.salles, self.multi)
+                self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(self.niveau_actuel, {}))
 
-    #Charger les textures
-    img_sol = assets.ASSETS['img_sol']
-    img_ascenseur = assets.ASSETS['img_ascenseur']
-    img_murface = assets.ASSETS['img_murface']
-    img_murtop = assets.ASSETS['img_murtop']
-    img_load = assets.ASSETS['img_load']
-    img_munition = assets.ASSETS['img_munition']
-    img_ballevol = assets.ASSETS['img_ballevol']
-    img_lit = assets.ASSETS['img_lit']
-    img_boutique = assets.ASSETS['img_boutique']
-    img_piece = assets.ASSETS['img_piece']
-    img_arme = assets.ASSETS['img_arme']
-    animationjoueur = assets.ASSETS['animationjoueur']
-    img_etoile = pygame.Surface((ZOOM+1,ZOOM+1))
-    img_etoile.fill((5,5,20))
-    pygame.draw.circle(img_etoile, (255,255,255), (ZOOM//2,ZOOM//2), 2)
-    img_flamme = pygame.Surface((ZOOM+1,ZOOM+1))
-    img_flamme.fill((255,69,0))
-    #Calque de lumiere
-    lumieremarche = Lumiere(LARGEUR, HAUTEUR)
+        self.monstres = []
+        self.font = pygame.font.Font("ressource/police.ttf",24)
+        self.fonttitre = pygame.font.Font("ressource/police.ttf",36)
+        self.fondu = 255
+        self.txtvictoire = self.font.render("VICTOIRE RETOUR SUR TERRE", True, (0,255,0))
+        self.txtgameover = self.font.render("GAME OVER", True, (255,0,0))
+        self.menubtn = self.font.render("MENU", True, (255,255,255))
+        self.txtrespawn = self.font.render("RETOUR AU VAISSEAU", True, (255,255,25))
+        self.txtinteragir = self.font.render("Appuyez sur E pour interagir", True, (255,255,255))
+        self.txtdormir = self.font.render("Appuyer sur E pour dormir", True, (255,255,255))
+        self.txtentrer = self.font.render("Appuyer sur E pour entrer", True, (255,255,255))
 
-    #Menu Ascenseur
-    menu = ascenseur.Ascenseur(LARGEUR, HAUTEUR)
-    #Menu pause
-    menupause = pause.EcranPause(LARGEUR, HAUTEUR)
-    #Menu sommeil
-    menusommeil = nuit.Sommeil(LARGEUR, HAUTEUR)
-    menuboutique = boutique.Boutique(LARGEUR, HAUTEUR)
-    surboutique = False
-    boutiqueouverte = False
-    piecessol = []
-    jour = 1
-    heure = 0
+        def fondtr(txtsurface):
+            rect = txtsurface.get_rect()
+            fond = pygame.Surface((rect.width+20, rect.height+10), pygame.SRCALPHA)
+            fond.fill((0,0,0,150))
+            return fond
+        
+        self.fondinteragir = fondtr(self.txtinteragir)
+        self.fonddormir = fondtr(self.txtdormir)
+        self.fondentrer = fondtr(self.txtentrer)
 
-    enpause = False
-    ouvertemenu = False
-    surascenceur = False #Pour savoir si on peut interagir avec l'ascenseur
-
-
-    #Dictionnaire pour sauvegarder les etages déjà visités
-    sauvegarde_etage = {}
-    niveau_actuel = 0
-    modifs_etage = {}
-    #Sauvegarde niveau 1 pour pas le perdre
-    sauvegarde_etage[0] = {"carte":carte,"salles":salles,"objets":objets,"pos": pos}
-
-    #Joueur
-    px, py = int(pos[0]), int(pos[1])
-    joueur = Joueur(px*ZOOM+(ZOOM//2), py*ZOOM+(ZOOM//2))
-
-    #Restauration depuis une sauvegarde
-    if save:
-        modifs_etage = {int(k): v for k, v in save["modifs"].items()}
-        joueur.rect.centerx = save["joueur"]["x"]
-        joueur.rect.centery = save["joueur"]["y"]
-        joueur.hp = save["joueur"]["hp"]
-        joueur.munition = save["joueur"]["munition"]
-        joueur.arsenal = save["joueur"]["arsenal"]
-        joueur.endurance = save["joueur"]["endurance"]
-        objets = sauvegarde.appliquer_modifs(objets, modifs_etage.get(0, {}))
-        sauvegarde_etage[0]["objets"] = objets
-        if save["niveau_actuel"] != 0:
-            niveau_actuel = save["niveau_actuel"]
-            random.seed(partie + niveau_actuel)
-            carte, salles, pos = generemap()
-            objets = generer_objets(carte, salles, multi)
-            objets = sauvegarde.appliquer_modifs(objets, modifs_etage.get(niveau_actuel, {}))
-    #lst de monstres
-    monstres=[]
-
-    #Variable interface
-    font = pygame.font.Font("ressource/police.ttf", 24)
-    fondu = 255
-    #Detecte changement donc animation diff
-    armeprec = joueur.arsenal
-    glissement = 0
-    actionmap = {} #Reactualise quand caisse cassé et mun recup
-    #Mort du joueur
-    mort = False
-    #Son munition
-    sonmun = assets.ASSETS['son_munition']
-    sonmun.set_volume(0.8)
-    pygame.time.delay(500)
-
-    running = True
-    while running:
-        LARGEUR, HAUTEUR = ecran.get_size()
+        self.pieceinv = -1
+        self.imgpiece = None
+        self.armeprec = self.joueur.arsenal
+        self.glissement = 0
+        self.actionmap = {}
+        self.mort = False
+        self.sonmun = assets.ASSETS['son_munition']
+        self.sonmun.set_volume(0.8)
+        #Cristal et victoire
+        self.cristal_y = None
+        self.cristal_x = None
+        self.cristaletage = 6
+        self.victoire = False
+        pygame.time.delay(500)
+    
+    def evenement(self):
         #Vérifie si le joueur est sur un ascenseur
-        casex = int(joueur.rect.centerx/ZOOM)
-        casey = int(joueur.rect.centery/ZOOM)
-        surascenceur = False
-        #Si joueur on verifie ou il est
+        casex = int(self.joueur.rect.centerx/ZOOM)
+        casey = int(self.joueur.rect.centery/ZOOM)
+        self.surascenceur = False
+        self.surlit = False
+        self.surboutique = False
+        #Vérifie si le joueur est sur un lit ou boutique ou ascenseur
         if 0 <= casex < LARGEURMAP and 0 <= casey < HAUTEURMAP:
-            if carte[casey][casex] == ASCENCEUR:
-                surascenceur = True
-        #Vérifie si le joueur est sur un lit
-        surlit = False
-        if 0 <= casex < LARGEURMAP and 0 <= casey < HAUTEURMAP:
-            if carte[casey][casex] == LIT:
-                surlit = True
-        #Vérifie si le joueur est sur la boutique
-        surboutique = False
-        if 0 <= casex < LARGEURMAP and 0 <= casey < HAUTEURMAP:
-            if carte[casey][casex] == BOUTIQUE:
-                surboutique = True
-        if not surboutique:
-            boutiqueouverte = False
+            if self.carte[casey][casex] == ASCENCEUR:
+                self.surascenceur = True
+            if self.carte[casey][casex] == LIT:
+                self.surlit = True
+            if self.carte[casey][casex] == BOUTIQUE:
+                self.surboutique = True
+        if not self.surboutique:
+            self.boutiqueouverte = False
         #Si on s'eloigne de l'ascenseur alors on ferme le menu
-        if not surascenceur:
-            ouvertemenu = False
+        if not self.surascenceur:
+            self.ouvertemenu = False
+        #Moteur vaisseau
+        self.surmoteur = False
+        if self.niveau_actuel == 0:
+            moteurrect = pygame.Rect(int(self.pos[0])*ZOOM - ZOOM*3, int(self.pos[1])*ZOOM, ZOOM*3, ZOOM*2)
+            if self.joueur.rect.colliderect(moteurrect):
+                self.surmoteur = True
+        
         #Evenement clavier
-        click = False
+        self.click = False
         for event in pygame.event.get():
-            if niveau_actuel != 0:
+            if self.niveau_actuel != 0:
                 filtre.activation_mc(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 #Ouvre inventaire
-                if event.key == pygame.K_LCTRL and not enpause:
-                    inventaire= not inventaire
-                 #Larry spawn
-                if event.key == pygame.K_l and niveau_actuel != 0:
-                    m= monstre.Monstre(joueur.rect.centerx+100, joueur.rect.centery, 3, 100)
-                    monstres.append(m)
-                    print(f"Larry va te toucher la nuit")
+                if event.key == pygame.K_LCTRL and not self.enpause:
+                    self.inventaire= not self.inventaire
+                #Larry spawn
+                if event.key == pygame.K_l and self.niveau_actuel != 0:
+                    m= monstre.Monstre(self.joueur.rect.centerx+100, self.joueur.rect.centery, 3, 100)
+                    self.monstres.append(m)
                 #Allume ou eteindre lampe
                 if event.key == pygame.K_h:
-                    joueur.toogle_lumiere()
-                    if joueur.lumiereallumee and filtre.m_combat:
+                    self.joueur.toogle_lumiere()
+                    if self.joueur.lumiereallumee and filtre.m_combat:
                         filtre.m_combat = False
                 #Pause ou ferme
                 if event.key == pygame.K_ESCAPE:
-                    if ouvertemenu:
-                        ouvertemenu = False
+                    if self.ouvertemenu:
+                        self.ouvertemenu = False
                     else:
-                        enpause = not enpause
+                        self.enpause = not self.enpause
                 #Menu ascenceur
-                if event.key == pygame.K_e and surascenceur:
-                    ouvertemenu = not ouvertemenu
-                if event.key == pygame.K_e and surlit and niveau_actuel==0:
-                    jour = menusommeil.nuit(ecran, joueur, jour)
-                    heure = 0
-                    joueur.achatjour = 0
-                    joueur.oxygene = joueur.oxygenemax
-                if event.key == pygame.K_e and surboutique and niveau_actuel == 0:
-                    boutiqueouverte = not boutiqueouverte
+                if event.key == pygame.K_e and self.surascenceur:
+                    self.ouvertemenu = not self.ouvertemenu
+                if event.key == pygame.K_e and self.surlit and self.niveau_actuel==0:
+                    self.jour = self.menusommeil.nuit(self.ecran, self.joueur, self.jour)
+                    self.heure = 0
+                    self.joueur.achatjour = 0
+                    self.joueur.oxygene = self.joueur.oxygenemax
+                if event.key == pygame.K_e and self.surboutique and self.niveau_actuel == 0:
+                    self.boutiqueouverte = not self.boutiqueouverte
+                if event.key == pygame.K_e and self.surmoteur and self.joueur.cristal:
+                    self.victoire = True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: #Clic gauche
-                    click = True
-                if boutiqueouverte:
-                    achat = menuboutique.clique(pygame.mouse.get_pos(), bouton_boutique, joueur)
-        
+                    self.click = True
+                if self.boutiqueouverte:
+                    self.menuboutique.clique(pygame.mouse.get_pos(), self.bouton_boutique, self.joueur)
+
+    def msj(self, t):
+        mouse_pos = pygame.mouse.get_pos()
         #Mode combat desactive quand tire pas
-        if niveau_actuel!=0:
+        if self.niveau_actuel!=0:
             filtre.updatemode()
-        
-        #Le joueur est mort
-        if mort:
-            ecran.fill((0,0,0))
-            textemort = font.render("GAME OVER", True, (255,0,0))
-            ecran.blit(textemort, textemort.get_rect(center=(LARGEUR//2, HAUTEUR//2-100)))
+        if self.victoire:
+            self.ecran.fill((0,0,0))
+            self.ecran.blit(self.txtvictoire, self.txtvictoire.get_rect(center=(self.LARGEUR//2, self.HAUTEUR//2-100)))
             btn_menu = pygame.Rect(0,0,200,60)
-            btn_menu.center = (LARGEUR//2,HAUTEUR//2+50)
-            mouse_pos = pygame.mouse.get_pos()
-            if btn_menu.collidepoint(mouse_pos):
-                couleur = (100,100,100)
-            else:
-                couleur = (50,50,50)
-            pygame.draw.rect(ecran, couleur, btn_menu)
-            textebtn = font.render("MENU", True,(255,255,255))
-            ecran.blit(textebtn, textebtn.get_rect(center=btn_menu.center))
-            if click and btn_menu.collidepoint(mouse_pos):
-                return
-            pygame.display.flip()
-            clock.tick(60)
-            continue
-       
-        if not ouvertemenu and not enpause:
+            btn_menu.center = (self.LARGEUR//2, self.HAUTEUR//2+50)
+            pygame.draw.rect(self.ecran, (100,100,100) if btn_menu.collidepoint(mouse_pos) else (50,50,50), btn_menu)
+            self.ecran.blit(self.menubtn, self.menubtn.get_rect(center=btn_menu.center))
+            if self.click and btn_menu.collidepoint(mouse_pos):
+                return "MENU"
+            return "VICTOIRE"
+            
+        #Le joueur est mort
+        if self.mort:
+            self.ecran.fill((0,0,0))
+            self.ecran.blit(self.txtgameover, self.txtgameover.get_rect(center=(self.LARGEUR//2, self.HAUTEUR//2-100)))
+            if getattr(self.joueur, "cristal", False):
+                self.joueur.cristal = False
+                self.cristaletage = self.niveau_actuel
+                self.cristal_x = self.joueur.rect.centerx
+                self.cristal_y = self.joueur.rect.centery
+            btn_respawn = pygame.Rect(0,0,350,60)
+            btn_respawn.center = (self.LARGEUR//2, self.HAUTEUR//2+50)
+            pygame.draw.rect(self.ecran, (100,100,100) if btn_respawn.collidepoint(mouse_pos) else (50,50,50), btn_respawn)
+            self.ecran.blit(self.txtrespawn, self.txtrespawn.get_rect(center=btn_respawn.center))
+            if self.click and btn_menu.collidepoint(mouse_pos):
+                self.mort = False
+                self.joueur.hp = self.joueur.hpmax
+                self.niveau_actuel = 0
+                self.carte, self.salles, self.pos = generer_vaisseau()
+                self.objets = generer_objets(self.carte, [], 0)
+                self.joueur.rect.center = (int(self.pos[0])*ZOOM+(ZOOM//2), int(self.pos[1])*ZOOM+(ZOOM//2))
+                self.monstres= []
+                self.joueur.possedelampe = True
+                return "CONTINUER"
+            return "MORT"
+        
+        if not self.ouvertemenu and not self.enpause:
             keys = pygame.key.get_pressed()
             #Deplacement joueur et collision
-            kx, ky = joueur.deplacer(keys, len(animationjoueur))
-            joueur.collision(kx, ky, carte, objets)
-            joueur.updatelampe(filtre.m_combat)
+            kx, ky = self.joueur.deplacer(keys, len(self.animationjoueur), t)
+            self.joueur.collision(kx, ky, self.carte, self.objets)
+            self.joueur.updatelampe(filtre.m_combat)
             #Changement arme
             if keys[pygame.K_1]:
-                joueur.changerarme(1)
-            if keys[pygame.K_2] and joueur.arsenal_achete.get(2, False):
-                joueur.changerarme(2)
-            if keys[pygame.K_3] and joueur.arsenal_achete.get(3, False):
-                joueur.changerarme(3)
+                self.joueur.changerarme(1)
+            if keys[pygame.K_2] and self.joueur.arsenal_achete.get(2, False):
+                self.joueur.changerarme(2)
+            if keys[pygame.K_3] and self.joueur.arsenal_achete.get(3, False):
+                self.joueur.changerarme(3)
             #Ramasser munition
             objetsreste = []
-            for obj in objets:
-                if obj.type == "munition" and joueur.rect.colliderect(obj.rect):
-                    joueur.munition = joueur.munition + 15
-                    sonmun.play()
+            for obj in self.objets:
+                if obj.type == "munition" and self.joueur.rect.colliderect(obj.rect):
+                    self.joueur.munition = self.joueur.munition + 15
+                    self.sonmun.play()
                     key = f"{obj.rect.x}-{obj.rect.y}"
-                    actionmap[key] = "S"
-                    modifs_etage.setdefault(niveau_actuel, {})[key] = "S"
+                    self.actionmap[key] = "S"
+                    self.modifs_etage.setdefault(self.niveau_actuel, {})[key] = "S"
+                elif obj.type == "cristal" and self.joueur.rect.colliderect(obj.rect):
+                    self.joueur.cristal = True
+                    self.sonmun.play()
+                    key = f"{obj.rect.x}-{obj.rect.y}"
+                    self.actionmap[key]="S"
+                    self.modifs_etage.setdefault(self.niveau_actuel, {})[key]="S"
+                    px,py = int(self.pos[0]), int(self.pos[1])
+                    self.monstres.append(monstre.Titan(px*ZOOM+ZOOM, py*ZOOM+ZOOM))    
                 else:
                     objetsreste.append(obj)
-            objets = objetsreste #Met a jour les objets restants
+            self.objets = objetsreste #Met a jour les objets restants
             #Ramasser piece
             piecesreste = []
-            for p in piecessol:
-                if joueur.rect.colliderect(p["rect"]):
-                    joueur.pieces += p["valeur"]
+            for p in self.piecessol:
+                if self.joueur.rect.colliderect(p["rect"]):
+                    self.joueur.pieces += p["valeur"]
                 else:
                     piecesreste.append(p)
-            piecessol = piecesreste #Met a jour les pieces restantes
+            self.piecessol = piecesreste #Met a jour les pieces restantes
             #Monstre loot piece
-            for m in monstres:
-                if m.mort and getattr(m, "loot", 0) > 0:
-                    piecessol.append({"rect": pygame.Rect(m.rect.centerx-20, m.rect.centery-20, 40, 40), "valeur": m.loot})
-                    m.loot = 0 #Evite de looter plusieurs fois
+            monstresvivant = []
+            for m in self.monstres:
+                if m.mort:
+                    if getattr(m, "loot", 0) > 0:
+                        self.piecessol.append({"rect": pygame.Rect(m.rect.centerx-20, m.rect.centery-20, 40, 40), "valeur": m.loot})
+                else:
+                    monstresvivant.append(m)
+            self.monstres = monstresvivant
             #Tir
-            if (keys[pygame.K_SPACE] or pygame.mouse.get_pressed()[0]) and niveau_actuel != 0:
-                joueur.tirer()
+            if (keys[pygame.K_SPACE] or pygame.mouse.get_pressed()[0]) and self.niveau_actuel != 0:
+                self.joueur.tirer()
             #Deplacement balle et acutalisation caisse cassé
-            casse = joueur.updatetir(carte, objets, monstres)
+            casse = self.joueur.updatetir(self.carte, self.objets, self.monstres, t)
             if casse:
                 for c in casse:
                     key = f"{c.rect.x}-{c.rect.y}"
-                    actionmap[key] = "M"
-                    modifs_etage.setdefault(niveau_actuel, {})[key] = "M"
+                    self.actionmap[key] = "M"
+                    self.modifs_etage.setdefault(self.niveau_actuel, {})[key] = "M"
+            #Si en dehor de l'ecran on stop le mouvement
+            if self.joueur.god > 0:
+                self.joueur.god -= 60*t
             #Deplacement provisoire
-            for m in monstres:
-                if joueur.god>0:
-                    joueur.god -=1
+            for m in self.monstres:
                 if not m.mort :
-                    kx, ky = m.deplacement(joueur.rect.centerx, joueur.rect.centery)
-                    m.collision(kx, ky, carte, objets)
-                    #le monstre touche le joueur
-                    if m.rect.colliderect(joueur.rect) and joueur.god<=0:
-                        joueur.hp -=10
-                        joueur.god= 60
-                        if joueur.hp <= 0:
-                            mort = True
-                            joueur.possedelampe = False
-                            joueur.lumiereallumee = False
+                    if getattr(m, "traque", False) or abs(m.rect.centerx - self.joueur.rect.centerx) < self.LARGEUR and abs(m.rect.centery - self.joueur.rect.centery) < self.HAUTEUR:
+                        kx, ky = m.deplacement(t, self.joueur.rect.centerx, self.joueur.rect.centery)
+                        m.collision(kx, ky, self.carte, self.objets)
+                        #le monstre touche le joueur
+                        if m.rect.colliderect(self.joueur.rect) and self.joueur.god<=0:
+                            degat = getattr(m, "degats", 10)
+                            self.joueur.hp -= degat
+                            self.joueur.god= 60
+                            if self.joueur.hp <= 0:
+                                self.mort = True
+                                self.joueur.possedelampe = False
+                                self.joueur.lumiereallumee = False
             #Oxygene
-            joueur.updateoxygene(niveau_actuel)
-            if joueur.hp <=0 and not mort:
-                mort = True        
+            self.joueur.updateoxygene(self.niveau_actuel)
+            if self.joueur.hp <=0 and not self.mort:
+                self.mort = True
             #Heure
-            if niveau_actuel != 0:
-                heure +=1
-                if heure >= 28800:
-                    if not hasattr(joueur, "time"):
-                        jour.time = 0
-                    jour.time +=1
-                    if joueur.time >= 120:
-                        joueur.time = 0
-                        joueur.hp = joueur.hp - 5
-                        if joueur.hp <= 0:
-                            mort = True
-                            joueur.possedelampe = False
-                            joueur.lumiereallumee = False
-
-        #Reseaux
-        if connect:
-            #position balle
-            balle = "vide"
-            if len(joueur.tir) > 0:
-                balle = "_".join([f"{int(b.rect.x)}={int(b.rect.y)}={b.dx:.2f}={b.dy:.2f}" for b in joueur.tir])
-            #Modification de la map sauvegarde
-            modifmap = "vide"
-            if len(actionmap) > 0:
-                modifmap = "_".join([f"{coordonne}={etat}" for coordonne, etat in actionmap.items()])
-                actionmap.clear() #Vide liste
-            monstree = "vide"
-            if len(monstres)>0:
-                monstree = "_".join([f"{int(m.rect.x)}={int(m.rect.y)}={int(m.mort)}" for m in monstres])
-            try:
-                #Mort ou pas
-                if mort:
-                    etatmort = 1
-                else:
-                    etatmort = 0
-                #Envoie la position du joueur
-                message = f"{joueur.rect.centerx},{joueur.rect.centery},{niveau_actuel},{joueur.angle},{joueur.animation},{balle},{modifmap},{etatmort},{monstree}\n"
-                socket_jeu.send(message.encode('utf-8'))
-            except BlockingIOError: pass
-            except Exception as e: pass
-            #Reçoit la position de l'autre joueur
-            try:
-                data = socket_jeu.recv(4096)
-                if data:
-                    buffer += data
-                    if b"\n" in buffer:
-                        texte = buffer.decode('utf-8')
-                        paquetss = texte.split("\n")
-                        dernier = paquetss[-2] #Isole dernier paquet
-                        try:
-                            #On traite les anciens
-                            for paquet in paquetss[:-1]:
-                                if paquet:
-                                    listejoueur = paquet.split('|')
-                                    for j in listejoueur:
-                                        if j:
-                                            jid, jinfos = j.split(':', 1)
-                                            v = jinfos.split(',')
-                                            #Si modif de carte
-                                            if len(v)>=7 and v[6] != "vide":
-                                                for m in v[6].split('_'):
-                                                    coordonne, etat = m.split('=')
-                                                    mx, my = coordonne.split('-')
-                                                    mx, my = int(mx), int(my)
-                                                    #Maintenant on ajoute la modif sur notre map
-                                                    objsup = None
-                                                    for obj in objets:
-                                                        if obj.rect.x == mx and obj.rect.y == my:
-                                                            if etat == "S":
-                                                                objsup = obj
-                                                            elif etat == "M" and getattr(obj, "type", "") != "munition":
-                                                                #Caisse devient mun
-                                                                obj.type = "munition"
-                                                                obj.texture = texture("munition.png", (90,90), transparente=True)
-                                                                obj.hitbox = obj.rect
-                                                    #Objet ramassé
-                                                    if objsup in objets:
-                                                        objets.remove(objsup)
-                            #Met a jour pos des joueur
-                            if dernier:
-                                listejoueur = dernier.split('|')
-                                for j in listejoueur:
-                                        if j:
-                                            jid, jinfos = j.split(':', 1)
-                                            v = jinfos.split(',')
-                                            if len(v) >= 9:
-                                                #Si nouveau joueur on l'ajoute au dico
-                                                if jid not in joueursup:
-                                                    joueursup[jid] = Joueur(int(v[0]), int(v[1]))
-                                                #Met a jour stat
-                                                autre = joueursup[jid]
-                                                autre.rect.centerx = int(v[0])
-                                                autre.rect.centery = int(v[1])
-                                                autre.etage = int(v[2])
-                                                autre.angle = float(v[3])
-                                                autre.animation = int(v[4])
-                                                autre.mort = bool(int(v[7]))
-                                                #Lecture des balles
-                                                autre.balles_reseau = []
-                                                if v[5] != "vide":
-                                                    for b in v[5].split('_'):
-                                                        parti = b.split('=')
-                                                        if len(parti)==4:
-                                                            ballex,balley,balledx,balledy = parti
-                                                            autre.balles_reseau.append((int(ballex), int(balley),float(balledx),float(balledy)))
-                                                #Monstres
-                                                autre.monstres_reseau = []
-                                                if v[8] != "vide":
-                                                    for m in v[8].split('_'):
-                                                        parts = m.split('=')
-                                                        if len(parts)==3:
-                                                            mx,my,mmort = parts
-                                                            autre.monstres_reseau.append((int(mx),int(my), int(mmort)))
-                        except Exception as e:
-                            pass
-                        buffer = paquetss[-1].encode('utf-8')
-            except BlockingIOError: pass
-            except Exception: pass
-
-        #Suivi joueur
-        camera_x = (LARGEUR//2)-joueur.rect.centerx
-        camera_y = (HAUTEUR//2)-joueur.rect.centery
-
-        #Dessin sol
-        minx = max(0, -camera_x//ZOOM-1)
-        maxx = min(LARGEURMAP, (-camera_x+LARGEUR)//ZOOM+2)
-        miny = max(0, -camera_y//ZOOM-1)
-        maxy = min(HAUTEURMAP, (-camera_y+HAUTEUR)//ZOOM+2)
-        ecran.fill((0,0,0))
-        for y in range(miny, maxy):
-            for x in range(minx, maxx):
-                case = carte[y][x]
-                screen_x = x * ZOOM + camera_x
-                screen_y = y * ZOOM + camera_y
-                if case == SOL and img_sol is not None:
-                    ecran.blit(img_sol, (screen_x,screen_y))
-                elif case == ASCENCEUR and img_ascenseur is not None:
-                    ecran.blit(img_ascenseur, (screen_x, screen_y))
-                elif case == ETOILE:
-                    ecran.blit(img_etoile, (screen_x, screen_y))
-                elif case == FLAMME:
-                    ecran.blit(img_flamme, (screen_x,screen_y))
-                elif case == LIT:
-                    ecran.blit(img_lit, (screen_x,screen_y))
-                elif case == BOUTIQUE:
-                    ecran.blit(img_boutique, (screen_x, screen_y))
-        
-        #Liste de chosses a dessiner apres le sol
-        adessiner = []
-
-        #Dessin murs
-        for y in range(miny, maxy):
-            for x in range(minx, maxx):
-                        case = carte[y][x]
-                        if case == MUR:
-                            screen_x = x * ZOOM + camera_x
-                            screen_y = y * ZOOM + camera_y
-                            img_mur = img_murtop
-                            #On regarsde si il y a du sol en dessous
-                            if y+1<HAUTEURMAP and (carte[y+1][x]==SOL or carte[y+1][x] == ASCENCEUR):
-                                img_mur = img_murface
-                            if img_mur:
-                                pos_y = screen_y + ZOOM
-                                adessiner.append((pos_y, img_mur,(screen_x,screen_y)))
-                        
-        #Dessin objets
-        for obj in objets:
-            fenetre_x = obj.rect.x + camera_x
-            fenetre_y = obj.rect.y + camera_y
-            if -ZOOM<fenetre_x<LARGEUR and -ZOOM<fenetre_y<HAUTEUR:
-                pos_y = fenetre_y + obj.rect.height
-                adessiner.append((pos_y, obj.texture, (fenetre_x, fenetre_y)))
-        
-        #Dessin piece au sol
-        for p in piecessol:
-            px = p["rect"].x + camera_x
-            py = p["rect"].y + camera_y
-            if -50<px<LARGEUR and -50<py<HAUTEUR:
-                ecran.blit(img_piece, (px, py))
-
-        #Dessin monstres
-        for m in monstres:
-            if not m.mort:
-                fenetre_x = m.rect.x + camera_x
-                fenetre_y = m.rect.y + camera_y
-                if -ZOOM<fenetre_x<LARGEUR and -ZOOM<fenetre_y<HAUTEUR:
-                    pos_y = fenetre_y + m.rect.height
-                    adessiner.append((pos_y, m.texture, (fenetre_x, fenetre_y)))
-        
-        #Dessin balle
-        for tir in joueur.tir:
-            ix = tir.rect.x + camera_x
-            iy = tir.rect.y + camera_y
-            if -ZOOM<ix<LARGEUR and -ZOOM<iy<HAUTEUR:
-                angleballe = math.atan2(tir.dy, tir.dx)
-                angle = -math.degrees(angleballe)
-                balleangle = pygame.transform.rotate(img_ballevol, angle)
-                rectballe = balleangle.get_rect(center=(ix,iy))
-                adessiner.append((rectballe.bottom, balleangle, rectballe.topleft))
-
-        img_autrejoueur = animationjoueur[joueur.animation]
-            
-        #Dessin autre joueur
-        if connect:
-            for idjoueur, autre in joueursup.items():
-                if getattr(autre, "etage", 1) == niveau_actuel:
-                    #Dessine ses balles
-                    if hasattr(autre, "monstres_reseau"):
-                        for mx,my,mmort in autre.monstres_reseau:
-                            if not mmort:
-                                ix = mx + camera_x
-                                iy = my + camera_y
-                                if -ZOOM<ix<LARGEUR and -ZOOM<iy<HAUTEUR:
-                                    pos_y = iy + 200
-                                    adessiner.append((pos_y, monstre.larry, (ix,iy)))
-                    #Dessine ses balles
-                    if hasattr(autre, "balles_reseau"):
-                        for ballex, balley, balledx, balledy in autre.balles_reseau:
-                            ix = ballex+camera_x
-                            iy = balley + camera_y
-                            if -ZOOM<ix<LARGEUR and -ZOOM<iy<HAUTEUR:
-                                #On crée la balle
-                                anglevol = math.atan2(balledy,balledx)
-                                angle = -math.degrees(anglevol)
-                                balleangle = pygame.transform.rotate(img_ballevol, angle)
-                                rectballe = balleangle.get_rect(center=(ix,iy))
-                                adessiner.append((rectballe.bottom, balleangle, rectballe.topleft))
-                    #Dessine son perso
-                    xjoueur2 = autre.rect.centerx + camera_x
-                    yjoueur2 = autre.rect.centery + camera_y
-                    #On dessine que si il est visible
-                    if -100<xjoueur2<LARGEUR and -100<yjoueur2<HAUTEUR:
-                        if not getattr(autre, "mort", False):
-                            #Joueur vivant
-                            img_autrejoueur = animationjoueur[autre.animation]
-                            img_autrejoueur = pygame.transform.rotate(img_autrejoueur, autre.angle)
-                        else:
-                            img_autrejoueur = animationjoueur[0].copy()
-                            img_autrejoueur = pygame.transform.rotate(img_autrejoueur, 90)
-                            img_autrejoueur.set_alpha(20)
-                        rect_aff = img_autrejoueur.get_rect(center=(xjoueur2, yjoueur2))
-                        adessiner.append((rect_aff.bottom, img_autrejoueur, rect_aff.topleft))
-
-        #Dessin joueur
-        img_joueur = animationjoueur[joueur.animation]
-        if img_joueur is not None:
-            joueurtourne = pygame.transform.rotate(img_joueur, joueur.angle)
-            rectaffiche = joueurtourne.get_rect()
-            xjoueur = joueur.rect.centerx + camera_x
-            yjoueur = joueur.rect.centery + camera_y
-            rectaffiche.center = (xjoueur, yjoueur)
-            pos_y= rectaffiche.bottom
-            adessiner.append((pos_y, joueurtourne, rectaffiche.topleft))
-
-        #Tri la liste a dessiner par ordre Y
-        adessiner.sort(key=lambda x: x[0])
-        for i in adessiner:
-            ecran.blit(i[1], i[2]) #image, position
-
-        #Effet Lumiere quand activé
-        if niveau_actuel != 0:
-            lumieremarche.appliquer(ecran, joueur, filtre.m_combat)
-
+            if self.niveau_actuel != 0:
+                self.heure += 60*t
+                if self.heure >= 28800:
+                    if not hasattr(self.joueur, "time"):
+                        self.joueur.time = 0
+                    self.joueur.time += 60*t
+                    if self.joueur.time >= 120:
+                        self.joueur.time = 0
+                        self.joueur.hp = self.joueur.hp - 5
+                        if self.joueur.hp <= 0:
+                            self.mort = True
+                            self.joueur.possedelampe = False
+                            self.joueur.lumiereallumee = False 
+            #Reseau
+        if self.connect:
+            self.buffer, self.objets, self.joueursup = reseau.connexion(self.socket_jeu, self.joueur, self.monstres, self.objets, self.actionmap, self.mort, self.niveau_actuel, self.buffer, self.joueursup)   
+        return "CONTINUER"
+    
+    def menus(self):
         #Message sur ascenseur
-        if surascenceur and not ouvertemenu:
-            txt = font.render("Appuyez sur E pour interagir", True, (255,255,255))
-            txt_rect = txt.get_rect(center=(LARGEUR//2, HAUTEUR-50))
-            #Fond du message
-            fond = pygame.Surface((txt_rect.width+20, txt_rect.height+10), pygame.SRCALPHA)
-            fond.fill((0,0,0,150))
-            fond.set_alpha(150)
-            ecran.blit(fond, (txt_rect.x-10, txt_rect.y-5))
-            ecran.blit(txt, txt_rect)
+        if self.surascenceur and not self.ouvertemenu:
+            txt_rect = self.txtinteragir.get_rect(center=(self.LARGEUR//2, self.HAUTEUR-50))
+            self.ecran.blit(self.fondinteragir,(txt_rect.x-10, txt_rect.y-5))
+            self.ecran.blit(self.txtinteragir, txt_rect)
         #Message pour le lit
-        if surlit and not ouvertemenu and niveau_actuel == 0:
-            tx = font.render("Appuyer sur E pour dormir", True, (255,255,255))
-            tx_rect = tx.get_rect(center=(LARGEUR//2, HAUTEUR-50))
-            fond = pygame.Surface((tx_rect.width+20, tx_rect.height+10), pygame.SRCALPHA)
-            fond.fill((0,0,0,150))
-            ecran.blit(fond,(tx_rect.x-10, tx_rect.y-5))
-            ecran.blit(tx, tx_rect)
+        if self.surlit and not self.ouvertemenu and self.niveau_actuel == 0:
+            tx_rect = self.txtdormir.get_rect(center=(self.LARGEUR//2, self.HAUTEUR-50))
+            self.ecran.blit(self.fonddormir,(tx_rect.x-10, tx_rect.y-5))
+            self.ecran.blit(self.txtdormir, tx_rect)
         #Message pour la boutique
-        if surboutique and not boutiqueouverte and niveau_actuel == 0:
-            tx = font.render("Appuyer sur E pour entrer", True, (255,255,255))
-            tx_rect = tx.get_rect(center=(LARGEUR//2, HAUTEUR-50))
-            fond = pygame.Surface((tx_rect.width+20, tx_rect.height+10), pygame.SRCALPHA)
-            fond.fill((0,0,0,150))
-            ecran.blit(fond,(tx_rect.x-10, tx_rect.y-5))
-            ecran.blit(tx, tx_rect)
+        if self.surboutique and not self.boutiqueouverte and self.niveau_actuel == 0:
+            t_rect = self.txtentrer.get_rect(center=(self.LARGEUR//2, self.HAUTEUR-50))
+            self.ecran.blit(self.fondentrer,(t_rect.x-10, t_rect.y-5))
+            self.ecran.blit(self.txtentrer, t_rect)
 
-        #Menu ascenseur
-        if ouvertemenu:
-            menu_boutons = menu.dessiner(ecran, niveau_actuel, joueur)
-            if click:
-                mouse_pos = pygame.mouse.get_pos()
-                etage_choisi = menu.clique(mouse_pos, menu_boutons)
+        #Menu boutique ascenseur 
+        self.bouton_boutique = []
+        if self.ouvertemenu:
+            menu_boutons = self.menu.dessiner(self.ecran, self.niveau_actuel, self.joueur)
+            if self.click:
+                etage_choisi = self.menu.clique(pygame.mouse.get_pos(), menu_boutons)
                 if etage_choisi is not None:
-                    sauvegarde_etage[niveau_actuel] = {
-                        "carte": carte,
-                        "salles": salles,
-                        "objets": objets,
-                        "pos": pos,
+                    self.sauvegarde_etage[self.niveau_actuel] = {
+                        "carte": self.carte,
+                        "salles": self.salles,
+                        "objets": self.objets,
+                        "pos": self.pos,
                     }
-                    menu.ecran_charge(ecran, img_load, etage_choisi)
+                    self.menu.ecran_charge(self.ecran, assets.ASSETS['img_load'], etage_choisi)
                     #Si l'étage a déjà été visité, on charge la sauvegarde
-                    if etage_choisi in sauvegarde_etage:
-                        carte = sauvegarde_etage[etage_choisi]["carte"]
-                        salles = sauvegarde_etage[etage_choisi]["salles"]
-                        objets = sauvegarde_etage[etage_choisi]["objets"]
-                        pos = sauvegarde_etage[etage_choisi]["pos"]
+                    if etage_choisi in self.sauvegarde_etage:
+                        self.carte = self.sauvegarde_etage[etage_choisi]["carte"]
+                        self.salles = self.sauvegarde_etage[etage_choisi]["salles"]
+                        self.objets = self.sauvegarde_etage[etage_choisi]["objets"]
+                        self.pos = self.sauvegarde_etage[etage_choisi]["pos"]
                     else:
                         if etage_choisi == 0:
-                            carte, salles, pos = generer_vaisseau()
-                            objets = generer_objets(carte, [], 0)
+                            #Toujours vaisseau
+                            self.carte, self.salles, self.pos = generer_vaisseau()
+                            self.objets = generer_objets(self.carte, [], 0)
                         elif 1<= etage_choisi <=6:
-                            random.seed(partie+etage_choisi)
-                            carte, salles, pos = generemap()
-                            objets = generer_objets(carte, salles, multi)
-                            objets = sauvegarde.appliquer_modifs(objets, modifs_etage.get(etage_choisi, {}))
-                    niveau_actuel = etage_choisi
+                            #Nouvelle carte
+                            random.seed(self.partie+etage_choisi)
+                            self.carte, self.salles, self.pos = generemap()
+                            self.objets = generer_objets(self.carte, self.salles, self.multi)
+                            self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(etage_choisi, {}))
+                    self.niveau_actuel = etage_choisi
+                    #Si etage 6 on active quete
+                    if self.niveau_actuel == self.cristaletage and not getattr(self.joueur, "cristal", False):
+                        if self.cristal_x is None and self.cristaletage == 6:
+                            objtang, posc = tango(self.carte, self.salles, poscristal=True)
+                            if objtang:
+                                self.objets.extend(objtang)
+                        elif self.cristal_x is not None:
+                            self.objets.append(Objet(self.cristal_x, self.cristal_y, "cristal.png", "cristal", size=(ZOOM//2, ZOOM//2)))
+                    if getattr(self.joueur, "cristal", False) and self.niveau_actuel != 0:
+                        posx, posy = int(self.pos[0]), int(self.pos[1])
+                        self.monstres.append(monstre.Titan(posx*ZOOM+ZOOM*2, posy*ZOOM+ZOOM*2))
                     #Repositionne le joueur sur la nouvelle carte a l"ascenseur
-                    joueurx = pos[0] * ZOOM + (ZOOM//2)
-                    joueury = pos[1] * ZOOM + (ZOOM//2)
-                    joueur.rect.center = (joueurx, joueury)
+                    posx,posy = int(self.pos[0]), int(self.pos[1])
+                    self.joueur.rect.center = (posx*ZOOM+(ZOOM//2), posy*ZOOM+(ZOOM//2))
                     pygame.time.delay(500)
-                    ouvertemenu = False
+                    self.ouvertemenu = False
                     pygame.event.clear()
-
-        #Menu boutique
-        bouton_boutique = []
-        if boutiqueouverte:
-            bouton_boutique = menuboutique.dessiner(ecran, joueur)
-            if click:
-                menuboutique.clique(pygame.mouse.get_pos(), bouton_boutique, joueur)
-
+        if self.boutiqueouverte:
+            self.bouton_boutique = self.menuboutique.dessiner(self.ecran, self.joueur)
         #Menu pause
-        if enpause:
-            boutons = menupause.dessiner(ecran)
-            if click:
-                mouse_pos = pygame.mouse.get_pos()
-                action = menupause.clique(mouse_pos, boutons)
+        if self.enpause:
+            boutons = self.menupause.dessiner(self.ecran)
+            if self.click:
+                action = self.menupause.clique(pygame.mouse.get_pos(), boutons)
                 if action == "REPRENDRE":
-                    enpause = False
+                    self.enpause = False
                 elif action == "SAUVEGARDER":
-                    sauvegarde_etage[niveau_actuel] = {
-                        "carte": carte,
-                        "salles": salles,
-                        "objets": objets,
+                    self.sauvegarde_etage[self.niveau_actuel] = {
+                        "carte": self.carte,
+                        "salles": self.salles,
+                        "objets": self.objets,
                     }
-                    sauvegarde.sauvegarder(partie, niveau_actuel, modifs_etage, joueur)
+                    sauvegarde.sauvegarder(self.partie, self.niveau_actuel, self.modifs_etage, self.joueur)
                 elif action == "OPTIONS":
-                    ecran = option.option_menu(ecran, LARGEUR, HAUTEUR)
-                    LARGEUR, HAUTEUR = ecran.get_size()
+                    self.ecran = option.option_menu(self.ecran, self.LARGEUR, self.HAUTEUR)
+                    self.LARGEUR, self.HAUTEUR = self.ecran.get_size()
                     #Met a jour les res de tout le jeu
-                    menupause.update_dimensions(LARGEUR, HAUTEUR)
-                    menu.update_dimensions(LARGEUR, HAUTEUR)
-                    img_load = texture("Chargement.png", (LARGEUR, HAUTEUR))
+                    self.menupause.update_dimensions(self.LARGEUR, self.HAUTEUR)
+                    self.menu.update_dimensions(self.LARGEUR, self.HAUTEUR)
+                    img_load = pygame.transform.scale(assets.ASSETS['img_load'], (self.LARGEUR,self.HAUTEUR))
                 elif action == "MENU PRINCIPAL":
-                    return #Revenir au menu principal
+                    return "MENU" #Revenir au menu principal
                 elif action == "QUITTER":
                     pygame.quit()
                     sys.exit()
-        
+        return "CONTINUER"
+    
+    def dessine(self):
         #Musique mode combat
         if filtre.combat:
-            if niveau_actuel != 0:
+            if self.niveau_actuel != 0:
                 if filtre.m_combat:
                     #Active nouvelle sic
                     pygame.mixer.music.load(assets.ASSETS['musique_combat'])
@@ -763,54 +540,63 @@ def lancer(ecran, mode = "solo", ip=None, save=None):
                     pygame.mixer.music.load(assets.ASSETS['musique_jeu'])
                     pygame.mixer.music.play(-1)
             filtre.combat = False
-
+        affichage.dessinerjeu(self.ecran, self.LARGEUR, self.HAUTEUR, self.carte, self.joueur, self.objets, self.piecessol, self.monstres, self.joueursup, self.niveau_actuel, self.connect, self.lumieremarche, filtre)
+        if self.menus() == "MENU":
+            return "MENU"
         #Overlay
-        if not enpause:
-            #Barre endurance
-            #Il court ?
-            if ouvertemenu == False: #Pas de barre si menu ouvert
-                touche = pygame.key.get_pressed()
-                mouvement = touche[pygame.K_LEFT] or touche[pygame.K_RIGHT] or touche[pygame.K_UP] or touche[pygame.K_DOWN] or touche[pygame.K_z] or touche[pygame.K_s] or touche[pygame.K_q] or touche[pygame.K_d]
-                course = mouvement and touche[pygame.K_LSHIFT] and joueur.endurance > 0
-                #Apparition fondu de la barre
-                if not course and joueur.endurance >= joueur.maxcourse:
-                    fondu = max(0, fondu-5)
-                else:
-                    fondu = min(255, fondu+25)                
-                joueurimage = animationjoueur[joueur.animation]
-                overlay.endurance(ecran, joueur, course, joueurimage, HAUTEUR, LARGEUR, fondu)
-        
-            #Compteur munition
-            overlay.munition(ecran, joueur, police, img_munition, HAUTEUR)
-            overlay.lampe(ecran, joueur, font, HAUTEUR)
-
+        if not self.enpause:
+            touche = pygame.key.get_pressed()
+            mouvement = any(touche[k] for k in [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP,pygame.K_DOWN, pygame.K_z, pygame.K_s, pygame.K_q, pygame.K_d])
+            course = mouvement and touche[pygame.K_LSHIFT] and self.joueur.endurance > 0
+            #Apparition fondu de la barre
+            if not course and self.joueur.endurance >= self.joueur.maxcourse:
+                self.fondu = max(0, self.fondu-5)
+            else:
+                self.fondu = min(255, self.fondu+25)   
+            overlay.endurance(self.ecran, self.joueur, course, self.HAUTEUR, self.LARGEUR)
+            overlay.munition(self.ecran, self.joueur, self.police, assets.ASSETS['img_munition'], self.HAUTEUR)
             #Arme overlay
             #Si changement d'arme on glisse image
-            if joueur.arsenal != armeprec:
-                armeprec = joueur.arsenal
-                glissement = -400
-            if glissement < 0:
-                glissement += 35
-                if glissement > 0:
-                    glissement = 0
-            overlay.arme_overlay(ecran, joueur, img_arme, HAUTEUR, glissement)
-            
-            #affichage de l'image de l'inventaire
-            overlay.onventaire(ecran, inventaire, hudinventaire, LARGEUR, HAUTEUR)
-            #activation du filtre
-            filtre.filtre(ecran)
-
+            if self.joueur.arsenal != self.armeprec:
+                self.armeprec = self.joueur.arsenal
+                self.glissement = -400
+            if self.glissement < 0:
+                self.glissement += 35
+                if self.glissement > 0:
+                    self.glissement = 0
+            overlay.arme_overlay(self.ecran, self.joueur, assets.ASSETS['img_arme'], self.HAUTEUR, self.glissement)
+            overlay.lampe(self.ecran, self.joueur, self.font, assets.ASSETS.get('img_lampe'), self.HAUTEUR)
+            if self.niveau_actuel!=0:
+                overlay.oxygene(self.ecran, self.joueur, self.font, self.LARGEUR, self.HAUTEUR)
+            overlay.hud_life(self.ecran, self.LARGEUR, self.HAUTEUR, self.joueur.hp, self.joueur.hpmax, self.police, self.coeur)
+            overlay.pieces(self.ecran, self.joueur, self.font, self.LARGEUR)
+            overlay.horloge(self.ecran, self.font, self.jour, self.heure, self.LARGEUR)
+            overlay.onventaire(self.ecran, self.inventaire, self.hudinventaire, self.LARGEUR, self.HAUTEUR)
+            filtre.filtre(self.ecran)
         #texte mode overlay
-        overlay.mode_texte(ecran, filtre.m_combat, enpause, police, hudmode, inventaire)
-        if not enpause :
-            overlay.hud_life(ecran, LARGEUR, HAUTEUR, joueur.hp, joueur.hpmax, police, coeur)
-            overlay.horloge(ecran, font, heure, LARGEUR)
-            if niveau_actuel != 0:
-                overlay.oxygene(ecran, joueur, font, LARGEUR, HAUTEUR)
-            piece_hud = font.render(f"Pieces: {joueur.pieces}", True, (255,200,50))
-            ecran.blit(piece_hud, piece_hud.get_rect(topright=(LARGEUR-20, 20)))
+        overlay.mode_texte(self.ecran, filtre.m_combat, self.enpause, self.police, self.hudmode, self.inventaire)                                      
         pygame.display.flip()
-        clock.tick(60)
+        return "CONTINUER"
     
-    if socket_jeu:
-        socket_jeu.close()  
+def lancer(ecran, mode="solo", ip = None, save=None):
+    partie = Partie(ecran, mode, ip, save)
+    clock = pygame.time.Clock()
+    running = True
+    while running:
+        partie.LARGEUR, partie.HAUTEUR = ecran.get_size()
+        t = clock.tick(60) / 1000.0
+        #Frappe du clavier
+        partie.evenement()
+        #Calcul
+        stat = partie.msj(t)
+        if stat == "MENU":
+            break
+        elif stat == "MORT":
+            pygame.display.flip()
+            continue
+        #Dessine
+        statdessin = partie.dessine()
+        if statdessin == "MENU":
+            break
+    if partie.socket_jeu:
+        partie.socket_jeu.close()

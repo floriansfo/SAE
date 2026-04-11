@@ -34,35 +34,24 @@ def generer_vaisseau():
     grille[spawny][centrex] = SOL
     spawn_pos = (centrex, ascy)
     #Lit
-    lity = starty+9
-    litx = centrex-3
+    lity,litx = starty+9, centrex-3
     grille[lity][litx] = LIT
     #Boutique
-    boutiquey = starty+9
-    boutiquex = centrex+3
+    boutiquey,boutiquex = starty+9, centrex+3
     grille[boutiquey][boutiquex] = BOUTIQUE
     #Dessine les murs intérieurs
     grillefinale = [row[:] for row in grille]
-    INTERIEUR = [SOL, ASCENCEUR, LIT, BOUTIQUE]
+    INTERIEUR = {SOL, ASCENCEUR, LIT, BOUTIQUE}
     for y in range(1,HAUTEURMAP-1):
         for x in range(1,LARGEURMAP-1):
             #Si on est dans le vide
             if grille[y][x] == ETOILE:
-                #Si on est à côté d'un sol ou d'un ascenceur, on met un mur
-                touche = False
-                for d in [-1,0,1]:
-                    for e in [-1,0,1]:
-                        if grille[y+d][x+e] in INTERIEUR:
-                            touche = True
-                            break
-                    if touche:
-                        break
-                if touche:
+                if any(grille[y+d][x+e]in INTERIEUR for d in (-1,0,1) for e in (-1,0,1)):
                     grillefinale[y][x] = MUR
+
     #Dessine Flamme
     for x in range(startx+2, finx-2):
-        for yflamme in range(finy+1, finy+4):
-            if yflamme < HAUTEURMAP:
+        for yflamme in range(finy+1, min(finy+4,HAUTEURMAP)):
                 grillefinale[yflamme][x] = FLAMME
     return grillefinale, salle, spawn_pos
 

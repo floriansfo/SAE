@@ -1,6 +1,5 @@
 import pygame
 import sys
-import time
 import assets
 
 pygame.init()
@@ -16,13 +15,14 @@ pygame.mouse.set_visible(False)
 BLACK = (0,0,0)
 
 #Charmenent assets
-logo = pygame.image.load("ressource/logormbg.png").convert_alpha()
+logoori = assets.ASSETS.get('img_logo')
+logo = pygame.transform.scale(logoori, (250,250))
 centre_logo = logo.get_rect(center=(WIDTH//2, HEIGHT//2))
 
 def demarrage():
     clock = pygame.time.Clock()
-    start_time = time.time() #Temps depuis lancement
-    duration = 1.5  # Durée du fondu
+    start_time = pygame.time.get_ticks()
+    duration = 1500 #1.5 Seconde 
     while True:
         clock.tick(60)
         for event in pygame.event.get():
@@ -30,7 +30,7 @@ def demarrage():
                 pygame.quit()
                 sys.exit()
         #Calcul temps
-        tamps = time.time() - start_time
+        tamps = pygame.time.get_ticks() - start_time
         #Calcul animation en %, min pour pas depasse 1
         arrive = min(tamps/ duration, 1.0)
         #Fond noir

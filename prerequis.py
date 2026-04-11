@@ -15,8 +15,14 @@ FLAMME = 5
 LIT = 7
 #Couleur
 NUIT = (15,15,25)
+CACHETEXTURE = {}
+CACHELUMIERE = {}
+
 #assets
 def texture(nom,taille = None, transparente = False):
+    cle = (nom, taille, transparente)
+    if cle in CACHETEXTURE:
+        return CACHETEXTURE[cle]
     chemin = os.path.join("ressource", nom)
     img= pygame.image.load(chemin)
     #Transparence
@@ -24,12 +30,15 @@ def texture(nom,taille = None, transparente = False):
         img.set_colorkey((255,255,255))
     #Redimenssionement
     if taille:
-        w,h= taille
-        img= pygame.transform.scale(img, (w, h))
-    return img.convert_alpha()
+        img= pygame.transform.scale(img, taille)
+    img = img.convert_alpha()
+    CACHETEXTURE[cle] = img
+    return img
 
 #Effet Lumiere
 def lumiere(rayon):
+    if rayon in CACHELUMIERE:
+        return CACHELUMIERE[rayon]
     t = int(rayon*2.5)
     #Surface vide pour la transparence
     s = pygame.Surface((t,t),pygame.SRCALPHA)
@@ -59,6 +68,7 @@ def lumiere(rayon):
             pygame.draw.circle(brosse,(255,250,220,int(p)),(largeur,largeur),largeur)
             dist = brosse.get_rect(center=(posx,posy))
             s.blit(brosse,dist,special_flags=pygame.BLEND_RGBA_ADD)
+    CACHELUMIERE[rayon] = s
     return s
 
 def angletrace(c, t, f):
@@ -73,14 +83,9 @@ def obstacle(rect_joueur,grille):
     casex=int(rect_joueur.centerx/ZOOM)
     casey=int(rect_joueur.centery/ZOOM)
     #On cherche un carre de 5x5 autour de lui
-    for y in range(casey-2,casey+3):
-        for x in range(casex-2,casex+3):
-            #Verifie qu'on sort pas de la map
-            if 0 <= x < LARGEURMAP and 0 <= y < HAUTEURMAP:
-                case = grille[y][x]
-                #Si case est un mur
-                if case == MUR or case == VIDE:
-                    #On fais hitbox pour ce mur
-                    rect_mur = pygame.Rect(x*ZOOM,y*ZOOM,ZOOM,ZOOM)
-                    obstacle.append(rect_mur)
+    for y in range(max(0,casey-2),min(HAUTEURMAP,casey+3)):
+        for x in range(max(0,casex-2),min(LARGEURMAP,casex+3)):
+            case = grille[y][x]
+            if case == MUR or case == VIDE:
+                obstacle.append(pygame.Rect(x*ZOOM,y*ZOOM,ZOOM,ZOOM))
     return obstacle

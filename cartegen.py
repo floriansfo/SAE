@@ -1,8 +1,10 @@
 import pygame
 import random
 import math
+import assets
 from prerequis import *
 from prerequis import texture
+
 
 class Objet:
     def __init__(self,x,y,name,type,size=None,cote=None):
@@ -25,11 +27,21 @@ class Objet:
         elif cote == "gauche":
             self.rect.left = x
             self.rect.centery = y +ZOOM//2
+        else:
+            self.rect.x = x
+            self.rect.y = y
         if not hasattr(Objet, 'texture_cache'):
             Objet.texture_cache = {}
         clecache = (name, size)
+        #Si on redimensionne pas
         if clecache not in Objet.texture_cache:
-            Objet.texture_cache[clecache] = texture(name,size,transparente=True)
+            image = assets.ASSETS.get(name)
+            if image is not None:
+                #Redimensionner et sauvegarder
+                Objet.texture_cache[clecache] = pygame.transform.scale(image, (taillew, tailleh))
+            else:
+                #Sinon on recharche et ca bouffe
+                Objet.texture_cache[clecache] = texture(name,size,transparente=True)
         self.texture=Objet.texture_cache[clecache]
         self.type = type  
         #Reduction hitbox si c'est un meuble
@@ -39,19 +51,41 @@ class Objet:
             self.hitbox = self.rect.copy()
         
     def draw(self,surface, camera_x, camera_y):
+        #Affichage de l'objet
         fenetre_x = self.rect.x + camera_x
         fenetre_y = self.rect.y + camera_y
-        if self.texture:
-            surface.blit(self.texture, (fenetre_x, fenetre_y))
+        #On dessine objet
+        surface.blit(self.texture, (fenetre_x, fenetre_y))
         return fenetre_y+self.rect.height
+
+def tango(grille, salles, poscristal = None):
+    objet = [] #corps et cristal
+    if not salles:
+        return objet, None
+    #On cherche le centre de la 1 salle
+    centre = salles[0].center
+    #On cherche la salle la plus loin calcul grace a pythagore en fonction de la distance la plus loin avec la 1ere
+    salleloin = max(salles[1:], key = lambda s: (s.centerx-centre[0])**2+(s.centery-centre[1])**2)
+    sx = salleloin.centerx*ZOOM
+    sy = salleloin.centery*ZOOM
+    #Apparition cristal
+    if poscristal:
+        #Objet corps
+        corps = Objet(sx-ZOOM//2, sy-ZOOM//2, "corps.png", 'corps', size =(ZOOM,ZOOM))
+        objet.append(corps)
+        #Objet cristal
+        cristal = Objet(sx+ZOOM//4, sy-ZOOM//4, "cristal.png", 'cristal', size=(ZOOM//2, ZOOM//2))
+        objet.append(cristal)
+        cristalpos = (sx+ZOOM//4, sy-ZOOM//4)
+        return objet, cristalpos
 
 def generer_objets(grille, salles, multi = 1.0):
     objets = []
     #Dictionnaire des types et probabilité d'affichage des objets
-    types = [{'nom': 'caisse.png', 'type': 'meuble', 'proba': 0.2},
-            {'nom': 'plante.png', 'type': 'plante', 'proba': 0.2},
-            {'nom': 'meuble.png', 'type': 'meuble', 'proba': 0.2},
-            {'nom': 'munition.png', 'type': 'munition', 'proba':0.1}]
+    types = [{'nom': 'img_caisse', 'type': 'meuble', 'proba': 0.2},
+            {'nom': 'img_plante', 'type': 'plante', 'proba': 0.2},
+            {'nom': 'img_meuble', 'type': 'meuble', 'proba': 0.2},
+            {'nom': 'img_munition', 'type': 'munition', 'proba':0.1}]
     
     for salle in salles:
         for y in range(salle.top, salle.bottom):

@@ -16,23 +16,33 @@ class Button:
         self.text = text #Texte du bouton
         self.action = action #Action lors du clic
         self.hover = False #Survol du bouton
+        self.txtsurf = None
+        self.txtrect = None
+        self.fondtransparent = None
+    
+    def update_pos(self, x, y, w, h):
+        self.rect = pygame.Rect(x, y, w, h)
 
-    def draw(self, surface, font):
+    def update_cache(self, font):
+        self.txtsurf = font.render(self.text, True, WHITE)
+        self.txtrect = self.txtsurf.get_rect(center=self.rect.center)
+        self.fondtransparent = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+        pygame.draw.rect(self.fondtransparent,(0,0,0,150),(0,0,self.rect.width,self.rect.height), border_radius=10)
+        
+    def draw(self, surface):
         #Couleur du bouton au survol
         if self.hover:
             dessus = GOLD 
         else:
             dessus = BLACK
         #Transparence
-        fond = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
-        pygame.draw.rect(fond,(0,0,0,150),(0,0,self.rect.width,self.rect.height), border_radius=10)
-        surface.blit(fond, self.rect.topleft)
+        if self.fondtransparent:
+            surface.blit(self.fondtransparent, self.rect.topleft)
         #Bordure du bouton
         pygame.draw.rect(surface, dessus, self.rect,2, border_radius=10)
         #Texte du bouton
-        text_surf = font.render(self.text, True, WHITE)
-        text_rect = text_surf.get_rect(center=self.rect.center)
-        surface.blit(text_surf, text_rect)
+        if self.txtsurf:
+            surface.blit(self.txtsurf, self.txtrect)
 
     def is_clicked(self, pos,clique):
         #Verirife si cliqué et survolé
@@ -58,7 +68,8 @@ class VolumeBar:
         #Fond de la barre
         pygame.draw.rect(surface,(100,100,100),self.rect, border_radius=5)
         #Dessine la barre de volume remplie
-        couleur = pygame.Rect(self.rect.x, self.rect.y, self.cerclex - self.rect.x, 10)
+        taillecouleur = max(1, self.cerclex - self.rect.x)
+        couleur = pygame.Rect(self.rect.x, self.rect.y, taillecouleur, 10)
         pygame.draw.rect(surface, GOLD, couleur, border_radius=5)
         #Dessine la boule
         pygame.draw.circle(surface, WHITE, (int(self.cerclex), int(self.cercley)), 10)
@@ -111,15 +122,24 @@ def option_menu(fenetre, largeur, hauteur):
     #Barre de volume
     volumeactuel = pygame.mixer.music.get_volume()
     if volumeactuel > 0:
-        posboule = pow(volumeactuel, 1/3)
+        posboule = volumeactuel ** (2/3)
     else:
         posboule = 0
     volume_barre = VolumeBar(0,0,300,posboule)
     #Bouton retour
     btn_retour = Button("RETOUR",0,0, 200, 50)
+    titre_surf = None
+    titre_rect = None
+    txtpleinecran = None
+    txtpleinecranrect = None
+    barrevolume = None
+    barrevolumerect = None
+    panneau_surf = None
+    panneau_rect = None
 
     def update_dimensions(newlargeur, newhauteur):
-        nonlocal imgfond, fonttitle, fonttext
+        nonlocal imgfond, titre_surf, titre_rect, txtpleinecran, txtpleinecranrect
+        nonlocal barrevolume, barrevolumerect, panneau_surf, panneau_rect
         imgfond = pygame.transform.scale(imgori, (newlargeur, newhauteur))
         #Texte se regle en fonction de la res
         taille_titre = max(30, int(newhauteur*0.08))
@@ -130,28 +150,47 @@ def option_menu(fenetre, largeur, hauteur):
         btnw = max(250, int(newlargeur*0.35))
         btnh = max(40, int(newhauteur*0.07))
         center_x = newlargeur // 2 - btnw//2
-        btn_pleinecran.rect.width = btnw
-        btn_pleinecran.rect.height = btnh
-        btn_pleinecran.rect.x = center_x
-        btn_pleinecran.rect.y = int(newhauteur*0.15)
-        if pleinecran:
-            btn_pleinecran.text = "MODE: PLEIN ECRAN"
-        else:
-            btn_pleinecran.text = "MODE: FENETRE"
-        btn_pleinecran.rect.width = btnw
-        btn_pleinecran.rect.height = btnh
-        btn_resolution.rect.width = btnw
-        btn_resolution.rect.height = btnh
-        btn_resolution.rect.x = center_x
-        btn_resolution.rect.y = int(newhauteur*0.25)
+        #Positionnement des boutons
+        btn_pleinecran.update_pos(center_x, int(newhauteur*0.18), btnw, btnh)
+        btn_pleinecran.text = "MODE: PLEIN ECRAN" if pleinecran else "MODE: FENETRE"
+        btn_pleinecran.update_cache(fonttext)
+
+        btn_resolution.update_pos(center_x, int(newhauteur*0.28), btnw, btnh)
         btn_resolution.text = f"RESOLUTION: {newlargeur}x{newhauteur}"
+        btn_resolution.update_cache(fonttext)
+  
+        txtpleinecran = fonttext.render("RESOLUTION DESACTIVE", True, (100,100,100))
+        txtpleinecranrect = txtpleinecran.get_rect(center=(newlargeur//2, int(newhauteur*0.28)+btnh//2))
+
+        barrevolume = fonttext.render("VOLUME MUSIQUE", True, WHITE)
+        barrevolumerect = barrevolume.get_rect(midbottom=(newlargeur//2, int(newhauteur*0.43)))
         volume_barre.rect.width = btnw
-        volume_barre.repositionner(center_x, int(newhauteur*0.40))
-        btn_retour.rect.width = max(150, int(newlargeur*0.15))
-        btn_retour.rect.height = btnh
-        btn_retour.rect.y = newhauteur - btnh - int(newhauteur*0.05)
-        btn_retour.rect.x = int(newlargeur*0.05)
+        volume_barre.repositionner(center_x, int(newhauteur*0.45))
+
+        #Panneau touche
+        tabw = max(350, int(newlargeur*0.35))
+        tabh = max(250, int(newhauteur*0.40))
+        panneau_rect = pygame.Rect(newlargeur//2 - tabw//2, int(newhauteur*0.55), tabw, tabh)
+
+        panneau_surf = pygame.Surface((tabw, tabh), pygame.SRCALPHA)
+        pygame.draw.rect(panneau_surf, (50,50,50), (0,0,tabw,tabh), border_radius=15)
+        pygame.draw.rect(panneau_surf, GOLD, (0,0,tabw,tabh), 2, border_radius=15)
+
+        commande = ["COMMANDES DU JEU:", "AVANCER: Z", "RECULER: S", "GAUCHE: Q", "DROITE: D", "PAUSE: ECHAP", "LUMIERE: H", "FILTRE: T", "ARME: 1,2,3", "TIR:CLIQUE GAUCHE"]
+        espacement = tabh // (len(commande)+1)
+        #Ecris dans le tab
+        for i, ligne in enumerate(commande):
+            titre_couleur = GOLD if i == 0 else WHITE
+            texte = fonttext.render(ligne, True, titre_couleur)
+            panneau_surf.blit(texte, (tabw//2 - texte.get_width()//2, 10+(i*espacement)))
     
+        btn_retour.update_pos(int(newlargeur*0.05), newhauteur-btnh-int(newhauteur*0.05), max(150, int(newlargeur*0.15)), btnh)
+        btn_retour.update_cache(fonttext)
+
+        titre_surf = fonttitle.render("OPTIONS", True, WHITE)
+        titre_rect = titre_surf.get_rect(midtop=(newlargeur//2, int(newhauteur*0.05)))
+
+    imgfond = None
     update_dimensions(L,H)
 
     running = True
@@ -164,21 +203,16 @@ def option_menu(fenetre, largeur, hauteur):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Clique gauche
-                    clique = True
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                clique = True
             #Resize de l'écran
             if event.type == pygame.VIDEORESIZE:
                 if not pleinecran:
                     L,H = event.w, event.h
                     fenetre = pygame.display.set_mode((L,H), pygame.RESIZABLE)
                     update_dimensions(L,H)
-                else:
-                    L,H = event.w, event.h
-                    update_dimensions(L,H)
         #Bouton plein écran
         if btn_pleinecran.is_clicked(pos, clique):
-            pygame.time.delay(200)
             pleinecran = not pleinecran
             if pleinecran:
                 #Si mode plein écran on passe a la résolution de l'ecran
@@ -189,9 +223,7 @@ def option_menu(fenetre, largeur, hauteur):
             L,H = fenetre.get_size()
             update_dimensions(L,H)
         #Bouton résolution
-        if not pleinecran:
-            if btn_resolution.is_clicked(pos, clique):
-                pygame.time.delay(200)
+        if not pleinecran and btn_resolution.is_clicked(pos, clique):
                 #Change la résolution par la suivante de la liste
                 index = (index + 1) % len(resolutions)
                 new_res = resolutions[index]
@@ -207,39 +239,20 @@ def option_menu(fenetre, largeur, hauteur):
             running = False
         fenetre.blit(imgfond, (0, 0))
         #Affiche le mot "Options"
-        titre = fonttitle.render("OPTIONS", True, WHITE)
-        fenetre.blit(titre, (L//2 - titre.get_width()//2, int(H*0.05)))
+        fenetre.blit(titre_surf, titre_rect)
         #Dessine les boutons
-        btn_pleinecran.draw(fenetre, fonttext)
+        btn_pleinecran.draw(fenetre)
         if not pleinecran:
-            btn_resolution.draw(fenetre, fonttext)
+            btn_resolution.draw(fenetre)
         else:
             #En plein ecran on met Resolution désactivée
-            txtpleinecran= fonttext.render("RESOLUTION DESACTIVE", True, (100,100,100))
-            fenetre.blit(txtpleinecran, (L//2 - txtpleinecran.get_width()//2, int(H*0.25)+10))
+            fenetre.blit(txtpleinecran, txtpleinecranrect)
         #Dessine la barre de volume
-        dessin_volume = fonttext.render("VOLUME MUSIQUE", True, WHITE)
-        fenetre.blit(dessin_volume, (L//2 - dessin_volume.get_width()//2, int(H*0.35)))
+        fenetre.blit(barrevolume, barrevolumerect)
         volume_barre.draw(fenetre)
-        #Tableau de touche du 
-        tableauy = int(H*0.50)
-        tabw = max(350, int(L*0.35))
-        tabh = max(250, int(H*0.40))
-        tableau_touche = pygame.Rect(L//2 - tabw//2, tableauy, tabw, tabh)
-        pygame.draw.rect(fenetre, (50,50,50), tableau_touche, border_radius=15)
-        pygame.draw.rect(fenetre, GOLD, tableau_touche, 2, border_radius=15)
-        commande = ["COMMANDES DU JEU:","AVANCER: Z","RECULER: S","GAUCHE: Q","DROITE: D","PAUSE: ECHAP","LUMIERE: H","FILTRE: T", "ARME: 1,2,3","TIR: CLIQUE GAUCHE"]
-        espacement = tabh // (len(commande)+1)
-        for i, ligne in enumerate(commande):
-            #Titre en or le reste en blanc
-            if i == 0:
-                titre_couleur = GOLD
-            else:
-                titre_couleur = WHITE
-            texte = fonttext.render(ligne, True, titre_couleur)
-            #Affichage des lignes
-            fenetre.blit(texte,(L//2 - texte.get_width()//2, tableauy+10+(i*espacement)))
-        btn_retour.draw(fenetre, fonttext)
+        #Dessine panneau
+        fenetre.blit(panneau_surf, panneau_rect)
+        btn_retour.draw(fenetre)
         pygame.display.flip()
         clock.tick(60)
     return fenetre

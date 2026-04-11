@@ -1,237 +1,192 @@
 import pygame
 import random
-import joueur
-import filtre
 
-#intialisation des éléments;
+VERTFOND = (10,25,15,210)
+VERTBORD = (45,90,55)
+VERTPHOSPHORE = (100,255,150)
+VERTECLAT = (180,255,200)
+BLANC = (240,255,240)
+ROUGE = (255,60,60)
+ORANGE =(255,170,50)
+BLEU = (100,180,255)
+#Cache pour opti
+CACHE = {}
+surfalpha = None
+policemode = None
+policeoxy = None
+
+def textee(police, texte, couleur):
+    cle = (texte, couleur)
+    if cle not in CACHE:
+        CACHE[cle] = police.render(texte, True, couleur)
+    return CACHE[cle]
+
+def panneau(fenetre,x,y,w,h):
+    global surfalpha
+    if surfalpha is None or surfalpha.get_size() != fenetre.get_size():
+        surfalpha = pygame.Surface(fenetre.get_size(), pygame.SRCALPHA)
+    surfalpha.fill((0,0,0,0), (x,y,w,h))
+    #Fond
+    pygame.draw.rect(surfalpha, VERTFOND, (x,y,w,h), border_radius=4)
+    fenetre.blit(surfalpha, (x,y), (x,y,w,h))
+    #Bordure
+    pygame.draw.rect(fenetre, VERTBORD, (x,y,w,h), 2, border_radius=4)
+    #Coin eclairé
+    pygame.draw.line(fenetre, VERTPHOSPHORE, (x,y+6), (x, y+16), 3)
+    pygame.draw.line(fenetre, VERTPHOSPHORE, (x+6,y), (x+16, y), 3)
+
 def overlay_HUD():
-    police=pygame.font.Font("ressource/police.ttf", 40)
-    hudmode= pygame.image.load("ressource/HUD_mc_V2.png").convert_alpha()
-    hudinventaire=pygame.image.load("ressource/HUD_inventaire.png").convert_alpha()
-    coeur= pygame.image.load("ressource/coeur_hp.png").convert_alpha()
-    coeur= pygame.transform.scale(coeur, (110,110))
-    inventaire=False  #Ferme de base
+    police = pygame.font.Font("ressource/police.ttf",24)
+    hudmode = pygame.image.load("ressource/HUD_mc_V2.png").convert_alpha()
+    hudinventaire = pygame.image.load("ressource/HUD_inventaire.png").convert_alpha()
+    coeur = pygame.image.load("ressource/coeur_hp.png").convert_alpha()
+    coeur = pygame.transform.scale(coeur, (30,30))
+    inventaire = False
     return police, hudmode, hudinventaire, inventaire, coeur
 
 def onventaire(fenetre, inventaire, hudinventaire, LARGEUR, HAUTEUR):
     if inventaire:
-        #Centre l'inventaire
-        surf= hudinventaire.get_rect()
-        surf.center=(LARGEUR//2,HAUTEUR//2)
-        fenetre.blit(hudinventaire, surf)
+        dessus = hudinventaire.get_rect(center = (LARGEUR//2, HAUTEUR//2))
+        fenetre.blit(hudinventaire, dessus)
 
-#Mode HUD texte & élément;
 def mode_texte(fenetre, m_combat, enpause, police, hudmode, inventaire):
-    fenetre.blit(hudmode,(10,10))
-    if enpause :
-        Texte = "PAUSE"
+    global policemode
+    if policemode is None:
+        policemode = pygame.font.Font("ressource/police.ttf",48)
+    fenetre.blit(hudmode, (10,10))
+    if enpause:
+        texte = "PAUSE"
     elif inventaire:
-        Texte= "INVENTAIRE"
-    elif m_combat==True:
-        Texte= "COMBAT"
+        texte = "INVENTAIRE"
+    elif m_combat == True:
+        texte = "COMBAT"
     else:
-        Texte="EXPLORATION"
-    surface=police.render(Texte, False, (255,255,255))
-    surf_rec=surface.get_rect()
-    surf_rec.center=(10+hudmode.get_width()//2, 10+hudmode.get_height()//2)
-    fenetre.blit(surface, surf_rec)
+        texte = "EXPLORATION"
+    surface = textee(policemode, texte, BLANC)
+    surfacerect = surface.get_rect()
+    surfacerect.center = (10+hudmode.get_width()//2, 10+hudmode.get_height()//2)
+    fenetre.blit(surface, surfacerect)
 
-def munition(fenetre, joueur, police, img, HAUTEUR):
-    #Si on a balle texte blanc, sinon rouge
-    if joueur.munition > 0:
-        texte = police.render(f"x{joueur.munition}", True, (255,255,255))
+def pieces(fenetre, joueur, police, LARGEUR):
+    texte = textee(police, f"PIECES: {joueur.pieces}", ORANGE)
+    w,h = texte.get_width()+30,40
+    x,y = LARGEUR-w-10,65
+    panneau(fenetre, x, y, w, h)
+    fenetre.blit(texte, texte.get_rect(center=(x+w//2, y+h//2)))
+
+def horloge(fenetre, police, jour, heure, LARGEUR):
+    DUREE = 28800
+    heure = min(heure, DUREE)
+    heurejeu = 6+(heure/DUREE)*14
+    heures, minutes = int(heurejeu), int((heurejeu-int(heurejeu))*60)
+    restant = DUREE-heure
+    if restant>7200:
+        couleur = VERTPHOSPHORE
+    elif restant>2880:
+        couleur = ORANGE
     else:
-        texte = police.render("x0", True, (230,10,10))
-    posx = 10
-    posy = HAUTEUR - 175
-    if img is not None:
-        fenetre.blit(img, (posx, posy))
-    #Afficher texte a coté
-    fenetre.blit(texte, (posx + 75, posy+15))
-
-def endurance(fenetre, joueur, course, img, HAUTEUR, LARGEUR, fondu):
-    if fondu <= 0:
-        return
-    largeur = 200
-    hauteur = 20
-    #Position sur l'ecran
-    posecranx = LARGEUR - 250
-    posecrany = HAUTEUR - 65
-    #Surface pour la barre
-    barre = pygame.Surface((300, 60), pygame.SRCALPHA)
-    posx = 10
-    posy = 20
-
-    #Calcul largeur de la barre
-    largeurbarre = (joueur.endurance / joueur.maxcourse)*largeur
-    if largeurbarre < 0:
-        largeurbarre = 0
-    #Couleur
-    couleurfond = (40,40,45,fondu)
-    couleurbord = (200,200,200,fondu)
-    #Barre rouge si endurance <=25
-    if joueur.endurance > 25:
-        couleur = (0,200,255, fondu)
-    else:
-        couleur = (255,50,50, fondu) 
-    
-    #Dessine barre avec fond et bordure
-    pygame.draw.rect(barre, couleurfond, (posx, posy, largeur, hauteur), border_radius=8)
-    #Dessine jauge de la barre
-    if largeurbarre > 0:
-        pygame.draw.rect(barre, couleur, (posx, posy, largeurbarre, hauteur), border_radius=8)
-    #Dessine contour
-    pygame.draw.rect(barre, couleurbord, (posx, posy, largeur, hauteur), 2, border_radius=8)
-    
-    #Effet flamme quand course
-    if course and largeurbarre > 0:
-        for i in range(10): #10 etincelle
-            x = random.randint(0,25)
-            y = random.randint(-5, hauteur+5)
-            taille=random.randint(2,4)
-            #Choix entre ces couleurs
-            couleurflamme = random.choice([(255,150,0),(255,200,0),(0,200,255),(255,255,255)])
-            cflamme = (couleurflamme[0],couleurflamme[1],couleurflamme[2],fondu)
-            #Dessine flamme sur la barre
-            flammex = posx + largeurbarre + x - 10
-            flammey = posy + y
-            pygame.draw.circle(barre, couleurflamme, (int(flammex), int(flammey)), taille)
-    
-    #Le joueur invisible
-    if img is not None and largeurbarre > 0:
-        taillejoueur = 28
-        joueur = pygame.transform.scale(img, (taillejoueur, taillejoueur)).convert_alpha()
-        joueur.set_alpha(min(170, fondu)) #Transparent
-        #Au niveau de la jauge
-        joueurx = posx + largeurbarre - (taillejoueur//2)
-        joueury = posy + (hauteur//2) - (taillejoueur//2)
-        barre.blit(joueur, (joueurx, joueury))
-    fenetre.blit(barre, (posecranx, posecrany))
+        couleur = ROUGE
+    texte = textee(police, f"JOUR {jour} | {heures:02d}:{minutes:02d}", couleur)
+    w,h = texte.get_width()+30,45
+    x,y = LARGEUR-w-10,10
+    panneau(fenetre, x, y, w, h)
+    fenetre.blit(texte, texte.get_rect(center=(x+w//2, y+h//2)))
+    if heurejeu >= 18 and pygame.time.get_ticks()%1000<500:
+        alerte = textee(police, "ALERTE: RENTRER AU VAISSEAU", ROUGE)
+        fenetre.blit(alerte, alerte.get_rect(center=(LARGEUR//2, 80)))
 
 def arme_overlay(fenetre, joueur, image, HAUTEUR, present):
-    posx = 10+present
-    posy = HAUTEUR - 95
-    #Recupere l'image adapté a l'arme utilisé du dictionnaire
+    posx = 415+(present//4)
+    posy = HAUTEUR-66
     imgarme = image.get(joueur.arsenal)
-    if imgarme is not None:
-        fenetre.blit(imgarme, (posx, posy))
+    imgarme = pygame.transform.scale(imgarme, (160,50))
+    fenetre.blit(imgarme, (posx, posy))
 
-def lampe(fenetre, joueur, police, HAUTEUR):
-    x = 10
-    y = HAUTEUR - 230
+def munition(fenetre, joueur, police, img, HAUTEUR):
+    panneau(fenetre, 320, HAUTEUR-71, 260, 60)
+    couleur = VERTPHOSPHORE if joueur.munition > 0 else ROUGE
+    texte = textee(police, f"x{joueur.munition}", couleur)
+    posx = 330
+    posy = HAUTEUR-56
+    imgvert = img.copy()
+    imgvert.fill(VERTPHOSPHORE, special_flags=pygame.BLEND_RGBA_MULT)
+    imgvert = pygame.transform.scale(imgvert, (50,50))
+    fenetre.blit(imgvert, (posx-8, posy-10))
+    fenetre.blit(texte, (posx+40, posy+3))
+
+def endurance(fenetre, joueur, course, HAUTEUR, LARGEUR):
+    largeur, hauteur = 240,10
+    x,y = LARGEUR//2-largeur//2, HAUTEUR-30
+    fin = joueur.endurance/joueur.maxcourse
+    couleur = VERTECLAT if fin >0.25 else ROUGE
+    pygame.draw.rect(fenetre, (20,30,20), (x, y, largeur, hauteur), border_radius=3)
+    if fin >0:
+        pygame.draw.rect(fenetre, couleur, (x, y, int(fin*largeur), hauteur), border_radius=3)
+    pygame.draw.rect(fenetre, VERTBORD, (x, y, largeur, hauteur), 1, border_radius=3)
+    #Etincelle quand course
+    if course and fin >0 :
+        for _ in range(5):
+            px, py = random.randint(-5,5), random.randint(-2, hauteur+2)
+            pygame.draw.circle(fenetre, VERTECLAT, (int(x+(fin*largeur)+px), int(y+py)),1)
+
+def lampe(fenetre, joueur, police, img_lampe, HAUTEUR):
+    panneau(fenetre, 15, HAUTEUR-131,290,120)
+    x,y = 30,HAUTEUR-115
     if not joueur.possedelampe:
-        texte = police.render("Pas de lampe", True, (150,15,0,150))
-        fenetre.blit(texte, (x, y))
+        texte = textee(police, "LUM: --", ROUGE)
+        fenetre.blit(texte, (x,y))
         return
-    p = int((joueur.pile / joueur.pilemax) * 100)
-    if p > 50:
-        couleur = (100,220,100)
+    p = int((joueur.pile/joueur.pilemax)*100)
+    if p >50:
+        couleur = VERTPHOSPHORE
     elif p > 20:
-        couleur = (255,180,30)
+        couleur = ORANGE
     else:
-        couleur = (220,50,50)
-    if joueur.lumiereallumee:
-        etat = "ON"
-    else:
-        etat = "OFF"
-    texte = police.render(f"Lampe: {etat} ({p}%)", True, couleur)
-    fenetre.blit(texte, (x, y))
-    largeur = 120
-    hauteur = 8
-    barre = pygame.Surface((largeur, hauteur), pygame.SRCALPHA)
-    pygame.draw.rect(barre, (40,40,40,180), (0, 0, largeur, hauteur), border_radius=4)
-    largeurbarre = int(p/100 * largeur)
-    if largeurbarre > 0:
-        pygame.draw.rect(barre, (*couleur, 220), (0, 0, largeurbarre, hauteur), border_radius=4)
-    pygame.draw.rect(barre, (200,200,200,180), (0, 0, largeur, hauteur), 1, border_radius=4)
-    fenetre.blit(barre, (x, y+28))
-
-
-#creation de la barre de vie
-def hud_life(fenetre, LARGEUR, HAUTEUR, hp_cur, hp_max, police, coeur):
-    #données
-    x= LARGEUR -460
-    y= 50
-    Cyan= (122,252,194)
-    Gris= (60,70,70)
-    #création de rectangle
-    rect_nb_totale= 25
-    rect_H= 32
-    rect_L= 10
-    rect_positif= int((hp_cur/hp_max)*rect_nb_totale)
-
-    texte_sante= police.render("LIFE", True, Cyan)
-    fenetre.blit(texte_sante,(x, y-40))
-
-    for i in range(rect_nb_totale):
-        rect_pos_x= x+ (i*(rect_L+ 5))
-        if i< rect_positif:
-            couleur= Cyan
-        else:
-            couleur = Gris
-
-        pygame.draw.rect(fenetre, couleur,(rect_pos_x, y, rect_L, rect_H))
-    
-    L_tt= rect_nb_totale*(rect_L+5)
-    #Ligne horizontale
-    pygame.draw.line(fenetre, Cyan,(x, y + rect_H+5), (x+L_tt+55, y+rect_H+5),2)
-    #texte pourcentage
-    texte_hp = police.render(f"{int(hp_cur)}/{int(hp_max)}", True, Cyan)
-    fenetre.blit(texte_hp,(x + L_tt-50, y + rect_H+10))
-    #coeur affichage
-    fenetre.blit(coeur,(x+L_tt-32, y-40))
+        couleur = ROUGE
+    imglampe = img_lampe.copy()
+    imglampe.fill(couleur, special_flags=pygame.BLEND_RGB_ADD)
+    imglampe = pygame.transform.scale(imglampe, (40,40))
+    fenetre.blit(imglampe, (x,y-10))
+    etat = "ON" if joueur.lumiereallumee else "OFF"
+    texte = textee(police, f"{p}% {etat}", couleur)
+    fenetre.blit(texte, (x+40,y))
+    pygame.draw.rect(fenetre, (30,40,30), (x+140,y+8,100,6), border_radius=2)
+    if p>0:
+        pygame.draw.rect(fenetre, couleur, (x+140,y+8,int((p/100)*100),6), border_radius=2)
 
 def oxygene(fenetre, joueur, police, LARGEUR, HAUTEUR):
-    largeur = 200
-    hauteur = 16
-    x = LARGEUR //2 - largeur//2
-    y = HAUTEUR - 60
-    CYAN = (122,252,194)
+    global policeoxy
+    if policeoxy is None:
+        policeoxy = pygame.font.Font("ressource/titre.ttf",24)
+    largeur, hauteur = 200,10
+    x,y = 70, HAUTEUR-75
     oxy = max(0, joueur.oxygene/joueur.oxygenemax)
-    #Texte O²
-    texteoxy = police.render("O²", True, (180,180,255))
-    fenetre.blit(texteoxy, (x-45, y-4))
-    #Surface pour la barre
-    barre = pygame.Surface((largeur, hauteur), pygame.SRCALPHA)
-    #Fond de la barre
-    pygame.draw.rect(barre, (30,30,60,180), (0, 0, largeur, hauteur), border_radius=6)
-    #Remplissage de la barre
-    if oxy > 0.3:
-        couleur = (50,120,220, 220)
-    elif oxy > 0.1:
-        couleur = (220,150,30, 220)
+    texteoxy = textee(policeoxy, "O²", BLEU)
+    fenetre.blit(texteoxy, (x-40,y-6))
+    if oxy>0.3:
+        couleur = BLEU
+    elif oxy>0.1:
+        couleur = ORANGE
     else:
-        couleur = (200,30,30, 220)
-    largeurbarre = int(oxy * largeur)
-    if largeurbarre > 0:
-        pygame.draw.rect(barre, couleur, (0, 0, largeurbarre, hauteur), border_radius=6)
-    #Bordure de la barre
-    pygame.draw.rect(barre, (180,180,255,200), (0, 0, largeur, hauteur), 2, border_radius=6)
-    fenetre.blit(barre, (x, y))
-    if oxy <= 0 and pygame.time.get_ticks() % 800 < 400: #Clignote quand à sec
-        alerte = police.render("ASPHYXIE", True, (255,50,50))
-        fenetre.blit(alerte, alerte.get_rect(center=(LARGEUR//2, y-35)))
+        couleur = ROUGE
+    pygame.draw.rect(fenetre, (20,30,20), (x, y, largeur, hauteur), border_radius=3)
+    largeurbarre = int(oxy*largeur)
+    if largeurbarre>0:
+        pygame.draw.rect(fenetre, couleur, (x, y, largeurbarre, hauteur), border_radius=3)
+    pygame.draw.rect(fenetre,(60,100,140), (x, y, largeur, hauteur),1, border_radius=3)
+    if oxy <= 0 and pygame.time.get_ticks()%800<400:
+        alerte = textee(police, "ASPHYXIE", ROUGE)
+        fenetre.blit(alerte, alerte.get_rect(center=(160,HAUTEUR-170)))
 
-def horloge(fenetre, police, heure, LARGEUR):
-    DUREE = 28800 #Durée d'une journée en secondes
-    heure = min(heure, DUREE)
-    heurejeu = 6+ (heure / DUREE) * 14 #Commence à 6h
-    heures = int(heurejeu)
-    minutes = int((heurejeu - heures) * 60)
-    #Couleur du texte qui change en fonction de l'heure
-    restant = DUREE - heure
-    if restant > 7200:
-        couleur = (255,220,100)
-    elif restant > 2880:
-        couleur = (255,140,30)
-    else:
-        couleur = (255,50,50)
-    texte = police.render(f"{heures:02d}:{minutes:02d}", True, couleur)
-    texte_rect = texte.get_rect(topright=(LARGEUR-20, 60))
-    fond = pygame.Surface((texte_rect.width + 20, texte_rect.height + 10), pygame.SRCALPHA)
-    fond.fill((0,0,0,140))
-    fenetre.blit(fond, (texte_rect.x - 10, texte_rect.y - 5))
-    fenetre.blit(texte, texte_rect)
-    if heurejeu >= 18 and pygame.time.get_ticks() % 1000 < 500: #Clignote quand il fait nuit
-        alerte = police.render("RENTRER AU VAISSEAU !", True, (255,50,50))
-        fenetre.blit(alerte, alerte.get_rect(center=(LARGEUR//2, 30)))
+def hud_life(fenetre, LARGEUR, HAUTEUR, hp_cur, hp_max, police, coeur):
+    x,y = 20, HAUTEUR-45
+    rectnb = 20
+    rectL, rectH = 8,18
+    rectpos = int((hp_cur/hp_max)*rectnb)
+    fenetre.blit(coeur, (x,y-4))
+    for i in range(rectnb):
+        rectposx = x+30+(i*(rectL+2))
+        couleur = VERTPHOSPHORE if i < rectpos else (40,55,45)
+        pygame.draw.rect(fenetre, couleur, (rectposx, y, rectL, rectH))
+    textehp = textee(police, f"{int(hp_cur)}", VERTECLAT)
+    fenetre.blit(textehp, (x+45+(rectnb*10), y-4))

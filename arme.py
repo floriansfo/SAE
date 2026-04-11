@@ -23,9 +23,9 @@ class Arme:
         self.image = pygame.Surface((10, 10), pygame.SRCALPHA)
         pygame.draw.circle(self.image, (255, 200, 0), (5, 5), 5)  # Dessine une balle jaune
 
-    def deplacer(self):
-        self.posx += self.ux
-        self.posy += self.uy
+    def deplacer(self, t):
+        self.posx += self.ux*60*t
+        self.posy += self.uy*60*t
         self.rect.centerx = int(self.posx)
         self.rect.centery = int(self.posy)
     
