@@ -140,12 +140,16 @@ class Boutique:
             posx = x+self.PUSH+idd*(self.btnw+10)
             btnrect = pygame.Rect(posx, posy, self.btnw, self.btnh)
             debloque = niveau in joueur.niveaudebloque
-            peu = joueur.pieces >= prix and restant>0 and not debloque
+            ordre = (niveau==2) or ((niveau-1) in joueur.niveaudebloque)
+            peu = joueur.pieces >= prix and restant>0 and not debloque and ordre
             dessuss = btnrect.collidepoint(mouse) and peu
             #Dessin
             if debloque:
-                ecran.blit(self.surfutilise, btnrect.topleft)
+                ecran.blit(self.surutilise, btnrect.topleft)
                 txt = self.petit.render(f"OK {niveau}", True, VERTBORD)
+            elif not ordre:
+                ecran.blit(self.surfnorm, btnrect.topleft)
+                txt = self.petit.render("BLOQUE", True, (120,120,120))
             else:
                 if dessuss:
                     ecran.blit(self.surfdessus, btnrect.topleft)
@@ -155,11 +159,13 @@ class Boutique:
                     couleurtexte = BLANC if peu else ROUGE
                 txt = self.petit.render(f"NIVEAU {niveau} {prix}P", True, couleurtexte)
             ecran.blit(txt, txt.get_rect(center=btnrect.center))
-            if not debloque:
+            if not debloque and ordre:
                 boutons.append((btnrect, {"id": f"niveau{niveau}", "prix": prix, "type": "niveau", "niveau": niveau}))
         #Texte commande
         ecran.blit(self.touche, self.touche.get_rect(center= (x+self.menuL//2, y+self.menuH-25)))
         return boutons
+    
+
     
     def clique(self, mouse_pos, boutons, joueur, nb_joueur=1):
         limite = 2 if nb_joueur <= 2 else 3
@@ -194,6 +200,8 @@ class Boutique:
             elif arttype == "niveau":
                 niv = article["niveau"]
                 if niv in joueur.niveaudebloque:
+                    return False
+                if niv > 2 and (niv-1) not in joueur.niveaudebloque:
                     return False
                 joueur.pieces -= article["prix"]
                 joueur.niveaudebloque.add(niv)

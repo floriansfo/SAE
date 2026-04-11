@@ -16,6 +16,7 @@ import boutique
 import assets
 import reseau
 import affichage
+import moteur
 
 from prerequis import *
 from lumiere import Lumiere
@@ -161,6 +162,9 @@ class Partie:
         #Joueur
         px, py = int(self.pos[0]), int(self.pos[1])
         self.joueur = Joueur(px*ZOOM+(ZOOM//2), py*ZOOM+(ZOOM//2))
+        #Moteur vaisseau
+        self.moteur = moteur.PuzzleMoteur(self.LARGEUR, self.HAUTEUR)
+        self.moteurouvert = False
 
         #Restauration depuis une sauvegarde
         if save:
@@ -252,6 +256,8 @@ class Partie:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if getattr(self,"moteurouvert", False):
+                self.moteur.gerer_evenements(event, self.joueur)
             if event.type == pygame.KEYDOWN:
                 #Ouvre inventaire
                 if event.key == pygame.K_LCTRL and not self.enpause:
@@ -267,7 +273,9 @@ class Partie:
                         filtre.m_combat = False
                 #Pause ou ferme
                 if event.key == pygame.K_ESCAPE:
-                    if self.ouvertemenu:
+                    if getattr(self,"moteurouvert", False):
+                        self.moteurouvert = False
+                    elif self.ouvertemenu:
                         self.ouvertemenu = False
                     else:
                         self.enpause = not self.enpause
@@ -275,14 +283,12 @@ class Partie:
                 if event.key == pygame.K_e and self.surascenceur:
                     self.ouvertemenu = not self.ouvertemenu
                 if event.key == pygame.K_e and self.surlit and self.niveau_actuel==0:
-                    self.jour = self.menusommeil.nuit(self.ecran, self.joueur, self.jour)
-                    self.heure = 0
-                    self.joueur.achatjour = 0
-                    self.joueur.oxygene = self.joueur.oxygenemax
+                    self.menusommeil.dodo(self.joueur, self.jour, self.heure)
                 if event.key == pygame.K_e and self.surboutique and self.niveau_actuel == 0:
                     self.boutiqueouverte = not self.boutiqueouverte
-                if event.key == pygame.K_e and self.surmoteur and self.joueur.cristal:
-                    self.victoire = True
+                #Ouvre le moteur si on fait E
+                if event.key == pygame.K_e and self.surmoteur:
+                    self.moteurouvert = not getattr(self,"moteurouvert", False)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: #Clic gauche
                     self.click = True
@@ -318,7 +324,7 @@ class Partie:
             btn_respawn.center = (self.LARGEUR//2, self.HAUTEUR//2+50)
             pygame.draw.rect(self.ecran, (100,100,100) if btn_respawn.collidepoint(mouse_pos) else (50,50,50), btn_respawn)
             self.ecran.blit(self.txtrespawn, self.txtrespawn.get_rect(center=btn_respawn.center))
-            if self.click and btn_menu.collidepoint(mouse_pos):
+            if self.click and btn_respawn.collidepoint(mouse_pos):
                 self.mort = False
                 self.joueur.hp = self.joueur.hpmax
                 self.niveau_actuel = 0
@@ -326,11 +332,12 @@ class Partie:
                 self.objets = generer_objets(self.carte, [], 0)
                 self.joueur.rect.center = (int(self.pos[0])*ZOOM+(ZOOM//2), int(self.pos[1])*ZOOM+(ZOOM//2))
                 self.monstres= []
-                self.joueur.possedelampe = True
+                self.joueur.possedelampe = False
+                self.joueur.lumiereallumee = False
                 return "CONTINUER"
             return "MORT"
         
-        if not self.ouvertemenu and not self.enpause:
+        if not self.ouvertemenu and not self.enpause and not getattr(self,"moteurouvert", False) and not self.menusommeil.cours:
             keys = pygame.key.get_pressed()
             #Deplacement joueur et collision
             kx, ky = self.joueur.deplacer(keys, len(self.animationjoueur), t)
@@ -447,6 +454,11 @@ class Partie:
             t_rect = self.txtentrer.get_rect(center=(self.LARGEUR//2, self.HAUTEUR-50))
             self.ecran.blit(self.fondentrer,(t_rect.x-10, t_rect.y-5))
             self.ecran.blit(self.txtentrer, t_rect)
+        #Message pour le moteur
+        if getattr(self,"surmoteur", False) and not getattr(self,"moteurouvert", False) and self.niveau_actuel == 0:
+            texterect = self.txtinteragir.get_rect(center=(self.LARGEUR//2, self.HAUTEUR-50))
+            self.ecran.blit(self.fondinteragir,(texterect.x-10, texterect.y-5))
+            self.ecran.blit(self.txtinteragir, texterect)
 
         #Menu boutique ascenseur 
         self.bouton_boutique = []
@@ -575,6 +587,20 @@ class Partie:
             filtre.filtre(self.ecran)
         #texte mode overlay
         overlay.mode_texte(self.ecran, filtre.m_combat, self.enpause, self.police, self.hudmode, self.inventaire)                                      
+        if self.menusommeil.cours:
+            etat = self.menusommeil.dessine(self.ecran, self.joueur)
+            if etat == "REVEIL":
+                self.jour += 1
+                self.heure = 0
+                self.joueur.achatjour = 0
+                self.joueur.oxygene = self.joueur.oxygenemax
+                self.joueur.hp += self.menusommeil.soinpris
+        if self.moteurouvert:
+            imgdiamant = assets.ASSETS.get('cristal1.png')
+            self.moteur.dessiner(self.ecran, self.joueur, imgdiamant)
+            if self.moteur.resolu:
+                self.victoire = True
+                self.moteurouvert = False
         pygame.display.flip()
         return "CONTINUER"
     
