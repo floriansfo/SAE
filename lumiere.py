@@ -61,6 +61,9 @@ class Lumiere:
         #Si mode combat alors aps de masque noir
         if mode_combat:
             return
+        ecranl, ecranh = ecran.get_size()
+        if ecranl != self.largeur or ecranh != self.hauteur:
+            self.redimenssione(ecranl, ecranh)
         #Active lampe apres generation map
         cx,cy = self.largeur//2, self.hauteur//2
         self.masque.fill((*NUIT, NUIT_ALPHA))

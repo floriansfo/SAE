@@ -35,7 +35,9 @@ class Partie:
         else:
             self.multi = 3.0
         #UI Son
-        self.police, self.hudmode, self.hudinventaire, self.inventaire, self.coeur = overlay.overlay_HUD()
+        self.overlay = overlay.Overlay(self.LARGEUR, self.HAUTEUR)
+        self.inventaire = False
+        #Musique
         pygame.mixer.music.load(assets.ASSETS['musique_jeu'])
         pygame.mixer.music.play(-1)
         #Serveur
@@ -401,20 +403,21 @@ class Partie:
             if self.joueur.god > 0:
                 self.joueur.god -= 60*t
             #Deplacement provisoire
-            for m in self.monstres:
-                if not m.mort :
-                    if getattr(m, "traque", False) or abs(m.rect.centerx - self.joueur.rect.centerx) < self.LARGEUR and abs(m.rect.centery - self.joueur.rect.centery) < self.HAUTEUR:
-                        kx, ky = m.deplacement(t, self.joueur.rect.centerx, self.joueur.rect.centery)
-                        m.collision(kx, ky, self.carte, self.objets)
-                        #le monstre touche le joueur
-                        if m.rect.colliderect(self.joueur.rect) and self.joueur.god<=0:
-                            degat = getattr(m, "degats", 10)
-                            self.joueur.hp -= degat
-                            self.joueur.god= 60
-                            if self.joueur.hp <= 0:
-                                self.mort = True
-                                self.joueur.possedelampe = False
-                                self.joueur.lumiereallumee = False
+            if self.niveau_actuel != 0:
+                for m in self.monstres:
+                    if not m.mort :
+                        if getattr(m, "traque", False) or abs(m.rect.centerx - self.joueur.rect.centerx) < self.LARGEUR and abs(m.rect.centery - self.joueur.rect.centery) < self.HAUTEUR:
+                            kx, ky = m.deplacement(t, self.joueur.rect.centerx, self.joueur.rect.centery)
+                            m.collision(kx, ky, self.carte, self.objets)
+                            #le monstre touche le joueur
+                            if m.rect.colliderect(self.joueur.rect) and self.joueur.god<=0:
+                                degat = getattr(m, "degats", 10)
+                                self.joueur.hp -= degat
+                                self.joueur.god= 60
+                                if self.joueur.hp <= 0:
+                                    self.mort = True
+                                    self.joueur.possedelampe = False
+                                    self.joueur.lumiereallumee = False
             #Oxygene
             self.joueur.updateoxygene(self.niveau_actuel)
             if self.joueur.hp <=0 and not self.mort:
@@ -492,6 +495,9 @@ class Partie:
                             self.objets = generer_objets(self.carte, self.salles, self.multi)
                             self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(etage_choisi, {}))
                     self.niveau_actuel = etage_choisi
+                    self.monstres.clear()
+                    if self.niveau_actuel == 0:
+                        self.joueur.lumiereallumee = False
                     #Si etage 6 on active quete
                     if self.niveau_actuel == self.cristaletage and not getattr(self.joueur, "cristal", False):
                         if self.cristal_x is None and self.cristaletage == 6:
@@ -531,6 +537,7 @@ class Partie:
                     #Met a jour les res de tout le jeu
                     self.menupause.update_dimensions(self.LARGEUR, self.HAUTEUR)
                     self.menu.update_dimensions(self.LARGEUR, self.HAUTEUR)
+                    self.overlay.update_dimensions(self.LARGEUR, self.HAUTEUR)
                     img_load = pygame.transform.scale(assets.ASSETS['img_load'], (self.LARGEUR,self.HAUTEUR))
                 elif action == "MENU PRINCIPAL":
                     return "MENU" #Revenir au menu principal
@@ -564,9 +571,9 @@ class Partie:
             if not course and self.joueur.endurance >= self.joueur.maxcourse:
                 self.fondu = max(0, self.fondu-5)
             else:
-                self.fondu = min(255, self.fondu+25)   
-            overlay.endurance(self.ecran, self.joueur, course, self.HAUTEUR, self.LARGEUR)
-            overlay.munition(self.ecran, self.joueur, self.police, assets.ASSETS['img_munition'], self.HAUTEUR)
+                self.fondu = min(255, self.fondu+25)
+            self.overlay.endurance(self.ecran, self.joueur, course)
+            self.overlay.munition(self.ecran, self.joueur, assets.ASSETS['img_munition'])
             #Arme overlay
             #Si changement d'arme on glisse image
             if self.joueur.arsenal != self.armeprec:
@@ -576,17 +583,17 @@ class Partie:
                 self.glissement += 35
                 if self.glissement > 0:
                     self.glissement = 0
-            overlay.arme_overlay(self.ecran, self.joueur, assets.ASSETS['img_arme'], self.HAUTEUR, self.glissement)
-            overlay.lampe(self.ecran, self.joueur, self.font, assets.ASSETS.get('img_lampe'), self.HAUTEUR)
+            self.overlay.arme_overlay(self.ecran, self.joueur, assets.ASSETS['img_arme'], self.glissement)
+            self.overlay.lampe(self.ecran, self.joueur, assets.ASSETS.get('img_lampe'))
             if self.niveau_actuel!=0:
-                overlay.oxygene(self.ecran, self.joueur, self.font, self.LARGEUR, self.HAUTEUR)
-            overlay.hud_life(self.ecran, self.LARGEUR, self.HAUTEUR, self.joueur.hp, self.joueur.hpmax, self.police, self.coeur)
-            overlay.pieces(self.ecran, self.joueur, self.font, self.LARGEUR)
-            overlay.horloge(self.ecran, self.font, self.jour, self.heure, self.LARGEUR)
-            overlay.onventaire(self.ecran, self.inventaire, self.hudinventaire, self.LARGEUR, self.HAUTEUR)
+                self.overlay.oxygene(self.ecran, self.joueur)
+            self.overlay.hud_life(self.ecran, self.joueur.hp, self.joueur.hpmax)
+            self.overlay.pieces(self.ecran, self.joueur)
+            self.overlay.horloge(self.ecran, self.jour, self.heure)
+            self.overlay.onventaire(self.ecran, self.inventaire)
             filtre.filtre(self.ecran)
         #texte mode overlay
-        overlay.mode_texte(self.ecran, filtre.m_combat, self.enpause, self.police, self.hudmode, self.inventaire)                                      
+        self.overlay.mode_texte(self.ecran, filtre.m_combat, self.enpause,self.inventaire)                                      
         if self.menusommeil.cours:
             etat = self.menusommeil.dessine(self.ecran, self.joueur)
             if etat == "REVEIL":

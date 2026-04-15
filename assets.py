@@ -23,6 +23,10 @@ def charger_assets(largeur, hauteur):
     assets['img_munition'] = texture("munitionoverlay.png", (80,80), transparente=True)
     assets['img_ballevol'] = texture("balle.png", (45,45), transparente=True)
 
+    assets['mode_combat'] = texture("HUD_mc_V2.png", None, transparente=True)
+    assets['mode_inventaire'] = texture("HUD_inventaire.png", None, transparente=True)
+    assets['coeur_hp'] = texture("coeur_hp.png", (30,30), transparente=True)
+
     assets['img_arme'] = {
         1: texture("pistolet.png",(250,80), transparente= True),
         2: texture("pompe.png",(250,80), transparente= True),
