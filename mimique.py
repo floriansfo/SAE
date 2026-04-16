@@ -3,6 +3,7 @@ import random
 import math
 import assets
 from monstre import Monstre, move
+from joueur import Joueur
 from prerequis import obstacle, texture, ZOOM
 
 
@@ -14,6 +15,11 @@ class Mimique(Monstre):
         self.rage=False
         self.cible=None
         self.timer= 0.0
+        self.revil=True
+        self.timer_revil=0.0
+        self.animation=0
+        self.time= 0
+        self.vitesseanim = 5
 
     def deplacement(self, t, joueur_x=None, joueur_y = None):
         kx= self.pos_x * self.speed*60*t
@@ -23,7 +29,7 @@ class Mimique(Monstre):
             dy = self.cible.rect.centery - self.rect.centery
             #Distance avec le joueur calcul
             distance =math.hypot(dx,dy)
-            if not self.rage and distance <250:
+            if not self.enrage and distance <250:
                 return (0,0)
             #Lorsque le joueur est proche
             if distance >0:
@@ -42,6 +48,8 @@ class Mimique(Monstre):
     def mrage(self):
         self.speed = 7
         self.enrage=True
+        self.revil=True
+        self.texture= assets.ASSETS['img_larry']
 
     def comportement(self,t, joueurs) :
         if self.enrage==True:
@@ -55,8 +63,8 @@ class Mimique(Monstre):
                     self.timer =0.0
                     return
         
-        dx = joueur.rect.centerx -self.rect.centerx
-        dy = joueur.rect.centery - self.rect.centery
+        dx = self.cible.rect.centerx -self.rect.centerx
+        dy = self.cible.rect.centery - self.rect.centery
         dist=math.hypot(dx, dy)
         if dist>1550:
             self.cible=None
@@ -65,3 +73,21 @@ class Mimique(Monstre):
         self.timer+=t
         if self.timer>=8.0:
             self.mrage()
+    
+    def take_damage(self, degats):
+        super().take_damage(degats)
+        self.loot=0
+        if not self.enrage and not self.mort:
+            self.mrage()
+
+    def affichage(self, ecran, camx, camy):
+        x= self.rect.x +camx
+        y= self.rect.y +camy
+        if not self.enrage:
+            self.time+=1
+            if self.time > self.vitesseanim:
+                self.time = 0
+                self.animation = (self.animation+1)% len(assets.ASSETS['animationjoueur'])
+            ecran.blit(assets.ASSETS['animationjoueur'][self.animation],(x,y))
+        else:
+            ecran.blit(self.texture, (x,y))
