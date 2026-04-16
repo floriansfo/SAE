@@ -165,7 +165,7 @@ class Partie:
         px, py = int(self.pos[0]), int(self.pos[1])
         self.joueur = Joueur(px*ZOOM+(ZOOM//2), py*ZOOM+(ZOOM//2))
         #Moteur vaisseau
-        self.moteur = moteur.PuzzleMoteur(self.LARGEUR, self.HAUTEUR)
+        self.moteur = moteur.Moteur(self.LARGEUR, self.HAUTEUR)
         self.moteurouvert = False
 
         #Restauration depuis une sauvegarde
