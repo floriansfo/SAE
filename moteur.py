@@ -26,7 +26,35 @@ class Moteur:
         #Resolu
         self.estla = False
         self.resolu = False
+        self.update_dimension(self.L, self.H)
     
+    def update_dimension(self, L, H):
+        self.L = L
+        self.H = H
+        self.echelle = self.H/1080.0
+        #Police
+        self.texte = pygame.font.Font("ressource/police.ttf", max(12, int(20*self.echelle)))
+        self.titre = pygame.font.Font("ressource/police.ttf", max(18, int(30*self.echelle)))
+        #Rectangle moteur
+        ml,mh = int(450*self.echelle), int(400*self.echelle)
+        self.moteur = pygame.Rect(self.L//2-int(350*self.echelle), self.H//2-int(200*self.echelle),ml,mh)
+        #Rectangle trou
+        tl, th = int(120*self.echelle), int(120*self.echelle)
+        self.trou = pygame.Rect(self.L//2-int(200*self.echelle), self.H//2-int(60*self.echelle),tl,th)
+        #Rectangle inventaire
+        il, ih = int(200*self.echelle), int(200*self.echelle)
+        self.inventaire = pygame.Rect(self.L//2+int(150*self.echelle), self.H//2-int(100*self.echelle),il,ih)
+        #Rectangle cristal
+        cl, ch = int(120*self.echelle), int(120*self.echelle)
+        self.cristalpos = (self.L//2+int(190*self.echelle), self.H//2+int(60*self.echelle))
+        #touche du cristal
+        if not hasattr(self, 'cristal') or not self.attrape:
+            self.cristal = pygame.Rect(*self.cristalpos, cl, ch)
+        else:
+            self.cristal.size = (cl, ch)
+        if hasattr(self, 'imgcristalnouv'):
+            delattr(self, "imgcristalnouv")
+
     def gerer_evenements(self, event, joueur):
         if self.resolu:
             return
@@ -44,7 +72,7 @@ class Moteur:
                 x = self.cristal.centerx - self.trou.centerx
                 y = self.cristal.centery - self.trou.centery
                 dist = (x**2 + y**2)**0.5
-                if dist < 60:
+                if dist < int(60*self.echelle):
                     #Le cristal est dans le trou
                     self.cristal.center = self.trou.center
                     self.estla = True
@@ -67,33 +95,33 @@ class Moteur:
         fond.fill((0,0,0,200))
         fenetre.blit(fond, (0,0))
         #Dessin moteur
-        pygame.draw.rect(fenetre, VERTFOND, self.moteur, border_radius=10)
-        pygame.draw.rect(fenetre, VERTBORD, self.moteur, width=3, border_radius=10)
+        pygame.draw.rect(fenetre, VERTFOND, self.moteur, border_radius=int(10*self.echelle))
+        pygame.draw.rect(fenetre, VERTBORD, self.moteur, max(1, int(3*self.echelle)), border_radius=int(10*self.echelle))
         titre = self.titre.render("REACTEUR VAISSEAU", True, VERTPHOSPHORE)
-        fenetre.blit(titre, (self.moteur.x+20 , self.moteur.y + 20))
+        fenetre.blit(titre, (self.moteur.x+int(20*self.echelle) , self.moteur.y + int(20*self.echelle)))
         couleur = VERTPHOSPHORE if self.estla else VERTBORD
-        pygame.draw.rect(fenetre, couleur, self.trou, 2, border_radius=5)
+        pygame.draw.rect(fenetre, couleur, self.trou, max(1, int(2*self.echelle)), border_radius=int(5*self.echelle))
         #Dessin parti a droite inventaire
-        pygame.draw.rect(fenetre, VERTFOND, self.inventaire, border_radius=10)
-        pygame.draw.rect(fenetre, VERTBORD, self.inventaire, 3, border_radius=10)
+        pygame.draw.rect(fenetre, VERTFOND, self.inventaire, border_radius=int(10*self.echelle))
+        pygame.draw.rect(fenetre, VERTBORD, self.inventaire, max(1, int(3*self.echelle)), border_radius=int(10*self.echelle))
         titreinv = self.texte.render("STOCKAGE", True, VERTBORD)
-        fenetre.blit(titreinv, (self.inventaire.x+20, self.inventaire.y+20))
+        fenetre.blit(titreinv, (self.inventaire.x+int(20*self.echelle), self.inventaire.y+int(20*self.echelle)))
         #Dessin cristal
         if joueur.cristal:
             if imgcristal:
                 if not hasattr(self, "imgcristalnouv"):
-                    self.imgcristalnouv = pygame.transform.scale(imgcristal, (120,120))
+                    self.imgcristalnouv = pygame.transform.scale(imgcristal, self.cristal.size)
                 fenetre.blit(self.imgcristalnouv, self.cristal.topleft)
         #Texte
         if self.resolu:
-            txt = self.font.render("SYSTEME ALIMENTE", True, VERTPHOSPHORE)
+            txt = self.texte.render("SYSTEME ALIMENTE", True, VERTPHOSPHORE)
         elif not joueur.cristal:
             txt = self.texte.render("CRISTAL MANQUANT", True, ROUGE)
         elif not self.estla:
             txt = self.texte.render("INSEREZ LE CRISTAL", True, ORANGE)
         elif not getattr(joueur, "a_tango", False):
             txt = self.texte.render("TANGO DOIT ETRE AVEC TOI", True, ORANGE)
-        fenetre.blit(txt, txt.get_rect(center=(self.L//2, self.H-100)))
+        fenetre.blit(txt, txt.get_rect(center=(self.L//2, self.H-int(100*self.echelle))))
         #Texte commande
         txtcommande = self.texte.render("Appuyer sur ECHAP pour fermer", True, VERTBORD)
-        fenetre.blit(txtcommande, txtcommande.get_rect(center=(self.L//2, self.H-50)))
+        fenetre.blit(txtcommande, txtcommande.get_rect(center=(self.L//2, self.H-int(50*self.echelle))))

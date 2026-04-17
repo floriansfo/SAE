@@ -1,13 +1,13 @@
 {
-  "seed": 624128,
-  "niveau_actuel": 1,
+  "seed": 54493,
+  "niveau_actuel": 0,
   "joueur": {
-    "x": 3220,
-    "y": 5307,
+    "x": 4410,
+    "y": 2970,
     "hp": 100,
     "munition": 30,
     "arsenal": 1,
-    "endurance": 28.90000000000002
+    "endurance": 100
   },
   "modifs": {}
 }

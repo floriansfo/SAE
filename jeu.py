@@ -538,6 +538,8 @@ class Partie:
                     self.menupause.update_dimensions(self.LARGEUR, self.HAUTEUR)
                     self.menu.update_dimensions(self.LARGEUR, self.HAUTEUR)
                     self.overlay.update_dimensions(self.LARGEUR, self.HAUTEUR)
+                    self.moteur.update_dimension(self.LARGEUR, self.HAUTEUR)
+                    self.menu.update_dimensions(self.LARGEUR, self.HAUTEUR)
                     img_load = pygame.transform.scale(assets.ASSETS['img_load'], (self.LARGEUR,self.HAUTEUR))
                 elif action == "MENU PRINCIPAL":
                     return "MENU" #Revenir au menu principal
