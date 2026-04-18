@@ -79,7 +79,8 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
             fenetre_x = m.rect.x + camera_x
             fenetre_y = m.rect.y + camera_y
             if -ZOOM<fenetre_x<LARGEUR and -ZOOM<fenetre_y<HAUTEUR:
-                adessiner.append((fenetre_y + m.rect.height, m.texture, (fenetre_x, fenetre_y)))
+                m.affichage(ecran, camera_x, camera_y)
+
     
     img_joueur = animationjoueur[joueur.animation]
     joueurtourne = pygame.transform.rotate(img_joueur, joueur.angle)

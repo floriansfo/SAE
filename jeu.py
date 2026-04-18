@@ -24,7 +24,7 @@ from cartegen import generemap, generer_objets, tango, Objet
 from vaisseau import generer_vaisseau
 from joueur import Joueur
 from vaisseau import LIT, BOUTIQUE
-
+from mimique import Mimique
 class Partie:
     def __init__(self, ecran, mode="solo", ip = None, save = None):
         self.ecran = ecran
@@ -268,6 +268,10 @@ class Partie:
                 if event.key == pygame.K_l and self.niveau_actuel != 0:
                     m= monstre.Monstre(self.joueur.rect.centerx+100, self.joueur.rect.centery, 3, 100)
                     self.monstres.append(m)
+                #mimique spawn
+                if event.key == pygame.K_m and self.niveau_actuel != 0:
+                    m= Mimique(self.joueur.rect.centerx+500, self.joueur.rect.centery, 2.8, 3000)
+                    self.monstres.append(m)
                 #Allume ou eteindre lampe
                 if event.key == pygame.K_h:
                     self.joueur.toogle_lumiere()
@@ -406,6 +410,8 @@ class Partie:
             if self.niveau_actuel != 0:
                 for m in self.monstres:
                     if not m.mort :
+                        if isinstance(m, Mimique):
+                            m.comportement(t,[self.joueur])
                         if getattr(m, "traque", False) or abs(m.rect.centerx - self.joueur.rect.centerx) < self.LARGEUR and abs(m.rect.centery - self.joueur.rect.centery) < self.HAUTEUR:
                             kx, ky = m.deplacement(t, self.joueur.rect.centerx, self.joueur.rect.centery)
                             m.collision(kx, ky, self.carte, self.objets)

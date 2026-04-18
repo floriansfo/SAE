@@ -4,7 +4,6 @@ import math
 import assets
 from monstre import Monstre, move
 from joueur import Joueur
-from prerequis import obstacle, texture, ZOOM
 
 
 
@@ -12,21 +11,25 @@ from prerequis import obstacle, texture, ZOOM
 class Mimique(Monstre):
     def __init__(self, x, y, speed, hp):
         super().__init__(x, y, 2.8, 3000)
-        self.rage=False
+        self.enrage=False
         self.cible=None
-        self.timer= 0.0
         self.revil=True
         self.timer_revil=0.0
+        #Anim
         self.animation=0
         self.time= 0
         self.vitesseanim = 5
+        self.angle=0
 
     def deplacement(self, t, joueur_x=None, joueur_y = None):
         kx= self.pos_x * self.speed*60*t
         ky = self.pos_y * self.speed*60*t
         if self.cible is not None:
+            #Direction vers sa cible
             dx = self.cible.rect.centerx -self.rect.centerx
             dy = self.cible.rect.centery - self.rect.centery
+            #angle
+            self.angle=math.degrees(math.atan2(-dy, dx))+90
             #Distance avec le joueur calcul
             distance =math.hypot(dx,dy)
             if not self.enrage and distance <250:
@@ -44,7 +47,7 @@ class Mimique(Monstre):
             kx= self.pos_x*self.speed*60*t
             ky= self.pos_y * self.speed*60*t  
         return (kx, ky)
-    
+    #passe en mode enrage
     def mrage(self):
         self.speed = 7
         self.enrage=True
@@ -54,26 +57,23 @@ class Mimique(Monstre):
     def comportement(self,t, joueurs) :
         if self.enrage==True:
             return
+        #recherche du joueur
         if not self.cible:
             for joueur in joueurs:
                 dx = joueur.rect.centerx -self.rect.centerx
                 dy = joueur.rect.centery - self.rect.centery
                 if math.hypot(dx, dy)<600:
                     self.cible =joueur
-                    self.timer =0.0
-                    return
+            
+        else:
+            #puis part si trop loin
+            dx = self.cible.rect.centerx -self.rect.centerx
+            dy = self.cible.rect.centery - self.rect.centery
+            dist=math.hypot(dx, dy)
+            if dist>1550:
+                self.cible=None
         
-        dx = self.cible.rect.centerx -self.rect.centerx
-        dy = self.cible.rect.centery - self.rect.centery
-        dist=math.hypot(dx, dy)
-        if dist>1550:
-            self.cible=None
-            self.timer=0.0
-            return
-        self.timer+=t
-        if self.timer>=8.0:
-            self.mrage()
-    
+    #quand on lui tire dessus il bascule
     def take_damage(self, degats):
         super().take_damage(degats)
         self.loot=0
@@ -88,72 +88,9 @@ class Mimique(Monstre):
             if self.time > self.vitesseanim:
                 self.time = 0
                 self.animation = (self.animation+1)% len(assets.ASSETS['animationjoueur'])
-            ecran.blit(assets.ASSETS['animationjoueur'][self.animation],(x,y))
+            #affichage tourner vers la cible
+            joueurtourne = pygame.transform.rotate(assets.ASSETS['animationjoueur'][self.animation], self.angle)
+            rectaffiche = joueurtourne.get_rect(center = (self.rect.centerx + camx, self.rect.centery + camy))
+            ecran.blit(joueurtourne, rectaffiche)
         else:
             ecran.blit(self.texture, (x,y))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
