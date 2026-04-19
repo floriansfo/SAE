@@ -3,18 +3,16 @@ import random
 import math
 import assets
 from monstre import Monstre, move
-from joueur import Joueur
+from prerequis import dist_mj
 
 
 
 
 class Mimique(Monstre):
-    def __init__(self, x, y, speed, hp):
-        super().__init__(x, y, 2.8, 3000)
+    def __init__(self, x, y,):
+        super().__init__(x, y, 2, 100)
         self.enrage=False
         self.cible=None
-        self.revil=True
-        self.timer_revil=0.0
         #Anim
         self.animation=0
         self.time= 0
@@ -31,7 +29,7 @@ class Mimique(Monstre):
             #angle
             self.angle=math.degrees(math.atan2(-dy, dx))+90
             #Distance avec le joueur calcul
-            distance =math.hypot(dx,dy)
+            distance = dist_mj(self.cible.rect, self.rect)
             if not self.enrage and distance <250:
                 return (0,0)
             #Lorsque le joueur est proche
@@ -51,7 +49,6 @@ class Mimique(Monstre):
     def mrage(self):
         self.speed = 7
         self.enrage=True
-        self.revil=True
         self.texture= assets.ASSETS['img_larry']
 
     def comportement(self,t, joueurs) :
@@ -60,17 +57,11 @@ class Mimique(Monstre):
         #recherche du joueur
         if not self.cible:
             for joueur in joueurs:
-                dx = joueur.rect.centerx -self.rect.centerx
-                dy = joueur.rect.centery - self.rect.centery
-                if math.hypot(dx, dy)<600:
+                if dist_mj(self.rect, joueur.rect)<600:
                     self.cible =joueur
-            
         else:
             #puis part si trop loin
-            dx = self.cible.rect.centerx -self.rect.centerx
-            dy = self.cible.rect.centery - self.rect.centery
-            dist=math.hypot(dx, dy)
-            if dist>1550:
+            if dist_mj(self.rect, self.cible.rect)>1550:
                 self.cible=None
         
     #quand on lui tire dessus il bascule

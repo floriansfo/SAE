@@ -12,7 +12,7 @@ move = [-1, 0, 1]
 class Monstre:
     def __init__(self,x, y, speed, hp):
         #Hitbox et pos
-        self.rect = pygame.Rect(x, y, 200, 200)
+        self.rect = pygame.Rect(x, y, 60, 60)
         self.rect.center = (x, y)
         #vitesse
         self.speed = speed
@@ -122,4 +122,12 @@ class Titan(Monstre):
         #Si le monstre touche un mur il le traverse
         self.rect.x += kx
         self.rect.y += ky
+
+
+
+
+
+
+#spawn des monstres par étage
+
 

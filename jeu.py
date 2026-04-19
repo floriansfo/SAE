@@ -270,7 +270,7 @@ class Partie:
                     self.monstres.append(m)
                 #mimique spawn
                 if event.key == pygame.K_m and self.niveau_actuel != 0:
-                    m= Mimique(self.joueur.rect.centerx+500, self.joueur.rect.centery, 2.8, 3000)
+                    m= Mimique(self.joueur.rect.centerx+500, self.joueur.rect.centery)
                     self.monstres.append(m)
                 #Allume ou eteindre lampe
                 if event.key == pygame.K_h:

@@ -89,3 +89,9 @@ def obstacle(rect_joueur,grille):
             if case == MUR or case == VIDE:
                 obstacle.append(pygame.Rect(x*ZOOM,y*ZOOM,ZOOM,ZOOM))
     return obstacle
+
+#Calcul de distace
+def dist_mj(monstre, joueur):
+    dx= monstre.centerx -joueur.centerx
+    dy= monstre.centery -joueur.centery
+    return math.sqrt(dx*dx+dy*dy)
