@@ -129,5 +129,13 @@ class Titan(Monstre):
 
 
 #spawn des monstres par étage
-
-
+def spawn_metage(niveau, salles):
+    from mimique import Mimique
+    monstres=[]
+    if niveau >=1:
+        for i in range(Mimique.nb_etage):
+            salle=  random.choice(salles)
+            mx= salle.centerx * ZOOM
+            my = salle.centery *ZOOM
+            monstres.append(Mimique(mx, my))
+    return monstres

@@ -501,7 +501,9 @@ class Partie:
                             self.objets = generer_objets(self.carte, self.salles, self.multi)
                             self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(etage_choisi, {}))
                     self.niveau_actuel = etage_choisi
+                    
                     self.monstres.clear()
+                    self.monstres.extend(monstre.spawn_metage(self.niveau_actuel, self.salles))
                     if self.niveau_actuel == 0:
                         self.joueur.lumiereallumee = False
                     #Si etage 6 on active quete
