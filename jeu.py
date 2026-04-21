@@ -25,6 +25,7 @@ from vaisseau import generer_vaisseau
 from joueur import Joueur
 from vaisseau import LIT, BOUTIQUE
 from mimique import Mimique
+
 class Partie:
     def __init__(self, ecran, mode="solo", ip = None, save = None):
         self.ecran = ecran
@@ -230,6 +231,8 @@ class Partie:
         self.surascenceur = False
         self.surlit = False
         self.surboutique = False
+        self.surmoteur = False
+        self.moteurcol = None
         #Vérifie si le joueur est sur un lit ou boutique ou ascenseur
         if 0 <= casex < LARGEURMAP and 0 <= casey < HAUTEURMAP:
             if self.carte[casey][casex] == ASCENCEUR:
@@ -246,8 +249,13 @@ class Partie:
         #Moteur vaisseau
         self.surmoteur = False
         if self.niveau_actuel == 0:
-            moteurrect = pygame.Rect(int(self.pos[0])*ZOOM - ZOOM*3, int(self.pos[1])*ZOOM, ZOOM*3, ZOOM*2)
-            if self.joueur.rect.colliderect(moteurrect):
+            largeur = ZOOM*3
+            hauteur = ZOOM*1.5
+            posx = (int(self.pos[0])-1)*ZOOM
+            posy = (int(self.pos[1])-3.5)*ZOOM
+            self.moteurcol = pygame.Rect(posx, posy, largeur, hauteur)
+            zone = self.moteurcol.inflate(ZOOM, ZOOM)
+            if self.joueur.rect.colliderect(zone):
                 self.surmoteur = True
         
         #Evenement clavier
@@ -347,7 +355,7 @@ class Partie:
             keys = pygame.key.get_pressed()
             #Deplacement joueur et collision
             kx, ky = self.joueur.deplacer(keys, len(self.animationjoueur), t)
-            self.joueur.collision(kx, ky, self.carte, self.objets)
+            self.joueur.collision(kx, ky, self.carte, self.objets, getattr(self,"moteurcol", None))
             self.joueur.updatelampe(filtre.m_combat)
             #Changement arme
             if keys[pygame.K_1]:
@@ -569,7 +577,7 @@ class Partie:
                     pygame.mixer.music.load(assets.ASSETS['musique_jeu'])
                     pygame.mixer.music.play(-1)
             filtre.combat = False
-        affichage.dessinerjeu(self.ecran, self.LARGEUR, self.HAUTEUR, self.carte, self.joueur, self.objets, self.piecessol, self.monstres, self.joueursup, self.niveau_actuel, self.connect, self.lumieremarche, filtre)
+        affichage.dessinerjeu(self.ecran, self.LARGEUR, self.HAUTEUR, self.carte, self.joueur, self.objets, self.piecessol, self.monstres, self.joueursup, self.niveau_actuel, self.connect, self.lumieremarche, filtre, getattr(self,"moteurcol", None))
         if self.menus() == "MENU":
             return "MENU"
         #Overlay

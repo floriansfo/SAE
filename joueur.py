@@ -187,11 +187,14 @@ class Joueur:
         self.angle = self.angleactuel + 90
         return kx, ky
     
-    def collision(self, kx, ky, carte, objets):
+    def collision(self, kx, ky, carte, objets, moteurrect=None):
         #On lit les meubles au tour
         zone = self.rect.inflate(ZOOM*4, ZOOM*4)
         #Hitbox des meubles au tour pour opti
         meubles = [obj.hitbox for obj in objets if obj.type == "meuble" and zone.colliderect(obj.rect)]
+
+        if moteurrect and zone.colliderect(moteurrect):
+            meubles.append(moteurrect)
 
         #Collision X
         self.rect.x += kx

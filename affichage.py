@@ -5,7 +5,7 @@ from prerequis import ZOOM, LARGEURMAP, HAUTEURMAP, SOL, ASCENCEUR, ETOILE, FLAM
 from vaisseau import BOUTIQUE, LIT
 import monstre
 
-def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monstres, joueursup, niveau_actuel, connect, lumieremarche, filtre):
+def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monstres, joueursup, niveau_actuel, connect, lumieremarche, filtre, moteurcol=None):
     #Suivi joueur
     camera_x = (LARGEUR//2)-joueur.rect.centerx
     camera_y = (HAUTEUR//2)-joueur.rect.centery
@@ -28,6 +28,7 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
     img_lit = assets.ASSETS['img_lit']
     img_boutique = assets.ASSETS['img_boutique']
     animationjoueur = assets.ASSETS['animationjoueur']
+    img_moteur = assets.ASSETS['moteur']
 
     #Dessiner le sol
     ecran.fill((0,0,0))
@@ -72,7 +73,13 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
         fenetre_y = obj.rect.y + camera_y
         if -ZOOM<fenetre_x<LARGEUR and -ZOOM<fenetre_y<HAUTEUR:
             adessiner.append((fenetre_y + obj.rect.height, obj.texture, (fenetre_x, fenetre_y)))
-    
+
+    if niveau_actuel == 0 and moteurcol and img_moteur:
+        screen_x = moteurcol.x + camera_x
+        screen_y = moteurcol.y + camera_y
+        rect = pygame.Rect(screen_x, screen_y, moteurcol.width, moteurcol.height)
+        adessiner.append((rect.bottom, img_moteur, rect.topleft))
+
     #Dessin monstres
     for m in monstres:
         if not m.mort:
