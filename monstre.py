@@ -12,7 +12,7 @@ move = [-1, 0, 1]
 class Monstre:
     def __init__(self,x, y, speed, hp):
         #Hitbox et pos
-        self.rect = pygame.Rect(x, y, 60, 60)
+        self.rect = pygame.Rect(x, y, 120, 125)
         self.rect.center = (x, y)
         #vitesse
         self.speed = speed
@@ -25,6 +25,8 @@ class Monstre:
         self.pos_y = random.choice(move)
         #Texture
         self.texture= assets.ASSETS['img_larry']
+        #debloquer les loulous
+        self.bloque =False
 
     #Calcul du deplacement en fct de la position du joueur
     def deplacement(self, t, joueur_x=None, joueur_y = None):
@@ -50,6 +52,7 @@ class Monstre:
         return (kx, ky)
 
     def collision(self, kx, ky, carte, objets):
+        self.bloque =False
         #On regarde au tour les meubles present
         zone = self.rect.inflate(ZOOM*4, ZOOM*4)
         meubles = [obj.hitbox for obj in objets if obj.type == "meuble" and zone.colliderect(obj.rect)]
@@ -58,6 +61,7 @@ class Monstre:
         ox = obstacle(self.rect,carte) + meubles
         x = self.rect.collidelistall(ox)
         for i in x:
+            self.bloque=True
             if kx >0: #Vers la droite
                 self.rect.right = ox[i].left
                 self.pos_x= -1 #On le pousse pour eviter collision
@@ -70,6 +74,7 @@ class Monstre:
         oy = obstacle(self.rect,carte) + meubles
         y = self.rect.collidelistall(oy)
         for i in y:
+            self.bloque =True
             if ky >0:
                 self.rect.bottom = oy[i].top
                 self.pos_y = -1

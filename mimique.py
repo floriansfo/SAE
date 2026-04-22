@@ -33,6 +33,10 @@ class Mimique(Monstre):
             distance = dist_mj(self.cible.rect, self.rect)
             if not self.enrage and distance <250:
                 return (0,0)
+            if self.bloque and distance>0:
+                kx = (-dy/distance) *self.speed*60*t
+                ky = (dx/distance) *self.speed*60*t
+                return (kx, ky)
             #Lorsque le joueur est proche
             if distance >0:
                 kx = (dx/distance) *self.speed*60*t
@@ -76,10 +80,13 @@ class Mimique(Monstre):
         x= self.rect.x +camx
         y= self.rect.y +camy
         if not self.enrage:
-            self.time+=1
-            if self.time > self.vitesseanim:
-                self.time = 0
-                self.animation = (self.animation+1)% len(assets.ASSETS['animationjoueur'])
+            if self.cible and dist_mj(self.cible.rect, self.rect)>=250:
+                self.time+=1
+                if self.time > self.vitesseanim:
+                    self.time = 0
+                    self.animation = (self.animation+1)% len(assets.ASSETS['animationjoueur'])
+            else:
+                self.animation=0
             #affichage tourner vers la cible
             joueurtourne = pygame.transform.rotate(assets.ASSETS['animationjoueur'][self.animation], self.angle)
             rectaffiche = joueurtourne.get_rect(center = (self.rect.centerx + camx, self.rect.centery + camy))
