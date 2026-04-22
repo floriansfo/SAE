@@ -1,4 +1,5 @@
 import pygame
+import math
 #mode combat
 m_combat =False
 combat = False
@@ -45,3 +46,15 @@ def filtre(fenetre):
         surface.fill((120, 0, 0, 50))
         fenetre.blit(surface,(0,0))
     
+hallucinationactive = False
+def hallucination(ecran):
+    #Ecran tremble et violet quand oxy < 20
+    if hallucinationactive:
+        largeur, hauteur = ecran.get_size()
+        temps = pygame.time.get_ticks()
+        #Flou alterne
+        flou = int(100+math.sin(temps*0.005)*50)
+        fond = pygame.Surface((largeur, hauteur))
+        fond.fill((40,0,20))
+        fond.set_alpha(flou)
+        ecran.blit(fond, (0,0))

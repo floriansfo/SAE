@@ -173,7 +173,11 @@ def generemap():
         #Creuse le sol pour connecter
         for k in range(nouvelle_salle.top, nouvelle_salle.bottom):
             for v in range(nouvelle_salle.left, nouvelle_salle.right):
-                grille[k][v] = SOL
+                #15% de mettre une racine
+                if random.random() < 0.05:
+                    grille[k][v] = 9
+                else:
+                    grille[k][v] = SOL
         #Connecte les salle par couloir
         if suivant:
             #On creuse couloir jusqu'a la salle precedente

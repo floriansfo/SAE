@@ -1,7 +1,7 @@
 import pygame
 import math
 import assets
-from prerequis import ZOOM, LARGEURMAP, HAUTEURMAP, SOL, ASCENCEUR, ETOILE, FLAMME, MUR
+from prerequis import ZOOM, LARGEURMAP, HAUTEURMAP, SOL, ASCENCEUR, ETOILE, FLAMME, MUR, RACINE
 from vaisseau import BOUTIQUE, LIT
 import monstre
 
@@ -29,6 +29,8 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
     img_boutique = assets.ASSETS['img_boutique']
     animationjoueur = assets.ASSETS['animationjoueur']
     img_moteur = assets.ASSETS['moteur']
+    img_racine = assets.ASSETS['img_racine']
+
 
     #Dessiner le sol
     ecran.fill((0,0,0))
@@ -39,6 +41,9 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
             screen_y = y * ZOOM + camera_y
             if case == SOL and img_sol is not None:
                 ecran.blit(img_sol, (screen_x,screen_y))
+            elif case == RACINE:
+                ecran.blit(img_sol, (screen_x,screen_y))
+                ecran.blit(img_racine, (screen_x, screen_y))
             elif case == ASCENCEUR and img_ascenseur is not None:
                 ecran.blit(img_ascenseur, (screen_x, screen_y))
             elif case == ETOILE:

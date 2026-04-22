@@ -93,38 +93,42 @@ class Monstre:
             self.loot = 0
     
 class Titan(Monstre):
-    texture_cache = None
-    def __init__(self,x,y, speed =4.0, hp = 1500):
-        super().__init__(x,y,speed,hp)
-        self.rect = pygame.Rect(x,y,100,100) #Hitbox
-        self.rect.center = (x,y)
-        self.degats = 25
+    def __init__(self,x,y):
+        super().__init__(x,y)
+        self.rect = pygame.Rect(x,y,80,80) #Hitbox
+        self.hitbox = self.rect.inflate(-20,-20)
+        self.hp = 99999
+        self.degats = 35
+        self.mort = False
         self.traque = True
-        if Titan.texture_cache is None:
-            imgbase = assets.ASSETS['img_larry']
-            Titan.texture_cache = pygame.transform.scale(imgbase, (200,200))
-            Titan.texture_cache.fill((200,0,0,100), special_flags=pygame.BLEND_RGBA_MULT)
-        self.texture = Titan.texture_cache
+        self.loot = 0
+        self.lampejoueur = False
+        self.recule = 0
 
-    def deplacement(self, t, joueurx = None, joueury = None):
+    def deplacement(self, t, joueurx, joueury):
+        #Recul balle
+        if self.recule > 0:
+            self.recule -= t
+            return 0, 0 #Bouge plus
         #IA du titan qui se dirige vers le joueur
-        if joueurx is not None and joueury is not None:
-            px = joueurx - self.rect.centerx
-            py = joueury - self.rect.centery
-            dist = math.sqrt(px*px + py*py) #Theoreme pytha pour la distance
-            if dist > 0:
-                kx = (px/dist)*self.speed*60*t
-                ky = (py/dist)*self.speed*60*t
-                return (kx, ky)
-        return super().deplacement(t,joueurx,joueury)
+        px = joueurx - self.rect.centerx
+        py = joueury - self.rect.centery
+        dist = math.hypot(px, py) #Theoreme pytha pour la distance
+        vitesse = 0
+        if (dist < 450 and self.lampejoueur) or dist < 120:
+            vitesse = 220 #T'attaque vite
+        else:
+            vitesse = 45 #Cherche pas
+        kx, ky = 0,0
+        if dist != 0:
+            kx = (px/dist) * vitesse * t
+            ky = (py/dist) * vitesse * t
+        return kx, ky
     
     def collision(self, kx, ky, carte, objets):
         #Si le monstre touche un mur il le traverse
         self.rect.x += kx
         self.rect.y += ky
-
-
-
 
 
 

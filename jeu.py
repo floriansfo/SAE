@@ -294,7 +294,7 @@ class Partie:
                 if event.key == pygame.K_ESCAPE:
                     if self.dialogue.ouvert:
                         self.dialogue.fermer()
-                    if getattr(self,"moteurouvert", False):
+                    elif getattr(self,"moteurouvert", False):
                         self.moteurouvert = False
                     elif self.ouvertemenu:
                         self.ouvertemenu = False
@@ -362,8 +362,22 @@ class Partie:
         
         if not self.ouvertemenu and not self.enpause and not getattr(self,"moteurouvert", False) and not self.menusommeil.cours:
             keys = pygame.key.get_pressed()
+            #Racine ralenti
+            rx = int(self.joueur.rect.centerx/ZOOM)
+            ry = int(self.joueur.rect.centery/ZOOM)
+            ralenti = False
+            if 0 <= rx < LARGEURMAP and 0 <= ry < HAUTEURMAP:
+                if self.carte[ry][rx] == 9:
+                    ralenti = True
+                    if self.niveau_actuel != 0:
+                        self.joueur.hp -= 2*t
+                        if self.joueur.hp <= 0 and not self.mort:
+                            self.mort = True
+                            self.joueur.possedelampe = False
+                            self.joueur.lumiereallumee = False
             #Deplacement joueur et collision
-            kx, ky = self.joueur.deplacer(keys, len(self.animationjoueur), t)
+            rapidite = (t/2) if ralenti else t
+            kx, ky = self.joueur.deplacer(keys, len(self.animationjoueur), rapidite)
             self.joueur.collision(kx, ky, self.carte, self.objets, getattr(self,"moteurcol", None))
             self.joueur.updatelampe(filtre.m_combat)
             #Changement arme
@@ -424,6 +438,12 @@ class Partie:
                     key = f"{c.rect.x}-{c.rect.y}"
                     self.actionmap[key] = "M"
                     self.modifs_etage.setdefault(self.niveau_actuel, {})[key] = "M"
+            for m in self.monstres:
+                if isinstance(m, monstre.Titan):
+                    if m.hp < 99999:
+                        m.recule = 2.0
+                        m.hp = 99999
+                        m.rect.x += 15 if self.joueur.rect.centerx < m.rect.centerx else -15
             #Si en dehor de l'ecran on stop le mouvement
             if self.joueur.god > 0:
                 self.joueur.god -= 60*t
@@ -433,6 +453,8 @@ class Partie:
                     if not m.mort :
                         if isinstance(m, Mimique):
                             m.comportement(t,[self.joueur])
+                        if isinstance(m, monstre.Titan):
+                            m.lampejoueur = self.joueur.lumiereallumee
                         if getattr(m, "traque", False) or abs(m.rect.centerx - self.joueur.rect.centerx) < self.LARGEUR and abs(m.rect.centery - self.joueur.rect.centery) < self.HAUTEUR:
                             kx, ky = m.deplacement(t, self.joueur.rect.centerx, self.joueur.rect.centery)
                             m.collision(kx, ky, self.carte, self.objets)
@@ -447,6 +469,17 @@ class Partie:
                                     self.joueur.lumiereallumee = False
             #Oxygene
             self.joueur.updateoxygene(self.niveau_actuel)
+            if getattr(self.joueur, "oxygene", 100) < getattr(self.joueur, "oxygenemax", 100)*0.20 and self.niveau_actuel != 0:
+                filtre.hallucinationactive = True
+                #Hallucination tir
+                if random.random() < 0.02:
+                    sonhallucination = assets.ASSETS.get('son_pistolet')
+                    son = pygame.mixer.find_channel()
+                    son.set_volume(0.3)
+                    son.play(sonhallucination)
+            else:
+                filtre.hallucinationactive = False
+
             if self.joueur.hp <=0 and not self.mort:
                 self.mort = True
             #Heure
@@ -542,9 +575,19 @@ class Partie:
                                 self.objets.extend(objtang)
                         elif self.cristal_x is not None:
                             self.objets.append(Objet(self.cristal_x, self.cristal_y, "cristal.png", "cristal", size=(ZOOM//2, ZOOM//2)))
-                    if getattr(self.joueur, "cristal", False) and self.niveau_actuel != 0:
-                        posx, posy = int(self.pos[0]), int(self.pos[1])
-                        self.monstres.append(monstre.Titan(posx*ZOOM+ZOOM*2, posy*ZOOM+ZOOM*2))
+                    #Spawn titan
+                    if self.niveau_actuel == 6 and not getattr(self, "titanspawn", False):
+                        self.titanspawn = True
+                        px, py = int(self.pos[0]), int(self.pos[1])
+                        #Spawn a 10 case de l'ascenceur
+                        self.titanla = monstre.Titan(px*ZOOM+ZOOM*10, py*ZOOM+ZOOM*10)
+                    #Titan suit dans les etages
+                    if getattr(self, "titanla", None) is not None and self.niveau_actuel != 0:
+                        px, py= int(self.pos[0]), int(self.pos[1])
+                        #Dans les etages on le change
+                        self.titanla.rect.centerx = px*ZOOM+ZOOM*10
+                        self.titanla.rect.centery = py*ZOOM+ZOOM*10
+                        self.monstres.append(self.titanla)
                     #Repositionne le joueur sur la nouvelle carte a l"ascenseur
                     posx,posy = int(self.pos[0]), int(self.pos[1])
                     self.joueur.rect.center = (posx*ZOOM+(ZOOM//2), posy*ZOOM+(ZOOM//2))
@@ -630,6 +673,7 @@ class Partie:
             self.overlay.horloge(self.ecran, self.jour, self.heure)
             self.overlay.onventaire(self.ecran, self.inventaire)
             filtre.filtre(self.ecran)
+            filtre.hallucination(self.ecran)
         #texte mode overlay
         self.overlay.mode_texte(self.ecran, filtre.m_combat, self.enpause,self.inventaire)                                      
         if self.menusommeil.cours:

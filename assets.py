@@ -29,6 +29,8 @@ def charger_assets(largeur, hauteur):
     assets['coeur_hp'] = texture("coeur_hp.png", (30,30), transparente=True)
     assets['moteur'] = texture("moteur.png", (ZOOM*3,ZOOM*2), transparente=True)
     assets['img_cassette']= texture("cassette.png", (ZOOM//2,ZOOM//2), transparente=True)
+    assets['img_racine'] = texture("racine.png", (Z,Z), transparente=True)
+
     assets['img_arme'] = {
         1: texture("pistolet.png",(250,80), transparente= True),
         2: texture("pompe.png",(250,80), transparente= True),
