@@ -112,6 +112,11 @@ def generer_objets(grille, salles, multi = 1.0):
                             #Creation de l'objet
                             obj = Objet(x*ZOOM, y*ZOOM, t['nom'], t['type'], size=taillemun, cote=cotebon)
                             objets.append(obj)
+    if salles:
+        salledialogue = random.choice(salles)
+        dx = random.randint(salledialogue.x+1, salledialogue.x+salledialogue.w-2)
+        dy = random.randint(salledialogue.y+1, salledialogue.y+salledialogue.h-2)
+        objets.append(Objet(dx*ZOOM, dy*ZOOM, "img_cassette", "dialogue"))
     return objets
 
 #couloir verticale

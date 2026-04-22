@@ -17,6 +17,7 @@ import assets
 import reseau
 import affichage
 import moteur
+import enregistrement
 
 from prerequis import *
 from lumiere import Lumiere
@@ -135,6 +136,8 @@ class Partie:
             if chargeetage == 0:
                 self.carte, self.salles, self.pos = generer_vaisseau()
                 self.objets = generer_objets(self.carte, [], 0)
+                dx, dy = int(self.pos[0]), int(self.pos[1])
+                self.objets.append(Objet((dx-2)*ZOOM, dy*ZOOM, "img_cassette", "dialogue", size =(ZOOM//2, ZOOM//2)))
             else:
                 random.seed(self.partie+chargeetage)
                 self.carte, self.salles, self.pos = generemap()
@@ -168,6 +171,8 @@ class Partie:
         #Moteur vaisseau
         self.moteur = moteur.Moteur(self.LARGEUR, self.HAUTEUR)
         self.moteurouvert = False
+        self.dialogue = enregistrement.Enregistrement(self.LARGEUR, self.HAUTEUR)
+        self.dialogueouvert = False
 
         #Restauration depuis une sauvegarde
         if save:
@@ -287,6 +292,8 @@ class Partie:
                         filtre.m_combat = False
                 #Pause ou ferme
                 if event.key == pygame.K_ESCAPE:
+                    if self.dialogue.ouvert:
+                        self.dialogue.fermer()
                     if getattr(self,"moteurouvert", False):
                         self.moteurouvert = False
                     elif self.ouvertemenu:
@@ -294,6 +301,8 @@ class Partie:
                     else:
                         self.enpause = not self.enpause
                 #Menu ascenceur
+                if event.key == pygame.K_e and getattr(self,"dialogueouvert", False) and not self.dialogue.ouvert:
+                    self.dialogue.ouvrir(self.niveau_actuel)
                 if event.key == pygame.K_e and self.surascenceur:
                     self.ouvertemenu = not self.ouvertemenu
                 if event.key == pygame.K_e and self.surlit and self.niveau_actuel==0:
@@ -366,6 +375,7 @@ class Partie:
                 self.joueur.changerarme(3)
             #Ramasser munition
             objetsreste = []
+            self.dialogueouvert = False
             for obj in self.objets:
                 if obj.type == "munition" and self.joueur.rect.colliderect(obj.rect):
                     self.joueur.munition = self.joueur.munition + 15
@@ -381,6 +391,9 @@ class Partie:
                     self.modifs_etage.setdefault(self.niveau_actuel, {})[key]="S"
                     px,py = int(self.pos[0]), int(self.pos[1])
                     self.monstres.append(monstre.Titan(px*ZOOM+ZOOM, py*ZOOM+ZOOM))    
+                elif obj.type == "dialogue" and self.joueur.rect.colliderect(obj.rect):
+                    self.dialogueouvert = True
+                    objetsreste.append(obj)
                 else:
                     objetsreste.append(obj)
             self.objets = objetsreste #Met a jour les objets restants
@@ -476,6 +489,11 @@ class Partie:
             texterect = self.txtinteragir.get_rect(center=(self.LARGEUR//2, self.HAUTEUR-50))
             self.ecran.blit(self.fondinteragir,(texterect.x-10, texterect.y-5))
             self.ecran.blit(self.txtinteragir, texterect)
+        #Message pour dialogue
+        if getattr(self,"dialogueouvert", False) and not self.dialogue.ouvert:
+            txtrect = self.txtinteragir.get_rect(center=(self.LARGEUR//2, self.HAUTEUR-50))
+            self.ecran.blit(self.fondinteragir,(txtrect.x-10, txtrect.y-5))
+            self.ecran.blit(self.txtinteragir, txtrect)
 
         #Menu boutique ascenseur 
         self.bouton_boutique = []
@@ -502,6 +520,8 @@ class Partie:
                             #Toujours vaisseau
                             self.carte, self.salles, self.pos = generer_vaisseau()
                             self.objets = generer_objets(self.carte, [], 0)
+                            dx, dy = int(self.pos[0]), int(self.pos[1])
+                            self.objets.append(Objet((dx-2)*ZOOM, dy*ZOOM, "img_cassette", "dialogue", size =(ZOOM//2, ZOOM//2)))
                         elif 1<= etage_choisi <=6:
                             #Nouvelle carte
                             random.seed(self.partie+etage_choisi)
@@ -581,7 +601,7 @@ class Partie:
         if self.menus() == "MENU":
             return "MENU"
         #Overlay
-        if not self.enpause:
+        if not self.enpause and not self.dialogue.ouvert:
             touche = pygame.key.get_pressed()
             mouvement = any(touche[k] for k in [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP,pygame.K_DOWN, pygame.K_z, pygame.K_s, pygame.K_q, pygame.K_d])
             course = mouvement and touche[pygame.K_LSHIFT] and self.joueur.endurance > 0
@@ -626,6 +646,8 @@ class Partie:
             if self.moteur.resolu:
                 self.victoire = True
                 self.moteurouvert = False
+        if self.dialogue.ouvert:
+            self.dialogue.dessiner(self.ecran)
         pygame.display.flip()
         return "CONTINUER"
     

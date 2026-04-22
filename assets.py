@@ -1,5 +1,6 @@
 import pygame
 from prerequis import texture, ZOOM
+import os
 
 def charger_assets(largeur, hauteur):
     assets = {}
@@ -27,6 +28,7 @@ def charger_assets(largeur, hauteur):
     assets['mode_inventaire'] = texture("HUD_inventaire.png", None, transparente=True)
     assets['coeur_hp'] = texture("coeur_hp.png", (30,30), transparente=True)
     assets['moteur'] = texture("moteur.png", (ZOOM*3,ZOOM*2), transparente=True)
+    assets['img_cassette']= texture("cassette.png", (ZOOM//2,ZOOM//2), transparente=True)
     assets['img_arme'] = {
         1: texture("pistolet.png",(250,80), transparente= True),
         2: texture("pompe.png",(250,80), transparente= True),
@@ -66,6 +68,15 @@ def charger_assets(largeur, hauteur):
     img_flamme.fill((255,69,0))
     assets['img_etoile'] = img_etoile
     assets['img_flamme'] = img_flamme
+
+    voix = {}
+    for i in range(7):
+        chemin = f"ressource/voix{i}.wav"
+        if os.path.exists(chemin):
+            voix[i] = pygame.mixer.Sound(chemin)
+            voix[i].set_volume(1)
+    assets['voix'] = voix
+
 
     return assets
 ASSETS = None
