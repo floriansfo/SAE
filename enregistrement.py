@@ -13,14 +13,8 @@ DIALOGUE = {
 
 class Enregistrement:
     def __init__(self, largeur, hauteur):
-        self.L = largeur
-        self.H = hauteur
         self.titre = pygame.font.Font("ressource/polices.ttf", 25)
         self.texte = pygame.font.Font("ressource/polices.ttf", 20)
-        #Dimension texte
-        marge = 50
-        hauteurtexte = 250
-        self.fond = pygame.Rect(marge, self.H-hauteurtexte-marge,self.L-(marge*2), hauteurtexte)
         self.ouvert = False
         self.dialogue = 0
         self.texteentier = ""
@@ -69,23 +63,27 @@ class Enregistrement:
     def dessiner(self, ecran):
         if not self.ouvert:
             return
+        resl, resh = ecran.get_size()
+        marge = 50
+        hauteurtexte = 250
+        self.fondrect = pygame.Rect(marge, resh-hauteurtexte-marge,resl-(marge*2), hauteurtexte)
         #Fond semi-transparent
-        fond = pygame.Surface((self.L, self.H), pygame.SRCALPHA)
+        fond = pygame.Surface((resl, resh), pygame.SRCALPHA)
         fond.fill((0,0,0,200))
         ecran.blit(fond, (0,0))
         #Dialogue
-        pygame.draw.rect(ecran, (10,15,10), self.fond, border_radius=10)
-        pygame.draw.rect(ecran, (50,220,50), self.fond, 3, border_radius=10)
+        pygame.draw.rect(ecran, (10,15,10), self.fondrect, border_radius=10)
+        pygame.draw.rect(ecran, (50,220,50), self.fondrect, 3, border_radius=10)
         #Titre
         titre = self.titre.render(f"Lecture audio {self.dialogue}...", True, (100,255,100))
-        ecran.blit(titre, (self.fond.x+20, self.fond.y + 20))
+        ecran.blit(titre, (self.fondrect.x+20, self.fondrect.y + 20))
         #Effet ecrire 
         if self.index < len(self.texteentier):
             self.index += self.vitesse
         #Coupe au nombre qui rentre sur la ligne
         affiche = self.texteentier[:int(self.index)]
         #Affichage
-        recttexte = pygame.Rect(self.fond.x+20, self.fond.y + 70, self.fond.width - 40, self.fond.height - 100)
+        recttexte = pygame.Rect(self.fondrect.x+20, self.fondrect.y + 70, self.fondrect.width - 40, self.fondrect.height - 100)
         #Couleur verte
         finx, finy = self.affichage(ecran, affiche, (100,255,100), recttexte, self.texte)
         #Curseur 
@@ -95,4 +93,4 @@ class Enregistrement:
         #Fermer
         if self.index>=len(self.texteentier):
             txtferme = self.texte.render("Appuyez sur ECHAP pour fermer", True, (50,150,50))
-            ecran.blit(txtferme, txtferme.get_rect(bottomright =(self.fond.right-20, self.fond.bottom-15)))
+            ecran.blit(txtferme, txtferme.get_rect(bottomright =(self.fondrect.right-20, self.fondrect.bottom-15)))

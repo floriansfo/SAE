@@ -82,6 +82,15 @@ class Boutique:
         pygame.draw.rect(self.surutilise, VERTPHOSPHORE, (0,0,self.btnw,self.btnh), 1, border_radius=4)
 
     def dessiner(self, ecran, joueur, nb_joueur=1):
+        #Resolution
+        resl, resh = ecran.get_size()
+        if resl != self.L or resh != self.H:
+            self.update(resl, resh)
+        #Fond noir
+        fond = pygame.Surface((self.L, self.H), pygame.SRCALPHA)
+        fond.fill(NOIRTRANSPARENT)
+        ecran.blit(fond, (0,0))
+        #Position
         x = (self.L-self.menuL)//2
         y = (self.H-self.menuH)//2
         #Fond et titre

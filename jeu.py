@@ -323,6 +323,9 @@ class Partie:
         #Mode combat desactive quand tire pas
         if self.niveau_actuel!=0:
             filtre.updatemode()
+        else:
+            filtre.desactive()
+        #Victoire
         if self.victoire:
             self.ecran.fill((0,0,0))
             self.ecran.blit(self.txtvictoire, self.txtvictoire.get_rect(center=(self.LARGEUR//2, self.HAUTEUR//2-100)))
@@ -357,6 +360,7 @@ class Partie:
                 self.monstres= []
                 self.joueur.possedelampe = False
                 self.joueur.lumiereallumee = False
+                filtre.desactive()
                 return "CONTINUER"
             return "MORT"
         
@@ -567,6 +571,7 @@ class Partie:
                     self.monstres.extend(monstre.spawn_metage(self.niveau_actuel, self.salles))
                     if self.niveau_actuel == 0:
                         self.joueur.lumiereallumee = False
+                        filtre.desactive()
                     #Si etage 6 on active quete
                     if self.niveau_actuel == self.cristaletage and not getattr(self.joueur, "cristal", False):
                         if self.cristal_x is None and self.cristaletage == 6:
@@ -630,8 +635,7 @@ class Partie:
     def dessine(self):
         #Musique mode combat
         if filtre.combat:
-            if self.niveau_actuel != 0:
-                if filtre.m_combat:
+                if filtre.m_combat and self.niveau_actuel != 0:
                     #Active nouvelle sic
                     pygame.mixer.music.load(assets.ASSETS['musique_combat'])
                     pygame.mixer.music.play(-1)
@@ -639,7 +643,7 @@ class Partie:
                     #Met ancienne sic
                     pygame.mixer.music.load(assets.ASSETS['musique_jeu'])
                     pygame.mixer.music.play(-1)
-            filtre.combat = False
+                filtre.combat = False
         affichage.dessinerjeu(self.ecran, self.LARGEUR, self.HAUTEUR, self.carte, self.joueur, self.objets, self.piecessol, self.monstres, self.joueursup, self.niveau_actuel, self.connect, self.lumieremarche, filtre, getattr(self,"moteurcol", None))
         if self.menus() == "MENU":
             return "MENU"

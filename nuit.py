@@ -44,6 +44,10 @@ class Sommeil:
     def dessine(self, ecran, joueur):
         if not self.cours:
             return "RIEN"
+        #Resolition
+        resl, resh = ecran.get_size()
+        if resl != self.L or resh != self.H:
+            self.update(resl, resh)
         temps = pygame.time.get_ticks() - self.time
         if self.mode == "ERREUR":
             if temps < 1500:

@@ -58,3 +58,11 @@ def hallucination(ecran):
         fond.fill((40,0,20))
         fond.set_alpha(flou)
         ecran.blit(fond, (0,0))
+
+def desactive():
+    global m_combat, combat, tempscombat, tempsdesac
+    if m_combat:
+        m_combat = False
+        combat = True
+        tempscombat = 0
+        tempsdesac = 0
