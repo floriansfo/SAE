@@ -32,6 +32,7 @@ def charger_assets(largeur, hauteur):
     assets['img_racine'] = texture("racine.png", (Z,Z), transparente=True)
 
     assets['img_arme'] = {
+        0: texture("couteau.png",(250,80), transparente= True),
         1: texture("pistolet.png",(250,80), transparente= True),
         2: texture("pompe.png",(250,80), transparente= True),
         3: texture("fusil.png",(250,80), transparente= True)

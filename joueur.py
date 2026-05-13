@@ -2,6 +2,7 @@ import pygame
 import math
 import random
 import assets
+import pygame as _pg
 from prerequis import *
 from prerequis import obstacle, angletrace
 from arme import Arme
@@ -30,8 +31,11 @@ class Joueur:
         self.tir = []
         self.vitessetir = 0
         self.delaytir = 12
-        self.munition = 30
-        self.arsenal = 1
+        self.munition = 0
+        self.arsenal = 0
+        self.couteautemps = 0
+        self.couteaudegat = 25
+        self.couteauporte = 80
         #vie
         self.hpmax=100
         self.hp= self.hpmax
@@ -46,7 +50,7 @@ class Joueur:
         self.timeoxy = 0
         #Boutique
         self.pieces = 0
-        self.arsenal_achete = {1: True}
+        self.arsenal_achete = {0: True}
         self.achatjour = 0
         self.niveaudebloque = {1}
         self.possedelampe = True
@@ -56,13 +60,16 @@ class Joueur:
         self.cristal = False
 
     def changerarme(self, num):
-        self.arsenal = num
+        if self.arsenal_achete.get(num, False):
+            self.arsenal = num
     
     def updatetir(self, carte, objets, monstres, t):
         objetcasse = [] #Liste obj casse pour le serveur
         #Coultdown arme
         if self.vitessetir > 0:
             self.vitessetir -= 60*t
+        if self.couteautemps > 0:
+            self.couteautemps -= 60*t
         #Mise a jour position des tirs
         tiractuelle = []
         for balle in self.tir:
@@ -127,6 +134,23 @@ class Joueur:
                 self.vitessetir = 5
                 self.munition = self.munition - 1
 
+    def attaquecouteau(self, monstres):
+        if self.couteautemps>0:
+            return []
+        touches = []
+        for m in monstres:
+            if not m.mort:
+                dist = math.hypot(m.rect.centerx-self.rect.centerx, m.rect.centery-self.rect.centery)
+                if dist < self.couteauporte:
+                    m.take_damage(self.couteaudegat)
+                    touches.append(m)
+        self.sonassaut.play()
+        if touches:
+            self.couteautemps = 30
+        else:
+            self.couteautemps = 20
+        return touches
+
     def deplacer(self, keys, nb_frame, t):
         vitessecourse = self.course*60*t
         vitessemarche = self.marche*60*t
@@ -176,14 +200,13 @@ class Joueur:
         else:
             self.animation = 0
             self.time = 0
-        #Tourner le joueur fuldifié
-        anglecible = math.degrees(math.atan2(-self.dernierky, self.dernierkx))
-        if kx !=0 or ky != 0:
-            #On lisse deplacement
-            self.angleactuel = angletrace(self.angleactuel,anglecible,0.15)
-        else:
-            #Fixe son angle
-            self.angleactuel = anglecible
+        #Tourner joueur vers souris
+        sx, sy = pygame.mouse.get_pos()
+        fenetre = _pg.display.get_surface()
+        sl, sh = fenetre.get_size()
+        tx = sx-sl//2
+        ty = sy-sh//2
+        self.angleactuel = math.degrees(math.atan2(-ty, tx))
         self.angle = self.angleactuel + 90
         return kx, ky
     

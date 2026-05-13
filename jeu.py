@@ -364,7 +364,7 @@ class Partie:
                 return "CONTINUER"
             return "MORT"
         
-        if not self.ouvertemenu and not self.enpause and not getattr(self,"moteurouvert", False) and not self.menusommeil.cours:
+        if not self.ouvertemenu and not self.enpause and not getattr(self,"moteurouvert", False) and not self.menusommeil.cours and not self.boutiqueouverte:
             keys = pygame.key.get_pressed()
             #Racine ralenti
             rx = int(self.joueur.rect.centerx/ZOOM)
@@ -386,10 +386,12 @@ class Partie:
             self.joueur.updatelampe(filtre.m_combat)
             #Changement arme
             if keys[pygame.K_1]:
+                self.joueur.changerarme(0)
+            if keys[pygame.K_2]:
                 self.joueur.changerarme(1)
-            if keys[pygame.K_2] and self.joueur.arsenal_achete.get(2, False):
+            if keys[pygame.K_3]:
                 self.joueur.changerarme(2)
-            if keys[pygame.K_3] and self.joueur.arsenal_achete.get(3, False):
+            if keys[pygame.K_4]:
                 self.joueur.changerarme(3)
             #Ramasser munition
             objetsreste = []
@@ -434,7 +436,10 @@ class Partie:
             self.monstres = monstresvivant
             #Tir
             if (keys[pygame.K_SPACE] or pygame.mouse.get_pressed()[0]) and self.niveau_actuel != 0:
-                self.joueur.tirer()
+                if self.joueur.arsenal == 0:
+                    self.joueur.attaquecouteau(self.monstres)
+                else:
+                    self.joueur.tirer()
             #Deplacement balle et acutalisation caisse cassé
             casse = self.joueur.updatetir(self.carte, self.objets, self.monstres, t)
             if casse:
@@ -599,7 +604,7 @@ class Partie:
                     pygame.time.delay(500)
                     self.ouvertemenu = False
                     pygame.event.clear()
-        if self.boutiqueouverte:
+        if self.boutiqueouverte and not self.enpause:
             self.bouton_boutique = self.menuboutique.dessiner(self.ecran, self.joueur)
         #Menu pause
         if self.enpause:
@@ -624,6 +629,7 @@ class Partie:
                     self.overlay.update_dimensions(self.LARGEUR, self.HAUTEUR)
                     self.moteur.update_dimension(self.LARGEUR, self.HAUTEUR)
                     self.menu.update_dimensions(self.LARGEUR, self.HAUTEUR)
+                    self.menuboutique.update(self.LARGEUR, self.HAUTEUR)
                     img_load = pygame.transform.scale(assets.ASSETS['img_load'], (self.LARGEUR,self.HAUTEUR))
                 elif action == "MENU PRINCIPAL":
                     return "MENU" #Revenir au menu principal
@@ -679,7 +685,8 @@ class Partie:
             filtre.filtre(self.ecran)
             filtre.hallucination(self.ecran)
         #texte mode overlay
-        self.overlay.mode_texte(self.ecran, filtre.m_combat, self.enpause,self.inventaire)                                      
+        if not self.enpause:
+            self.overlay.mode_texte(self.ecran, filtre.m_combat, self.enpause,self.inventaire)                                      
         if self.menusommeil.cours:
             etat = self.menusommeil.dessine(self.ecran, self.joueur)
             if etat == "REVEIL":

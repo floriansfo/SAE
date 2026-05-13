@@ -10,7 +10,8 @@ ROUGE = (255,60,60)
 ORANGE =(255,170,50)
 NOIRTRANSPARENT = (0,0,0,160)
 
-ARTICLE = [{"id": 2,     "nom": "Fusil a pompe",  "prix": 150, "description": "5 balles, puissant, cadence faible", "type": "arme"},
+ARTICLE = [{"id": 1, "nom": "Pistolet", "prix": 80, "description": "Arme de base", "type": "arme" },
+           {"id": 2,     "nom": "Fusil a pompe",  "prix": 150, "description": "5 balles, puissant, cadence faible", "type": "arme"},
            {"id": 3,     "nom": "Fusil d'assaut", "prix": 250, "description": "Rapide, attention au recul",         "type": "arme"},
            {"id": "pile", "nom": "Pile lampe",    "prix": 50,  "description": "Recharge pile lampe",                "type": "pile"},
            {"id": "lampe","nom": "Lampe torche",  "prix": 100, "description": "Permet de s'eclairer",               "type": "lampe"},]
@@ -32,10 +33,10 @@ class Boutique:
         self.cache()
     
     def cache(self):
-        self.menuL = min(680, self.L-60)
-        self.menuH = min(620, self.H-60)
+        self.menuL = min(700, self.L-60)
+        self.menuH = min(720, self.H-60)
         self.PUSH = 20
-        self.ligne = 75
+        self.ligne = 60
         self.w = self.menuL-self.PUSH*2
 
         #Fond boutique
@@ -106,9 +107,9 @@ class Boutique:
         txtachat = self.petit.render(f"ACHATS RESTANTS: {restant}/{limite}", True, couleurreste)
         ecran.blit(txtachat, txtachat.get_rect(topright=(x+self.menuL-self.PUSH, y+85)))
         #Partie article
-        posy = y+115
+        posy = y+105
         ecran.blit(self.partarm, (x+self.PUSH, posy))
-        posy+=30
+        posy+=22
         boutons = []
         mouse = pygame.mouse.get_pos()
         for article in ARTICLE:
@@ -138,7 +139,7 @@ class Boutique:
                 prix = self.normal.render(f"{article['prix']}P", True, couleurprix)
                 ecran.blit(prix, prix.get_rect(midright = (artrect.right-20, artrect.centery)))
                 boutons.append((artrect, article))
-            posy+=self.ligne+10
+            posy+=self.ligne+6
         posy +=5
         pygame.draw.line(ecran, VERTBORD, (x+self.PUSH, posy), (x+self.menuL-self.PUSH, posy),2)
         posy +=15
@@ -192,6 +193,8 @@ class Boutique:
                 joueur.pieces -= article["prix"]
                 joueur.arsenal_achete[article["id"]] = True
                 joueur.achatjour += 1
+                if article["id"] == 1:
+                    joueur.munition = 30
                 return True
             elif arttype == "pile":
                 joueur.pieces -= article["prix"]
