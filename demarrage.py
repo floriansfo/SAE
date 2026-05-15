@@ -16,7 +16,7 @@ BLACK = (0,0,0)
 
 #Charmenent assets
 logoori = assets.ASSETS.get('img_logo')
-logo = pygame.transform.scale(logoori, (250,250))
+logo = pygame.transform.scale(logoori, (1024, 1024))
 centre_logo = logo.get_rect(center=(WIDTH//2, HEIGHT//2))
 
 def demarrage():
