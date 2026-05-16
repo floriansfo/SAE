@@ -47,6 +47,10 @@ def charger_assets(largeur, hauteur):
     for i in range(4):
         frame= texture(f"slime/slime-move-{i}.png",(120, 95), transparente=True)
         assets['slime_move'].append(frame)
+    assets['slime_die']= []
+    for i in range(4):
+        frame= texture(f"slime/slime-die-{i}.png", (120,95), transparente=True)
+        assets['slime_die'].append(frame)
     assets['couleurs_slime']=[(0,0,0, 80),(100,0,0, 80), (0,100,0,80), (100,50,0,80), (50,100,0,80)]   
 
     son_mun = pygame.mixer.Sound("ressource/ESM_Handful_of_Bullet_Shell_Drop_2_Gun_Military_Pistol_Shot_Machine_Rifle_Metal.wav")

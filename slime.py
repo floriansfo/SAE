@@ -25,6 +25,17 @@ class Slime (Monstre) :
             tmp =frame.copy()
             tmp.fill(self.couleur, special_flags=pygame.BLEND_RGB_ADD)
             self.frame.append(tmp)
+        self.frames_mort=[]
+        for frame in assets.ASSETS['slime_die']:
+            tmp =frame.copy()
+            tmp.fill(self.couleur, special_flags=pygame.BLEND_RGB_ADD)
+            self.frames_mort.append(tmp)
+        #la mort du slime au slime
+        self.anim_mort=False
+        self.frame_mort =0
+        self.time_mort=0
+
+    
     def deplacement(self, t, joueur_x=None, joueur_y=None):
         if(random.random()<0.02):
             self.pos_x= random.choice(move)
@@ -44,9 +55,29 @@ class Slime (Monstre) :
     
 
 
+    def take_damage(self, degats):
+        super().take_damage(degats)
+        if self.mort:
+            self.mort= False
+            self.anim_mort=True
+            self.degats=0
+
     def affichage(self, ecran, camx, camy):
         x= self.rect.x +camx
         y= self.rect.y +camy
+        if self.anim_mort:
+            self.time_mort+=1
+            if self.time_mort> self.vitesseanim:
+                self.time_mort=0
+                self.frame_mort+=1
+                if self.frame_mort>=len(self.frames_mort):
+                    self.mort=True
+                    self.frame_mort=len(self.frames_mort)-1 
+            jpegslime = pygame.transform.rotate(self.frames_mort[self.frame_mort], self.angle)
+            rectaffiche = jpegslime.get_rect(center = (self.rect.centerx + camx, self.rect.centery + camy))
+            ecran.blit(jpegslime, rectaffiche)
+            return
+
         if self.pos_x !=0 or self.pos_y !=0:
             self.time+=1
             if self.time > self.vitesseanim:

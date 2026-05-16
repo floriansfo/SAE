@@ -19,10 +19,14 @@ logoori = assets.ASSETS.get('img_logo')
 logo = pygame.transform.scale(logoori, (1024, 1024))
 centre_logo = logo.get_rect(center=(WIDTH//2, HEIGHT//2))
 
+#son intro
+intro_son= pygame.mixer.Sound("ressource/introduction.wav")
+
 def demarrage():
     clock = pygame.time.Clock()
     start_time = pygame.time.get_ticks()
     duration = 1500 #1.5 Seconde 
+    intro_son.play()
     while True:
         clock.tick(60)
         for event in pygame.event.get():
