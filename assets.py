@@ -11,7 +11,7 @@ def charger_assets(largeur, hauteur):
     assets['img_murface'] = texture("murface.png", (Z, Z))
     assets['img_murtop'] = texture("murtop.png", (Z, Z))
     assets['img_lit'] = texture("lit.png", (Z, Z))
-    assets['img_boutique'] = texture("boutique.png", (Z, Z))
+    assets['img_boutique'] = texture("shop.png", (Z, Z))
     assets['img_logo'] = texture("logov2.png", (Z, Z))
     assets['img_caisse'] = texture("caisse.png", (Z, Z))
     assets['img_plante'] = texture("plante.png", (Z, Z))
