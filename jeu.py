@@ -26,6 +26,7 @@ from vaisseau import generer_vaisseau
 from joueur import Joueur
 from vaisseau import LIT, BOUTIQUE
 from mimique import Mimique
+from nyctobat import Nyctobat
 
 class Partie:
     def __init__(self, ecran, mode="solo", ip = None, save = None):
@@ -462,6 +463,8 @@ class Partie:
                     if not m.mort :
                         if isinstance(m, Mimique):
                             m.comportement(t,[self.joueur])
+                        if isinstance(m, Nyctobat):
+                            m.comportement(t, [self.joueur])
                         if isinstance(m, monstre.Titan):
                             m.lampejoueur = self.joueur.lumiereallumee
                         if getattr(m, "traque", False) or abs(m.rect.centerx - self.joueur.rect.centerx) < self.LARGEUR and abs(m.rect.centery - self.joueur.rect.centery) < self.HAUTEUR:

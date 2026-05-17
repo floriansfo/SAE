@@ -141,6 +141,7 @@ class Titan(Monstre):
 def spawn_metage(niveau, salles):
     from mimique import Mimique
     from slime import Slime
+    from nyctobat import Nyctobat
     monstres=[]
     if niveau >=1:
         for i in range(Mimique.nb_etage):
@@ -153,4 +154,26 @@ def spawn_metage(niveau, salles):
             mx= salle.centerx * ZOOM
             my = salle.centery *ZOOM
             monstres.append(Slime(mx, my))
+        for i in range(Nyctobat.nb_etage):
+            salle=  random.choice(salles)
+            mx= salle.centerx * ZOOM
+            my = salle.centery *ZOOM
+            monstres.append(Nyctobat(mx, my))
     return monstres
+
+class Direction:
+    face= 'face'
+    droite= 'droite'
+    gauche= 'gauche'
+    back ='back'
+    def mouvement(dx, dy):
+        if(abs(dx)> abs(dy)):
+            if dx>0:
+                return Direction.droite
+            else:
+                return Direction.gauche
+        elif dy>0:
+            return Direction.face
+        else:
+            return Direction.back
+    

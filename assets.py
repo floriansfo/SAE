@@ -53,6 +53,39 @@ def charger_assets(largeur, hauteur):
         assets['slime_die'].append(frame)
     assets['couleurs_slime']=[(0,0,0, 80),(100,0,0, 80), (0,100,0,80), (100,50,0,80), (50,100,0,80)]   
 
+    
+    
+    #asset nyctobat
+    #différentes directions
+    assets['nyctobat_face']=[]
+    for i in range(1,4):
+        frame= texture(f"nyctobat/face-{i}.png", (96,96), transparente=True)
+        assets['nyctobat_face'].append(frame)
+    
+    assets['nyctobat_back']=[]
+    for i in range(1,4):
+        frame= texture(f"nyctobat/back-{i}.png", (96,96), transparente=True)
+        assets['nyctobat_back'].append(frame)
+    
+    assets['nyctobat_droite']=[]
+    for i in range(1,4):
+        frame= texture(f"nyctobat/droite-{i}.png", (96,96), transparente=True)
+        assets['nyctobat_droite'].append(frame)
+
+    assets['nyctobat_gauche']=[]
+    for i in range(1,4):
+        frame= texture(f"nyctobat/gauche-{i}.png", (96,96), transparente=True)
+        assets['nyctobat_gauche'].append(frame)
+    
+    #frame de mort: 1 pour chaque pos
+    assets['nyctobat_face_dead']=texture(f"nyctobat/face_dead.png",(96,96), transparente=True)
+    assets['nyctobat_back_dead']=texture(f"nyctobat/back_dead.png",(96,96), transparente=True)
+    assets['nyctobat_droite_dead']=texture(f"nyctobat/droite_dead.png",(96,96), transparente=True)
+    assets['nyctobat_gauche_dead']=texture(f"nyctobat/gauche_dead.png",(96,96), transparente=True)
+
+
+
+
     son_mun = pygame.mixer.Sound("ressource/ESM_Handful_of_Bullet_Shell_Drop_2_Gun_Military_Pistol_Shot_Machine_Rifle_Metal.wav")
     son_pist = pygame.mixer.Sound("ressource/GunshotRevolver_BW.57313.wav")
     son_pomp = pygame.mixer.Sound("ressource/STCR2_PHONK_Kit_One_Shot_TurboCharger_Gunshot (1) (mp3cut.net).mp3")
