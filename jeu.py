@@ -37,6 +37,8 @@ class Partie:
             self.multi = 5.0
         else:
             self.multi = 3.0
+        #timer
+        self.timer_obscurité=0
         #UI Son
         self.overlay = overlay.Overlay(self.LARGEUR, self.HAUTEUR)
         self.inventaire = False
@@ -366,6 +368,12 @@ class Partie:
             return "MORT"
         
         if not self.ouvertemenu and not self.enpause and not getattr(self,"moteurouvert", False) and not self.menusommeil.cours and not self.boutiqueouverte:
+            #diminution du noir
+            self.timer_obscurité+=1
+            if self.timer_obscurité>5:
+                self.timer_obscurité=0
+                if filtre.obscurité_nv>0:
+                    filtre.obscurité_nv-=1
             keys = pygame.key.get_pressed()
             #Racine ralenti
             rx = int(self.joueur.rect.centerx/ZOOM)
@@ -475,6 +483,10 @@ class Partie:
                                 degat = getattr(m, "degats", 10)
                                 self.joueur.hp -= degat
                                 self.joueur.god= 60
+                                if isinstance(m, Nyctobat):
+                                    filtre.obscurité_nv +=40
+                                    if filtre.obscurité_nv>255:
+                                        filtre.obcurité_nv=255
                                 if self.joueur.hp <= 0:
                                     self.mort = True
                                     self.joueur.possedelampe = False
@@ -687,6 +699,11 @@ class Partie:
             self.overlay.onventaire(self.ecran, self.inventaire)
             filtre.filtre(self.ecran)
             filtre.hallucination(self.ecran)
+            if filtre.obscurité_nv>0:
+                noir= pygame.Surface(self.ecran.get_size())
+                noir.fill((0,0,0))
+                noir.set_alpha(filtre.obscurité_nv)
+                self.ecran.blit(noir,(0,0))
         #texte mode overlay
         if not self.enpause:
             self.overlay.mode_texte(self.ecran, filtre.m_combat, self.enpause,self.inventaire)                                      

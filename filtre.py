@@ -7,6 +7,8 @@ DUREEMODE = 20*60
 DUREEDESAC = 50*60
 tempscombat = 0
 tempsdesac = 0
+#obscurité
+obscurité_nv=0
 
 def activation_mc(event):
     global m_combat, combat, tempscombat, tempsdesac
