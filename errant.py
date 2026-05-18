@@ -9,7 +9,7 @@ import lumiere
 
 
 class Errant(Monstre):
-    nb_etage=15
+    nb_etage=2
     def __init__(self, x, y,):
         super().__init__(x, y, 1, 100)
         self.degats= 25

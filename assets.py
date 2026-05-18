@@ -43,16 +43,47 @@ def charger_assets(largeur, hauteur):
     texture("joueurdroit.png",(100,100), transparente=True)
     ]
     #slime assets
-    assets['slime_move'] =[]
-    for i in range(4):
-        frame= texture(f"slime/slime-move-{i}.png",(120, 95), transparente=True)
-        assets['slime_move'].append(frame)
-    assets['slime_die']= []
-    for i in range(4):
-        frame= texture(f"slime/slime-die-{i}.png", (120,95), transparente=True)
-        assets['slime_die'].append(frame)
-    assets['couleurs_slime']=[(0,0,0, 80),(100,0,0, 80), (0,100,0,80), (100,50,0,80), (50,100,0,80)]   
+    assets['slime_face']=[]
+    for i in range(8):
+        frame= texture(f"slime/face-{i}.png", (167,167), transparente=True)
+        assets['slime_face'].append(frame)
+    
+    assets['slime_back']=[]
+    for i in range(8):
+        frame= texture(f"slime/back-{i}.png", (167,167), transparente=True)
+        assets['slime_back'].append(frame)
+    
+    assets['slime_droite']=[]
+    for i in range(8):
+        frame= texture(f"slime/droite-{i}.png", (167,167), transparente=True)
+        assets['slime_droite'].append(frame)
 
+    assets['slime_gauche']=[]
+    for i in range(8):
+        frame= texture(f"slime/gauche-{i}.png", (167,167), transparente=True)
+        assets['slime_gauche'].append(frame)
+    #couleur
+    assets['couleurs_slime']=[(0,0,0, 80),(100,0,0, 80), (0,100,0,80), (100,50,0,80), (50,100,0,80)]   
+    #mort du slime
+    assets['slime_mort_face']=[]
+    for i in range(9):
+        frame= texture(f"slime/mort_face-{i}.png", (167,167), transparente=True)
+        assets['slime_mort_face'].append(frame)
+    
+    assets['slime_mort_back']=[]
+    for i in range(9):
+        frame= texture(f"slime/mort_back-{i}.png", (167,167), transparente=True)
+        assets['slime_mort_back'].append(frame)
+    
+    assets['slime_mort_droite']=[]
+    for i in range(9):
+        frame= texture(f"slime/mort_droite-{i}.png", (167,167), transparente=True)
+        assets['slime_mort_droite'].append(frame)
+
+    assets['slime_mort_gauche']=[]
+    for i in range(9):
+        frame= texture(f"slime/mort_gauche-{i}.png", (167,167), transparente=True)
+        assets['slime_mort_gauche'].append(frame)
     
     
     #asset nyctobat
