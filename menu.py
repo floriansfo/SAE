@@ -157,6 +157,7 @@ buttons = [
 #On l'appelle une première fois pour initialiser les positions
 update_resolution(WIDTH, HEIGHT)
 
+pygame.mouse.set_visible(True)
 running = True
 clock = pygame.time.Clock()
 

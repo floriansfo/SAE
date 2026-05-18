@@ -300,22 +300,25 @@ class Partie:
                         self.dialogue.fermer()
                     elif getattr(self,"moteurouvert", False):
                         self.moteurouvert = False
-                    elif self.ouvertemenu:
+                    elif getattr(self, "ouvertemenu", False):
                         self.ouvertemenu = False
+                    elif getattr(self, "boutiqueouverte", False):
+                        self.boutiqueouverte = False
                     else:
                         self.enpause = not self.enpause
                 #Menu ascenceur
-                if event.key == pygame.K_e and getattr(self,"dialogueouvert", False) and not self.dialogue.ouvert:
-                    self.dialogue.ouvrir(self.niveau_actuel)
-                if event.key == pygame.K_e and self.surascenceur:
-                    self.ouvertemenu = not self.ouvertemenu
-                if event.key == pygame.K_e and self.surlit and self.niveau_actuel==0:
-                    self.menusommeil.dodo(self.joueur, self.jour, self.heure)
-                if event.key == pygame.K_e and self.surboutique and self.niveau_actuel == 0:
-                    self.boutiqueouverte = not self.boutiqueouverte
-                #Ouvre le moteur si on fait E
-                if event.key == pygame.K_e and self.surmoteur:
-                    self.moteurouvert = not getattr(self,"moteurouvert", False)
+                if event.key == pygame.K_e:
+                    if getattr(self,"dialogueouvert", False) and not self.dialogue.ouvert:
+                        self.dialogue.ouvrir(self.niveau_actuel)
+                    if self.surascenceur:
+                        self.ouvertemenu = True
+                    if self.surlit and self.niveau_actuel==0:
+                        self.menusommeil.dodo(self.joueur, self.jour, self.heure)
+                    if self.surboutique and self.niveau_actuel == 0:
+                        self.boutiqueouverte = True
+                    #Ouvre le moteur si on fait E
+                    if self.surmoteur:
+                        self.moteurouvert = True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: #Clic gauche
                     self.click = True
@@ -446,9 +449,6 @@ class Partie:
             self.monstres = monstresvivant
             #Tir
             if (keys[pygame.K_SPACE] or pygame.mouse.get_pressed()[0]) and self.niveau_actuel != 0:
-                if self.joueur.arsenal == 0:
-                    self.joueur.attaquecouteau(self.monstres)
-                else:
                     self.joueur.tirer()
             #Deplacement balle et acutalisation caisse cassé
             casse = self.joueur.updatetir(self.carte, self.objets, self.monstres, t)
@@ -736,6 +736,8 @@ def lancer(ecran, mode="solo", ip = None, save=None):
     while running:
         partie.LARGEUR, partie.HAUTEUR = ecran.get_size()
         t = clock.tick(60) / 1000.0
+        menuouv = (partie.enpause or getattr(partie,"moteurouvert", False) or getattr(partie,"boutiqueouverte", False) or getattr(partie,"ouvertemenu", False) or getattr(partie,"inventaire", False) or (hasattr(partie,"menusommeil") and partie.menusommeil.cours))
+        pygame.mouse.set_visible(menuouv)
         #Frappe du clavier
         partie.evenement()
         #Calcul

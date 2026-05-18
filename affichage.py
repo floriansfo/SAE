@@ -104,11 +104,15 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
         ix = tir.rect.x + camera_x
         iy = tir.rect.y + camera_y
         if -ZOOM<ix<LARGEUR and -ZOOM<iy<HAUTEUR:
-            angleballe = math.atan2(tir.dy, tir.dx)
-            angle = -math.degrees(angleballe)
-            balleangle = pygame.transform.rotate(img_ballevol, angle)
-            rectballe = balleangle.get_rect(center=(ix,iy))
-            adessiner.append((rectballe.bottom, balleangle, rectballe.topleft))
+            if getattr(tir, "id", 1) == 0:
+                rectballe = tir.image.get_rect(center=(ix,iy))
+                adessiner.append((rectballe.bottom, tir.image, rectballe.topleft))
+            else:
+                angleballe = math.atan2(tir.dy, tir.dx)
+                angle = -math.degrees(angleballe)
+                balleangle = pygame.transform.rotate(img_ballevol, angle)
+                rectballe = balleangle.get_rect(center=(ix,iy))
+                adessiner.append((rectballe.bottom, balleangle, rectballe.topleft))
     
     #Dessin autre joueur
     if connect:
@@ -166,3 +170,8 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
     #Effet Lumiere quand activé
     if niveau_actuel != 0:
         lumieremarche.appliquer(ecran, joueur, filtre.m_combat)
+    
+    #Viseur adapte a sensi
+    if hasattr(joueur, 'sourisx'):
+        pygame.draw.circle(ecran, (255,0,0), (int(joueur.sourisx), int(joueur.sourisy)), 4)
+        pygame.draw.circle(ecran, (255,255,255), (int(joueur.sourisx), int(joueur.sourisy)), 6, 2)

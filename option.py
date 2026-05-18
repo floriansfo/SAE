@@ -4,7 +4,7 @@ import sys
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GOLD = (255, 215, 0)
-
+sensijoueur = 1.0
 pygame.init()
 ecran = pygame.display.Info()
 taille = (ecran.current_w, ecran.current_h)
@@ -96,6 +96,7 @@ class VolumeBar:
     
 #Boucle du menu option
 def option_menu(fenetre, largeur, hauteur):
+    pygame.mouse.set_visible(True)
     clock = pygame.time.Clock()
     fonttitle = pygame.font.SysFont(None, 60)
     fonttext = pygame.font.SysFont(None, 30)
@@ -126,6 +127,9 @@ def option_menu(fenetre, largeur, hauteur):
     else:
         posboule = 0
     volume_barre = VolumeBar(0,0,300,posboule)
+    global sensijoueur
+    posboulesensi = sensijoueur/2
+    sensibar = VolumeBar(0,0,300,posboulesensi)
     #Bouton retour
     btn_retour = Button("RETOUR",0,0, 200, 50)
     titre_surf = None
@@ -136,10 +140,13 @@ def option_menu(fenetre, largeur, hauteur):
     barrevolumerect = None
     panneau_surf = None
     panneau_rect = None
+    txtsensi = None
+    txtsensirect = None
 
     def update_dimensions(newlargeur, newhauteur):
         nonlocal imgfond, titre_surf, titre_rect, txtpleinecran, txtpleinecranrect
         nonlocal barrevolume, barrevolumerect, panneau_surf, panneau_rect
+        nonlocal txtsensi, txtsensirect
         imgfond = pygame.transform.scale(imgori, (newlargeur, newhauteur))
         #Texte se regle en fonction de la res
         taille_titre = max(30, int(newhauteur*0.08))
@@ -167,10 +174,15 @@ def option_menu(fenetre, largeur, hauteur):
         volume_barre.rect.width = btnw
         volume_barre.repositionner(center_x, int(newhauteur*0.45))
 
+        txtsensi = fonttext.render("SENSIBILITE SOURIS", True, WHITE)
+        txtsensirect = txtsensi.get_rect(midbottom=(newlargeur//2, int(newhauteur*0.52)))
+        sensibar.rect.width = btnw
+        sensibar.repositionner(center_x, int(newhauteur*0.53))
+
         #Panneau touche
         tabw = max(350, int(newlargeur*0.35))
-        tabh = max(250, int(newhauteur*0.40))
-        panneau_rect = pygame.Rect(newlargeur//2 - tabw//2, int(newhauteur*0.55), tabw, tabh)
+        tabh = max(200, int(newhauteur*0.40))
+        panneau_rect = pygame.Rect(newlargeur//2 - tabw//2, int(newhauteur*0.60), tabw, tabh)
 
         panneau_surf = pygame.Surface((tabw, tabh), pygame.SRCALPHA)
         pygame.draw.rect(panneau_surf, (50,50,50), (0,0,tabw,tabh), border_radius=15)
@@ -234,6 +246,9 @@ def option_menu(fenetre, largeur, hauteur):
         nouveau_volume = volume_barre.actualise(pos, actionclique)
         if nouveau_volume is not None:
             pygame.mixer.music.set_volume(nouveau_volume**1.5) #Volume pour un volume plus rapide
+        nouvellesensi = sensibar.actualise(pos, actionclique)
+        if nouvellesensi is not None:
+            sensijoueur = max(0.1, nouvellesensi*2)
         #Clique sur le bouton retour
         if btn_retour.is_clicked(pos, clique):
             running = False
@@ -250,6 +265,8 @@ def option_menu(fenetre, largeur, hauteur):
         #Dessine la barre de volume
         fenetre.blit(barrevolume, barrevolumerect)
         volume_barre.draw(fenetre)
+        fenetre.blit(txtsensi, txtsensirect)
+        sensibar.draw(fenetre)
         #Dessine panneau
         fenetre.blit(panneau_surf, panneau_rect)
         btn_retour.draw(fenetre)

@@ -2,6 +2,7 @@ import pygame
 import math
 import random
 import assets
+import option
 import pygame as _pg
 from prerequis import *
 from prerequis import obstacle, angletrace
@@ -68,88 +69,81 @@ class Joueur:
         #Coultdown arme
         if self.vitessetir > 0:
             self.vitessetir -= 60*t
-        if self.couteautemps > 0:
-            self.couteautemps -= 60*t
         #Mise a jour position des tirs
         tiractuelle = []
         for balle in self.tir:
-            balle.deplacer(t)
+            balle.deplacer(t, self)
             touche_monstre= False
             for m in monstres:
                 if not m.mort and balle.rect.colliderect(m.rect):
-                        m.take_damage(10)
+                        if getattr(balle, "id", 1) == 0:
+                            degat = self.couteaudegat
+                        else:
+                            degat = 10
+                        m.take_damage(degat)
                         touche_monstre= True
-            if not touche_monstre :
-                zone = balle.rect.inflate(ZOOM*4, ZOOM*4)
-                objproche = [obj for obj in objets if zone.colliderect(obj.rect)]
-                touche = balle.collisionoupas(carte, objproche)
-                limx = HAUTEURMAP*ZOOM
-                limy = HAUTEURMAP*ZOOM
-                if not touche and (-1000<balle.rect.x<limx+1000) and (-1000<balle.rect.y<limy+1000):
-                    tiractuelle.append(balle)
-                elif touche and touche != "mur": 
-                    #Touche objet destructible
-                    if not hasattr(touche, 'hp'):
-                        touche.hp = 3
-                    touche.hp = touche.hp -1
-                    if touche.hp <= 0:
-                        #La caisse se casse et se transforme en muni
-                        touche.type = "munition"
-                        touche.texture = assets.ASSETS['img_munition']
-                        touche.hitbox = touche.rect
-                        objetcasse.append(touche)
+                        if getattr(balle, "id", 1) != 0:
+                            break
+            touche_objet = False
+            for obj in objets:
+                if balle.rect.colliderect(obj.rect) and obj.type in ["caisse", "meuble"]:
+                    touche_objet = True
+                    if not hasattr(obj, 'hp'):
+                        obj.hp = 3
+                    obj.hp -= 1
+                    if obj.hp <= 0:
+                        obj.type = "munition"
+                        obj.texture = assets.ASSETS.get('img_munition', obj.texture)
+                        obj.hitbox = obj.rect
+                        objetcasse.append(obj)
+                    if getattr(balle, "id", 1)!=0:
+                        break
+            touche_mur = balle.collisionoupas(carte, objets)
+            if not touche_monstre and not touche_objet and not touche_mur:
+                tiractuelle.append(balle)
+            elif getattr(balle, "id", 1) == 0 and not touche_mur:
+                tiractuelle.append(balle)
         self.tir = tiractuelle
         return objetcasse
 
     def tirer(self):
+        #Calcul de l'Appariton de la balle
+        pangle = math.radians(self.angleactuel)
+        debutx = self.rect.centerx + math.cos(pangle)*25
+        debuty = self.rect.centery - math.sin(pangle)*25
         #On peut tirer que si on a des balle et que le couldown est fini
-        if self.munition>0 and self.vitessetir <= 0:
-            #Calcul de l'Appariton de la balle
-            pangle = math.radians(self.angleactuel)
-            debutx = self.rect.centerx + math.cos(pangle)*20
-            debuty = self.rect.centery - math.sin(pangle)*20
-            if self.arsenal == 1:
-                #Pistolet Classique
-                self.sonpistolet.play()
-                p = Arme(debutx, debuty, self.angleactuel)
+        if self.vitessetir <= 0:
+            if self.arsenal == 0:
+                p = Arme(debutx, debuty, self.angleactuel, id=0)
                 self.tir.append(p)
-                self.vitessetir = 15
-                self.munition -= 1
-            elif self.arsenal == 2:
-                #Fusil a pompe: 2 balle
-                if self.munition>=2:
-                    self.sonpompe.play()
-                    #Tire 5 balle avec angles
-                    for pompe in [-16, -8, 0, 8, 16]:
-                        p = Arme(debutx, debuty, self.angleactuel+pompe)
-                        self.tir.append(p)
-                    self.vitessetir = 40
-                    self.munition = self.munition - 2
-            elif self.arsenal == 3:
+                self.vitessetir = 25
                 self.sonassaut.play()
-                #Fusil d'assaut: rapide avec recul entre -5 et 5 deg
-                recul = random.uniform(-5, 5)
-                p = Arme(debutx, debuty, self.angleactuel+recul)
-                self.tir.append(p)
-                self.vitessetir = 5
-                self.munition = self.munition - 1
-
-    def attaquecouteau(self, monstres):
-        if self.couteautemps>0:
-            return []
-        touches = []
-        for m in monstres:
-            if not m.mort:
-                dist = math.hypot(m.rect.centerx-self.rect.centerx, m.rect.centery-self.rect.centery)
-                if dist < self.couteauporte:
-                    m.take_damage(self.couteaudegat)
-                    touches.append(m)
-        self.sonassaut.play()
-        if touches:
-            self.couteautemps = 30
-        else:
-            self.couteautemps = 20
-        return touches
+            elif self.munition > 0:
+                if self.arsenal == 1:
+                    #Pistolet Classique
+                    self.sonpistolet.play()
+                    p = Arme(debutx, debuty, self.angleactuel, id=1)
+                    self.tir.append(p)
+                    self.vitessetir = 15
+                    self.munition -= 1
+                elif self.arsenal == 2:
+                    #Fusil a pompe: 2 balle
+                    if self.munition>=2:
+                        self.sonpompe.play()
+                        #Tire 5 balle avec angles
+                        for pompe in [-16, -8, 0, 8, 16]:
+                            p = Arme(debutx, debuty, self.angleactuel+pompe, id=2)
+                            self.tir.append(p)
+                        self.vitessetir = 40
+                        self.munition = self.munition - 2
+                elif self.arsenal == 3:
+                    self.sonassaut.play()
+                    #Fusil d'assaut: rapide avec recul entre -5 et 5 deg
+                    recul = random.uniform(-5, 5)
+                    p = Arme(debutx, debuty, self.angleactuel+recul, id=3)
+                    self.tir.append(p)
+                    self.vitessetir = 5
+                    self.munition = self.munition - 1
 
     def deplacer(self, keys, nb_frame, t):
         vitessecourse = self.course*60*t
@@ -201,11 +195,21 @@ class Joueur:
             self.animation = 0
             self.time = 0
         #Tourner joueur vers souris
-        sx, sy = pygame.mouse.get_pos()
         fenetre = _pg.display.get_surface()
         sl, sh = fenetre.get_size()
-        tx = sx-sl//2
-        ty = sy-sh//2
+        if not hasattr(self, 'sourisx'):
+            self.sourisx = sl//2
+            self.sourisy = sh//2
+            pygame.mouse.set_pos((sl//2, sh//2))
+            pygame.mouse.get_rel()
+        dx, dy = pygame.mouse.get_rel()
+        pygame.mouse.set_pos((sl//2, sh//2))
+        self.sourisx += dx*option.sensijoueur
+        self.sourisy += dy*option.sensijoueur
+        self.sourisx = max(0, min(self.sourisx, sl))
+        self.sourisy = max(0, min(self.sourisy, sh))
+        tx = self.sourisx -sl//2
+        ty = self.sourisy -sh//2
         self.angleactuel = math.degrees(math.atan2(-ty, tx))
         self.angle = self.angleactuel + 90
         return kx, ky
