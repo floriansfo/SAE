@@ -77,6 +77,29 @@ def charger_assets(largeur, hauteur):
         frame= texture(f"nyctobat/gauche-{i}.png", (96,96), transparente=True)
         assets['nyctobat_gauche'].append(frame)
     
+
+
+    #asset errant
+    assets['errant_face']=[]
+    for i in range(1,4):
+        frame= texture(f"errant/face-{i}.png", (128,128), transparente=True)
+        assets['errant_face'].append(frame)
+    
+    assets['errant_back']=[]
+    for i in range(1,4):
+        frame= texture(f"errant/back-{i}.png", (128, 128), transparente=True)
+        assets['errant_back'].append(frame)
+    
+    assets['errant_droite']=[]
+    for i in range(1,4):
+        frame= texture(f"errant/droite-{i}.png", (128, 128), transparente=True)
+        assets['errant_droite'].append(frame)
+
+    assets['errant_gauche']=[]
+    for i in range(1,4):
+        frame= texture(f"errant/gauche-{i}.png", (128, 128), transparente=True)
+        assets['errant_gauche'].append(frame)
+    
     #frame de mort: 1 pour chaque pos
     assets['nyctobat_face_dead']=texture(f"nyctobat/face_dead.png",(96,96), transparente=True)
     assets['nyctobat_back_dead']=texture(f"nyctobat/back_dead.png",(96,96), transparente=True)

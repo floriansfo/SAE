@@ -142,6 +142,7 @@ def spawn_metage(niveau, salles):
     from mimique import Mimique
     from slime import Slime
     from nyctobat import Nyctobat
+    from errant import Errant
     monstres=[]
     if niveau >=1:
         for i in range(Mimique.nb_etage):
@@ -159,6 +160,11 @@ def spawn_metage(niveau, salles):
             mx= salle.centerx * ZOOM
             my = salle.centery *ZOOM
             monstres.append(Nyctobat(mx, my))
+        for i in range(Errant.nb_etage):
+            salle=  random.choice(salles)
+            mx= salle.centerx * ZOOM
+            my = salle.centery *ZOOM
+            monstres.append(Errant(mx, my))
     return monstres
 
 class Direction:
