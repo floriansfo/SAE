@@ -6,6 +6,8 @@ NUIT = (10, 10, 20)
 NUIT_ALPHA = 245  #cacher la map
 CONE_ANGLE  = 30
 CONE_PORTEE = 480
+RONDPORTEE = 150
+RONDCOUCHE = 40
 
 def cone(portee, angle, couleur, couche = 80):
     #On calcul la porté de la lumiere
@@ -34,12 +36,24 @@ def cone(portee, angle, couleur, couche = 80):
             pygame.draw.polygon(lumiere, (r, g, b, alpha), points)
     return lumiere
 
+def rond(portee, couche=RONDCOUCHE):
+    taille = portee*2
+    surface = pygame.Surface((taille, taille), pygame.SRCALPHA)
+    cx = cy = portee
+    for i in range(couche, 0, -1):
+        dist = i/couche
+        rayoncouche = int(portee*dist)
+        alpha = int(220*(1-dist**1.5))
+        pygame.draw.circle(surface, (255, 220, 150, alpha), (cx, cy), rayoncouche)
+    return surface
+
 class Lumiere:
     def __init__(self, largeur, hauteur):
         self.largeur = largeur
         self.hauteur = hauteur
         #Calcul le cone
         self.cone = cone(CONE_PORTEE, CONE_ANGLE, (255, 240, 200))
+        self.rond = rond(RONDPORTEE)
         self.angle = None
         self.rotation = None
         self.masque = pygame.Surface((self.largeur,self.hauteur), pygame.SRCALPHA)
@@ -67,6 +81,8 @@ class Lumiere:
         #Active lampe apres generation map
         cx,cy = self.largeur//2, self.hauteur//2
         self.masque.fill((*NUIT, NUIT_ALPHA))
+        rectrond = self.rond.get_rect(center=(cx,cy))
+        self.masque.blit(self.rond, rectrond, special_flags=pygame.BLEND_RGBA_SUB)
         if joueur.lumiereallumee:
             cone = self.conerota(joueur.angleactuel)
             rectcone = cone.get_rect(center=(cx,cy))

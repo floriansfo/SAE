@@ -59,7 +59,10 @@ class Joueur:
         self.pilemax = 3600
         #Cristal
         self.cristal = False
-
+        #Inventaire
+        self.inventaire = [{"type": None, "quantite": 0} for _ in range(9)]
+        self.inventaire[0] = {"type": "couteau", "quantite": 1}
+    
     def changerarme(self, num):
         if self.arsenal_achete.get(num, False):
             self.arsenal = num
@@ -126,6 +129,7 @@ class Joueur:
                     self.tir.append(p)
                     self.vitessetir = 15
                     self.munition -= 1
+                    self.retirer("munition", 1)
                 elif self.arsenal == 2:
                     #Fusil a pompe: 2 balle
                     if self.munition>=2:
@@ -136,6 +140,7 @@ class Joueur:
                             self.tir.append(p)
                         self.vitessetir = 40
                         self.munition = self.munition - 2
+                        self.retirer("munition", 2)
                 elif self.arsenal == 3:
                     self.sonassaut.play()
                     #Fusil d'assaut: rapide avec recul entre -5 et 5 deg
@@ -144,6 +149,7 @@ class Joueur:
                     self.tir.append(p)
                     self.vitessetir = 5
                     self.munition = self.munition - 1
+                    self.retirer("munition", 1)
 
     def deplacer(self, keys, nb_frame, t):
         vitessecourse = self.course*60*t
@@ -200,12 +206,17 @@ class Joueur:
         if not hasattr(self, 'sourisx'):
             self.sourisx = sl//2
             self.sourisy = sh//2
-            pygame.mouse.set_pos((sl//2, sh//2))
             pygame.mouse.get_rel()
+        enjeu = not pygame.mouse.get_visible()            
         dx, dy = pygame.mouse.get_rel()
-        pygame.mouse.set_pos((sl//2, sh//2))
-        self.sourisx += dx*option.sensijoueur
-        self.sourisy += dy*option.sensijoueur
+        if enjeu:
+            pygame.mouse.set_pos((sl//2, sh//2))
+            self.sourisx += dx*option.sensijoueur
+            self.sourisy += dy*option.sensijoueur
+        else:
+            mx,my = pygame.mouse.get_pos()
+            self.sourisx = mx
+            self.sourisy = my
         self.sourisx = max(0, min(self.sourisx, sl))
         self.sourisy = max(0, min(self.sourisy, sh))
         tx = self.sourisx -sl//2
@@ -269,3 +280,40 @@ class Joueur:
                     self.hp -= 5
         else:
             self.oxygene = self.oxygenemax
+    
+    def quantite(self, type, quantite):
+        for case in self.inventaire:
+            if case["type"] == type and case["quantite"] < 32:
+                dispo = 32-case["quantite"]
+                if quantite <= dispo:
+                    case["quantite"] += quantite
+                    return True
+                else:
+                    case["quantite"] = 32
+                    quantite -= dispo
+        if quantite > 0:
+            for case in self.inventaire:
+                if case["type"] is None:
+                    case["type"] = type
+                    if quantite <= 32:
+                        case["quantite"] = quantite
+                        return 0
+                    else:
+                        case["quantite"] = 32
+                        quantite -= 32
+        return quantite
+
+    def retirer(self, type, quantite):
+        for case in reversed(self.inventaire):
+            if case["type"]==type:
+                if case["quantite"] >= quantite:
+                    case["quantite"] -= quantite
+                    quantite = 0
+                else:
+                    quantite -= case["quantite"]
+                    case["quantite"] = 0
+                if case["quantite"] == 0:
+                    case["type"] = None
+                if quantite == 0:
+                    return True
+        return quantite == 0

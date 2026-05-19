@@ -216,3 +216,45 @@ class Overlay:
             pygame.draw.rect(fenetre, couleur, (rectposx, y, rectL, rectH))
         textehp = self.textee(self.police, f"{int(hp_cur)}", VERTECLAT)
         fenetre.blit(textehp, (x+int(45*self.echelle)+(rectnb*int(10*self.echelle)), y-int(4*self.echelle)))
+
+    def inventairedessin(self, fenetre, joueur, pos, clique, cliquedroit = False):
+        img = assets.ASSETS.get("mode_inventaire")
+        rect = img.get_rect(center=(self.L//2, self.H//2))
+        fenetre.blit(img, rect)
+        colonne = 3
+        taille = int(200*self.echelle)
+        mx = int(20*self.echelle)
+        my = int(20*self.echelle)
+        sx = rect.x+int(80*self.echelle)
+        sy = rect.y+int(80*self.echelle)
+        police = pygame.font.Font("ressource/police.ttf", max(16, int(22*self.echelle)))
+        action = None
+        #Cree les 9 cases
+        for i, case in enumerate(joueur.inventaire):
+            col = i%colonne
+            ligne = i//colonne
+            casex = sx + col*(taille+mx)
+            casey = sy + ligne*(taille+my)
+            rectcase = pygame.Rect(casex, casey, taille, taille)
+            #Souris sur la case
+            if rectcase.collidepoint(pos):
+                #Contour quand on est dessus
+                pygame.draw.rect(fenetre, (255,215,0), rectcase, 3, border_radius=5)
+                if cliquedroit and case["type"] is not None:
+                    action = ("DROP", i)
+            #Affiche l'item
+            if case["type"] is not None:
+                nom = f"img_{case['type']}"
+                imgitem = assets.ASSETS.get(nom)
+                if imgitem:
+                    imgitem = pygame.transform.scale(imgitem, (taille-16, taille-16))
+                    rectitem = imgitem.get_rect(center=rectcase.center)
+                    fenetre.blit(imgitem, rectitem)
+                #aFFICGE NB QUE QUAND >1
+                if case["quantite"] > 1:
+                    masque = police.render(str(case["quantite"]), True, (0,0,0))
+                    fenetre.blit(masque, (rectcase.right-24, rectcase.bottom-24))
+                    #Texte
+                    txt = police.render(str(case["quantite"]), True, (255,255,255))
+                    fenetre.blit(txt, (rectcase.right-25, rectcase.bottom-25))
+        return action
