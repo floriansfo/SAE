@@ -105,6 +105,8 @@ class Overlay:
             fenetre.blit(alerte, alerte.get_rect(center=(self.L//2, int(80*self.echelle))))
 
     def arme_overlay(self, fenetre, joueur, image, present):
+        if joueur.arsenal == -1:
+            return
         posx = int((415+(present//4))*self.echelle)
         posy = self.H-int(62*self.echelle)
         imgarme = image.get(joueur.arsenal)
@@ -228,7 +230,7 @@ class Overlay:
                 nom = f"img_{case['type']}"
                 imgitem = assets.ASSETS.get(nom)
                 if imgitem:
-                    imgitem = pygame.transform.scale(imgitem, (taille-16, taille-16))
+                    imgitem = pygame.transform.scale(imgitem, (taille-45, taille-45))
                     rectitem = imgitem.get_rect(center=rectcase.center)
                     fenetre.blit(imgitem, rectitem)
                 #aFFICGE NB QUE QUAND >1

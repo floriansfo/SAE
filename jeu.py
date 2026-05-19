@@ -352,6 +352,8 @@ class Partie:
                         if num not in arseav:
                             nom = {0: "couteau", 1: "pistolet", 2: "pompe", 3: "fusil"}
                             armeachete = nom.get(num)
+                            if self.joueur.arsenal == -1:
+                                self.joueur.arsenal = num
                             if armeachete and hasattr(self.joueur, "quantite"):
                                 reste = self.joueur.quantite(armeachete, 1)
                                 if reste >0:
@@ -446,13 +448,17 @@ class Partie:
             objetsreste = []
             self.dialogueouvert = False
             for obj in self.objets:
+                if hasattr(obj, 'delay') and obj.delay > 0:
+                    obj.delay -= 1
+                    objetsreste.append(obj)
+                    continue
                 if obj.type == "munition" and self.joueur.rect.colliderect(obj.rect):
                     qte = getattr(obj, "quantite", 15)
                     reste = self.joueur.quantite("munition", qte)
                     ga = qte - reste
                     self.joueur.munition += ga
                     if reste > 0:
-                        obj.quantite -= reste
+                        obj.quantite = reste
                         objetsreste.append(obj)
                     else:
                         k = f"{obj.rect.x}-{obj.rect.y}"
@@ -466,6 +472,11 @@ class Partie:
                         obj.quantite = reste
                         objetsreste.append(obj)
                     else:
+                        nom = {"couteau": 0, "pistolet": 1, "pompe": 2, "fusil": 3}
+                        id = nom[obj.type]
+                        self.joueur.arsenal_achete[id] = True
+                        if getattr(self.joueur, "arsenal", 0)== -1:
+                            self.joueur.arsenal = id
                         k = f"{obj.rect.x}-{obj.rect.y}"
                         self.actionmap[k] = "S"
                         self.modifs_etage.setdefault(self.niveau_actuel, {})[k] = "S"
@@ -488,6 +499,10 @@ class Partie:
             #Ramasser piece
             piecesreste = []
             for p in self.piecessol:
+                if p.get("delay", 0) > 0:
+                    p["delay"] -= 1
+                    piecesreste.append(p)
+                    continue
                 if self.joueur.rect.colliderect(p["rect"]):
                     reste = self.joueur.quantite("piece", p["valeur"])
                     ga = p["valeur"] - reste
@@ -549,7 +564,7 @@ class Partie:
                                 if isinstance(m, Nyctobat):
                                     filtre.obscurité_nv +=40
                                     if filtre.obscurité_nv>255:
-                                        filtre.obcurité_nv=255
+                                        filtre.obscurité_nv=255
                                 if self.joueur.hp <= 0:
                                     self.mort = True
                                     self.joueur.possedelampe = False
@@ -573,11 +588,11 @@ class Partie:
             if self.niveau_actuel != 0:
                 self.heure += 60*t
                 if self.heure >= 28800:
-                    if not hasattr(self.joueur, "time"):
-                        self.joueur.time = 0
-                    self.joueur.time += 60*t
-                    if self.joueur.time >= 120:
-                        self.joueur.time = 0
+                    if not hasattr(self.joueur, "timernuit"):
+                        self.timernuit = 0
+                    self.timernuit += 60*t
+                    if self.timernuit >= 120:
+                        self.timernuit = 0
                         self.joueur.hp = self.joueur.hp - 5
                         if self.joueur.hp <= 0:
                             self.mort = True
@@ -795,20 +810,34 @@ class Partie:
                 case = self.joueur.inventaire[i]
                 titem = case["type"]
                 if titem is not None:
-                    case["quantite"]-=1
+                    qte = case["quantite"]
+                    case["quantite"]=0
                     if titem=="piece":
-                        self.joueur.pieces -= 1
+                        self.joueur.pieces -= qte
                     elif titem == "munition":
-                        self.joueur.munition -= 1
-                    elif titem in "cristal":
+                        self.joueur.munition -= qte
+                    elif titem == "cristal":
                         self.joueur.cristal = False
-                    if case["quantite"] <= 0:
-                        case["type"] = None
+                    case["type"] = None
+                    if titem in ["couteau", "pistolet", "pompe", "fusil"]:
+                        nom = {"couteau": 0, "pistolet": 1, "pompe": 2, "fusil": 3}
+                        id = nom[titem]
+                        if id in self.joueur.arsenal_achete:
+                            del self.joueur.arsenal_achete[id]
+                        if self.joueur.arsenal == id:
+                            if len(self.joueur.arsenal_achete) > 0:
+                                self.joueur.arsenal = list(self.joueur.arsenal_achete.keys())[0]
+                            else:
+                                self.joueur.arsenal = -1
                     px = self.joueur.rect.centerx+random.randint(-40,40)
                     py = self.joueur.rect.centery+random.randint(-40,40)
-                    objsur = Objet(px, py, f"img_{titem}", titem, size=(40,40))
-                    objsur.quantite = 1
-                    self.objets.append(objsur)
+                    if titem == "piece":
+                        self.piecessol.append({"rect": pygame.Rect(px, py, 40, 40), "valeur": qte, "delay": 60})
+                    else:
+                        objsur = Objet(px, py, f"img_{titem}", titem, size=(40,40))
+                        objsur.quantite = qte
+                        objsur.delay = 60
+                        self.objets.append(objsur)
         pygame.display.flip()
         return "CONTINUER"
     
