@@ -108,7 +108,7 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
                 rectballe = tir.image.get_rect(center=(ix,iy))
                 adessiner.append((rectballe.bottom, tir.image, rectballe.topleft))
             else:
-                angleballe = math.atan2(tir.dy, tir.dx)
+                angleballe = math.atan2(tir.uy, tir.ux)
                 angle = -math.degrees(angleballe)
                 balleangle = pygame.transform.rotate(img_ballevol, angle)
                 rectballe = balleangle.get_rect(center=(ix,iy))
