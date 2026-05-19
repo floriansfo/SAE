@@ -31,12 +31,14 @@ class Overlay:
         self.echelle = self.H/1080.0
         #Redimensionne les polices
         self.police = pygame.font.Font("ressource/police.ttf", max(12, int(24*self.echelle)))
+        self.arme_police = pygame.font.Font("ressource/police.ttf", max(16, int(40*self.echelle)))
         self.policemode = pygame.font.Font("ressource/police.ttf", max(24, int(48*self.echelle)))
         self.policeoxy = pygame.font.Font("ressource/titre.ttf", max(12, int(24*self.echelle)))
         #Redimensionne les images
         self.imgmode = pygame.transform.scale(self.imgmodebase, (int(self.imgmodebase.get_width()*self.echelle), int(self.imgmodebase.get_height()*self.echelle)))
         self.imginventaire = pygame.transform.scale(self.imginventairebase, (int(self.imginventairebase.get_width()*self.echelle), int(self.imginventairebase.get_height()*self.echelle)))
         self.coeur = pygame.transform.scale(self.coeurbase, (int(self.coeurbase.get_width()*self.echelle), int(self.coeurbase.get_height()*self.echelle)))
+        self.arme_imgmode= pygame.transform.scale(self.imgmode, (int(260*self.echelle), int(60*self.echelle)))
 
     def textee(self, police, texte, couleur):
         cle = (texte, couleur)
@@ -104,18 +106,35 @@ class Overlay:
             alerte = self.textee(self.police, "ALERTE: RENTRER AU VAISSEAU", ROUGE)
             fenetre.blit(alerte, alerte.get_rect(center=(self.L//2, int(80*self.echelle))))
 
+   # def arme_overlay(self, fenetre, joueur, image, present):
+    #    posx = int((415+(present//4))*self.echelle)
+     #   posy = self.H-int(62*self.echelle)
+      #  imgarme = image.get(joueur.arsenal)
+       # imgarme = pygame.transform.scale(imgarme, (int(160*self.echelle), int(40*self.echelle)))
+        #fenetre.blit(imgarme, (posx, posy))
+    
     def arme_overlay(self, fenetre, joueur, image, present):
-        posx = int((415+(present//4))*self.echelle)
-        posy = self.H-int(62*self.echelle)
-        imgarme = image.get(joueur.arsenal)
-        imgarme = pygame.transform.scale(imgarme, (int(160*self.echelle), int(40*self.echelle)))
-        fenetre.blit(imgarme, (posx, posy))
+        if joueur.arsenal==3:
+            arme_nom="FUSIL"
+        elif joueur.arsenal==2:
+            arme_nom="POMPE"
+        elif joueur.arsenal==1:
+            arme_nom="PISTOLET"
+        else:
+            arme_nom="COUTEAU"
+        posx = int((320+(present//4))*self.echelle)
+        posy = self.H-int(50*self.echelle)-self.imgmode.get_height()-int(5*self.echelle)
+        fenetre.blit(self.arme_imgmode, (posx, posy))
+        surface = self.textee(self.arme_police, arme_nom, BLANC)
+        surfacerect = surface.get_rect()
+        surfacerect.center = (posx+self.arme_imgmode.get_width()//2, posy+self.arme_imgmode.get_height()//2)
+        fenetre.blit(surface, surfacerect)
 
     def munition(self, fenetre, joueur, img):
         self.panneau(fenetre, int(320*self.echelle), self.H-int(71*self.echelle), int(260*self.echelle), int(60*self.echelle))
         couleur = VERTPHOSPHORE if joueur.munition > 0 else ROUGE
         texte = self.textee(self.police, f"x{joueur.munition}", couleur)
-        posx = int(330*self.echelle)
+        posx = int(340*self.echelle)
         posy = int(self.H-(56*self.echelle))
         imgvert = img.copy()
         imgvert.fill(VERTPHOSPHORE, special_flags=pygame.BLEND_RGBA_MULT)

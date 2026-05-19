@@ -7,7 +7,7 @@ from prerequis import dist_mj
 
 
 class Slime (Monstre) :
-    nb_etage=20
+    nb_etage=5
     def __init__(self, x, y,):
         super().__init__(x, y, 2, 100)
         self.degats=8
