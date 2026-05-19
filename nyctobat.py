@@ -8,7 +8,6 @@ from prerequis import dist_mj
 
 
 class Nyctobat(Monstre):
-    nb_etage=3
     def __init__(self, x, y,):
         super().__init__(x, y, 5, 50)
         self.degats= 5

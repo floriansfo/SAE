@@ -9,7 +9,6 @@ from prerequis import dist_mj
 
 
 class Mimique(Monstre):
-    nb_etage=2
     def __init__(self, x, y,):
         super().__init__(x, y, 2, 100)
         self.enrage=False

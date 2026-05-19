@@ -7,7 +7,6 @@ from prerequis import dist_mj
 
 
 class Xeno(Monstre):
-    nb_etage=17
     def __init__(self, x, y,):
         super().__init__(x, y, 3, 100)
         self.degats= 20

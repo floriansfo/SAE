@@ -145,33 +145,76 @@ def spawn_metage(niveau, salles):
     from errant import Errant
     from xeno import Xeno
     monstres=[]
-    if niveau >=1:
-        for i in range(Mimique.nb_etage):
-            salle=  random.choice(salles)
-            mx= salle.centerx * ZOOM
-            my = salle.centery *ZOOM
-            monstres.append(Mimique(mx, my))
-        for i in range(Slime.nb_etage):
-            salle=  random.choice(salles)
-            mx= salle.centerx * ZOOM
-            my = salle.centery *ZOOM
-            monstres.append(Slime(mx, my))
-        for i in range(Nyctobat.nb_etage):
-            salle=  random.choice(salles)
-            mx= salle.centerx * ZOOM
-            my = salle.centery *ZOOM
-            monstres.append(Nyctobat(mx, my))
-        for i in range(Errant.nb_etage):
-            salle=  random.choice(salles)
-            mx= salle.centerx * ZOOM
-            my = salle.centery *ZOOM
-            monstres.append(Errant(mx, my))
-        for i in range(Xeno.nb_etage):
-            salle=  random.choice(salles)
-            mx= salle.centerx * ZOOM
-            my = salle.centery *ZOOM
-            monstres.append(Xeno(mx, my))
+    #choix des nv de spawn des monstres
+    if niveau==1:
+        nb_slime=5
+        nb_mimique=0
+        nb_nyctobat=0
+        nb_errant=0
+        nb_xeno=0
+    elif niveau==2:
+        nb_slime=7
+        nb_mimique=1
+        nb_nyctobat=3
+        nb_errant=1
+        nb_xeno=0
+    elif niveau==3:
+        nb_slime=9
+        nb_mimique=2
+        nb_nyctobat=1
+        nb_errant=0
+        nb_xeno=0
+    elif niveau==4:
+        nb_slime=8
+        nb_mimique=2
+        nb_nyctobat=2
+        nb_errant=1
+        nb_xeno=0
+    elif niveau==5:
+        nb_slime=11
+        nb_mimique=3
+        nb_nyctobat=2
+        nb_errant=2
+        nb_xeno=1
+    elif niveau==6:
+        nb_slime=12
+        nb_mimique=2
+        nb_nyctobat=3
+        nb_errant=1
+        nb_xeno=2
+    else:
+        nb_slime=0
+        nb_mimique=0
+        nb_nyctobat=0
+        nb_errant=0
+        nb_xeno=0
+    for i in range(nb_mimique):
+        salle=  random.choice(salles)
+        mx= salle.centerx * ZOOM
+        my = salle.centery *ZOOM
+        monstres.append(Mimique(mx, my))
+    for i in range(nb_slime):
+        salle=  random.choice(salles)
+        mx= salle.centerx * ZOOM
+        my = salle.centery *ZOOM
+        monstres.append(Slime(mx, my))
+    for i in range(nb_nyctobat):
+        salle=  random.choice(salles)
+        mx= salle.centerx * ZOOM
+        my = salle.centery *ZOOM
+        monstres.append(Nyctobat(mx, my))
+    for i in range(nb_errant):
+        salle=  random.choice(salles)
+        mx= salle.centerx * ZOOM
+        my = salle.centery *ZOOM
+        monstres.append(Errant(mx, my))
+    for i in range(nb_xeno):
+        salle=  random.choice(salles)
+        mx= salle.centerx * ZOOM
+        my = salle.centery *ZOOM
+        monstres.append(Xeno(mx, my))
     return monstres
+
 
 class Direction:
     face= 'face'
