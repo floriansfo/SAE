@@ -6,7 +6,7 @@ NUIT = (10, 10, 20)
 NUIT_ALPHA = 245  #cacher la map
 CONE_ANGLE  = 30
 CONE_PORTEE = 480
-RONDPORTEE = 120
+RONDPORTEE = 150
 RONDCOUCHE = 40
 
 def cone(portee, angle, couleur, couche = 80):

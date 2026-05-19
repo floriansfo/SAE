@@ -269,6 +269,7 @@ class Partie:
         
         #Evenement clavier
         self.click = False
+        self.clickdroit = False
         for event in pygame.event.get():
             if self.niveau_actuel != 0:
                 filtre.activation_mc(event)
@@ -304,6 +305,8 @@ class Partie:
                         self.ouvertemenu = False
                     elif getattr(self, "boutiqueouverte", False):
                         self.boutiqueouverte = False
+                    elif getattr(self, "inventaire", False):
+                        self.inventaire = False
                     else:
                         self.enpause = not self.enpause
                 #Menu ascenceur
@@ -322,8 +325,41 @@ class Partie:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: #Clic gauche
                     self.click = True
-                if self.boutiqueouverte:
+                if event.button == 3: #Clic droit
+                    self.clickdroit = True
+                if getattr(self, "boutiqueouverte", False):
+                    pieceav = self.joueur.pieces
+                    munav = self.joueur.munition
+                    arseav = list(self.joueur.arsenal_achete.keys())
                     self.menuboutique.clique(pygame.mouse.get_pos(), self.bouton_boutique, self.joueur)
+                    if self.joueur.pieces < pieceav:
+                        perte= pieceav - self.joueur.pieces
+                        if hasattr(self.joueur, "retirer"):
+                            self.joueur.retirer("piece", perte)
+                    if self.joueur.munition > munav:
+                        g = self.joueur.munition - munav
+                        self.joueur.munition = munav
+                        if hasattr(self.joueur, "quantite"):
+                            reste = self.joueur.quantite("munition", g)
+                            self.joueur.munition += (g - reste)
+                            if reste > 0:
+                                px = self.joueur.rect.centerx+random.randint(-40,40)
+                                py = self.joueur.rect.centery+random.randint(-40,40)
+                                objsur = Objet(px, py, "img_munition", "munition", size=(40,40))
+                                objsur.quantite = reste
+                                self.objets.append(objsur)
+                    for num in list(self.joueur.arsenal_achete.keys()):
+                        if num not in arseav:
+                            nom = {0: "couteau", 1: "pistolet", 2: "pompe", 3: "fusil"}
+                            armeachete = nom.get(num)
+                            if armeachete and hasattr(self.joueur, "quantite"):
+                                reste = self.joueur.quantite(armeachete, 1)
+                                if reste >0:
+                                    px = self.joueur.rect.centerx+random.randint(-40,40)
+                                    py = self.joueur.rect.centery+random.randint(-40,40)
+                                    objsur = Objet(px, py, f"img_{armeachete}", armeachete, size=(40,40))
+                                    objsur.quantite = 1
+                                    self.objets.append(objsur)
 
     def msj(self, t):
         mouse_pos = pygame.mouse.get_pos()
@@ -411,13 +447,32 @@ class Partie:
             self.dialogueouvert = False
             for obj in self.objets:
                 if obj.type == "munition" and self.joueur.rect.colliderect(obj.rect):
-                    self.joueur.munition = self.joueur.munition + 15
+                    qte = getattr(obj, "quantite", 15)
+                    reste = self.joueur.quantite("munition", qte)
+                    ga = qte - reste
+                    self.joueur.munition += ga
+                    if reste > 0:
+                        obj.quantite -= reste
+                        objetsreste.append(obj)
+                    else:
+                        k = f"{obj.rect.x}-{obj.rect.y}"
+                        self.actionmap[k] = "S"
+                        self.modifs_etage.setdefault(self.niveau_actuel, {})[k] = "S"
                     self.sonmun.play()
-                    key = f"{obj.rect.x}-{obj.rect.y}"
-                    self.actionmap[key] = "S"
-                    self.modifs_etage.setdefault(self.niveau_actuel, {})[key] = "S"
+                elif obj.type in ["couteau", "pistolet", "pompe", "fusil"] and self.joueur.rect.colliderect(obj.rect):
+                    qte = getattr(obj, "quantite", 1)
+                    reste = self.joueur.quantite(obj.type, qte)
+                    if reste>0:
+                        obj.quantite = reste
+                        objetsreste.append(obj)
+                    else:
+                        k = f"{obj.rect.x}-{obj.rect.y}"
+                        self.actionmap[k] = "S"
+                        self.modifs_etage.setdefault(self.niveau_actuel, {})[k] = "S"
                 elif obj.type == "cristal" and self.joueur.rect.colliderect(obj.rect):
                     self.joueur.cristal = True
+                    if hasattr(self.joueur, "quantite"):
+                        self.joueur.quantite("cristal", 1)
                     self.sonmun.play()
                     key = f"{obj.rect.x}-{obj.rect.y}"
                     self.actionmap[key]="S"
@@ -434,7 +489,12 @@ class Partie:
             piecesreste = []
             for p in self.piecessol:
                 if self.joueur.rect.colliderect(p["rect"]):
-                    self.joueur.pieces += p["valeur"]
+                    reste = self.joueur.quantite("piece", p["valeur"])
+                    ga = p["valeur"] - reste
+                    self.joueur.pieces += ga
+                    if reste > 0:
+                        p["valeur"] = reste
+                        piecesreste.append(p)
                 else:
                     piecesreste.append(p)
             self.piecessol = piecesreste #Met a jour les pieces restantes
@@ -726,6 +786,29 @@ class Partie:
                 self.moteurouvert = False
         if self.dialogue.ouvert:
             self.dialogue.dessiner(self.ecran)
+        if getattr(self, "inventaire", False):
+            pos = pygame.mouse.get_pos()
+            cliquedroit = getattr(self, "clickdroit", False)
+            action = self.overlay.inventairedessin(self.ecran, self.joueur, pos, self.click, cliquedroit)
+            if action and action[0] == "DROP":
+                i = action[1]
+                case = self.joueur.inventaire[i]
+                titem = case["type"]
+                if titem is not None:
+                    case["quantite"]-=1
+                    if titem=="piece":
+                        self.joueur.pieces -= 1
+                    elif titem == "munition":
+                        self.joueur.munition -= 1
+                    elif titem in "cristal":
+                        self.joueur.cristal = False
+                    if case["quantite"] <= 0:
+                        case["type"] = None
+                    px = self.joueur.rect.centerx+random.randint(-40,40)
+                    py = self.joueur.rect.centery+random.randint(-40,40)
+                    objsur = Objet(px, py, f"img_{titem}", titem, size=(40,40))
+                    objsur.quantite = 1
+                    self.objets.append(objsur)
         pygame.display.flip()
         return "CONTINUER"
     
