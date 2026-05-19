@@ -116,7 +116,11 @@ def charger_assets(largeur, hauteur):
         frame= texture(f"nyctobat/gauche-{i}.png", (96,96), transparente=True)
         assets['nyctobat_gauche'].append(frame)
     
-
+    #frame de mort: 1 pour chaque pos
+    assets['nyctobat_face_dead']=texture(f"nyctobat/face_dead.png",(96,96), transparente=True)
+    assets['nyctobat_back_dead']=texture(f"nyctobat/back_dead.png",(96,96), transparente=True)
+    assets['nyctobat_droite_dead']=texture(f"nyctobat/droite_dead.png",(96,96), transparente=True)
+    assets['nyctobat_gauche_dead']=texture(f"nyctobat/gauche_dead.png",(96,96), transparente=True)
 
     #asset errant
     assets['errant_face']=[]
@@ -139,11 +143,29 @@ def charger_assets(largeur, hauteur):
         frame= texture(f"errant/gauche-{i}.png", (128, 128), transparente=True)
         assets['errant_gauche'].append(frame)
     
-    #frame de mort: 1 pour chaque pos
-    assets['nyctobat_face_dead']=texture(f"nyctobat/face_dead.png",(96,96), transparente=True)
-    assets['nyctobat_back_dead']=texture(f"nyctobat/back_dead.png",(96,96), transparente=True)
-    assets['nyctobat_droite_dead']=texture(f"nyctobat/droite_dead.png",(96,96), transparente=True)
-    assets['nyctobat_gauche_dead']=texture(f"nyctobat/gauche_dead.png",(96,96), transparente=True)
+
+    #asset xeno
+    assets['xeno_face']=[]
+    for i in range(10):
+        frame= texture(f"xeno/face-{i}.png", (128,128), transparente=True)
+        assets['xeno_face'].append(frame)
+    
+    assets['xeno_back']=[]
+    for i in range(10):
+        frame= texture(f"xeno/back-{i}.png", (128, 128), transparente=True)
+        assets['xeno_back'].append(frame)
+    
+    assets['xeno_droite']=[]
+    for i in range(10):
+        frame= texture(f"xeno/droite-{i}.png", (128, 128), transparente=True)
+        assets['xeno_droite'].append(frame)
+
+    assets['xeno_gauche']=[]
+    for i in range(10):
+        frame= texture(f"xeno/gauche-{i}.png", (128, 128), transparente=True)
+        assets['xeno_gauche'].append(frame)
+
+
 
 
 

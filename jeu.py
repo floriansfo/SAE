@@ -28,6 +28,7 @@ from vaisseau import LIT, BOUTIQUE
 from mimique import Mimique
 from nyctobat import Nyctobat
 from errant import Errant
+from xeno import Xeno
 
 class Partie:
     def __init__(self, ecran, mode="solo", ip = None, save = None):
@@ -550,6 +551,8 @@ class Partie:
                         if isinstance(m, Nyctobat):
                             m.comportement(t, [self.joueur])
                         if isinstance(m, Errant):
+                            m.comportement(t, [self.joueur])
+                        if isinstance(m, Xeno):
                             m.comportement(t, [self.joueur])
                         if isinstance(m, monstre.Titan):
                             m.lampejoueur = self.joueur.lumiereallumee
