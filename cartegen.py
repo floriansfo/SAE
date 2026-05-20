@@ -35,7 +35,9 @@ class Objet:
         clecache = (name, size)
         #Si on redimensionne pas
         if clecache not in Objet.texture_cache:
-            image = assets.ASSETS.get(name)
+            image= assets.ASSETS['img_deco'].get(name)
+            if image is None:
+                image = assets.ASSETS.get(name)
             if image is not None:
                 #Redimensionner et sauvegarder
                 Objet.texture_cache[clecache] = pygame.transform.scale(image, (taillew, tailleh))
@@ -79,13 +81,26 @@ def tango(grille, salles, poscristal = None):
         cristalpos = (sx+ZOOM//4, sy-ZOOM//4)
         return objet, cristalpos
 
-def generer_objets(grille, salles, multi = 1.0):
+def generer_objets(grille, salles, multi = 1.0, niveau=1):
     objets = []
     #Dictionnaire des types et probabilité d'affichage des objets
     types = [{'nom': 'img_caisse', 'type': 'meuble', 'proba': 0.2},
             {'nom': 'img_plante', 'type': 'plante', 'proba': 0.2},
             {'nom': 'img_meuble', 'type': 'meuble', 'proba': 0.2},
             {'nom': 'img_munition', 'type': 'munition', 'proba':0.1}]
+    if niveau>=2:
+        types.append({'nom':'rock1','type': 'meuble', 'proba': 0.15 })
+        types.append({'nom':'Veins1','type': 'meuble', 'proba': 0.15 })
+    if niveau>=3:
+        types.append({'nom':'Veins2','type': 'meuble', 'proba': 0.15 })
+    if niveau>=4:
+        types.append({'nom':'rock2','type': 'meuble', 'proba': 0.15 })
+        types.append({'nom':'Veins3','type': 'meuble', 'proba': 0.15 })
+    if niveau >=5:
+        types.append({'nom':'plant1','type': 'meuble', 'proba': 0.15 })
+    if niveau >=6:
+        types.append({'nom':'bones','type': 'meuble', 'proba': 0.15 })
+        types.append({'nom':'plant2','type': 'meuble', 'proba': 0.15 })
     
     for salle in salles:
         for y in range(salle.top, salle.bottom):

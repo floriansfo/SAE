@@ -84,7 +84,7 @@ class Partie:
                     self.socket_jeu.recv(1024)
                     #Generation objet avec seed similaire
                     random.seed(self.partie)
-                    self.objets = generer_objets(self.carte, self.salles, self.multi)
+                    self.objets = generer_objets(self.carte, self.salles, self.multi, niveau=1)
                     print("Carte enregistré avec succes")
                 except Exception as e:
                     print(f"Erreur de reseau hote: {e}")
@@ -122,7 +122,7 @@ class Partie:
                     #Application de la seed pour avoir meme objet
                     self.partie = donneesmap["seed"]
                     random.seed(self.partie)
-                    self.objets = generer_objets(self.carte, self.salles, self.multi)
+                    self.objets = generer_objets(self.carte, self.salles, self.multi, niveau=1)
                 except Exception as e:
                     print(f"Erreur de chargement de la carte: {e}")
             if self.socket_jeu:
@@ -146,7 +146,7 @@ class Partie:
             else:
                 random.seed(self.partie+chargeetage)
                 self.carte, self.salles, self.pos = generemap()
-                self.objets = generer_objets(self.carte, self.salles, self.multi)
+                self.objets = generer_objets(self.carte, self.salles, self.multi, niveau=chargeetage)
 
         #Assets et menu
         self.animationjoueur = assets.ASSETS['animationjoueur']
@@ -197,7 +197,7 @@ class Partie:
                 self.niveau_actuel = save["niveau_actuel"]
                 random.seed(self.partie + self.niveau_actuel)
                 self.carte, self.salles, self.pos = generemap()
-                self.objets = generer_objets(self.carte, self.salles, self.multi)
+                self.objets = generer_objets(self.carte, self.salles, self.multi, niveau=self.niveau_actuel)
                 self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(self.niveau_actuel, {}))
 
         self.monstres = []
@@ -674,7 +674,7 @@ class Partie:
                             #Nouvelle carte
                             random.seed(self.partie+etage_choisi)
                             self.carte, self.salles, self.pos = generemap()
-                            self.objets = generer_objets(self.carte, self.salles, self.multi)
+                            self.objets = generer_objets(self.carte, self.salles, self.multi, niveau=etage_choisi)
                             self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(etage_choisi, {}))
                     self.niveau_actuel = etage_choisi
                     #élimine les monstres de l'étage.

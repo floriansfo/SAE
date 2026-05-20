@@ -147,7 +147,7 @@ def spawn_metage(niveau, salles):
     monstres=[]
     #choix des nv de spawn des monstres
     if niveau==1:
-        nb_slime=5
+        nb_slime=67
         nb_mimique=0
         nb_nyctobat=0
         nb_errant=0
