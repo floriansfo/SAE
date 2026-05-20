@@ -6,10 +6,15 @@ def charger_assets(largeur, hauteur):
     assets = {}
     Z = ZOOM+1
     #Charger les textures
+    #sol
     assets['img_sol'] = texture("sol.png",(Z,Z))
+    assets['img_sol_rouge']= texture("sol/sol_rouge.png", (Z,Z))
     assets['img_ascenseur'] = texture("ascenseur.png",(Z,Z))
     assets['img_murface'] = texture("murface.png", (Z, Z))
     assets['img_murtop'] = texture("murtop.png", (Z, Z))
+    #rouge
+    assets['img_murtop_rouge'] = texture("sol/murtop_rouge.png", (Z, Z))
+    assets['img_murface_rouge'] = texture("sol/murface_rouge.png", (Z, Z))
     assets['img_lit'] = texture("lit.png", (Z, Z))
     assets['img_boutique'] = texture("shop.png", (Z, Z))
     assets['img_logo'] = texture("logov2.png", (Z, Z))
