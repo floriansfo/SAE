@@ -31,6 +31,18 @@ def charger_assets(largeur, hauteur):
     assets['img_cassette']= texture("cassette.png", (ZOOM//2,ZOOM//2), transparente=True)
     assets['img_racine'] = texture("racine.png", (Z,Z), transparente=True)
 
+
+    #decoration pour la map
+    assets['img_deco']= {
+        'bones':texture("decoration/Bones_shadow1_7.png",(Z,Z), transparente=True),
+        'rock1':texture("decoration/Rock1_shadow1_5.png",(Z,Z), transparente=True),
+        'rock2':texture("decoration/Rock2_shadow2_1.png",(Z,Z), transparente=True),
+        'plant1':texture("decoration/Spike_plant_shadow1_2.png",(Z,Z), transparente=True),
+        'plant2':texture("decoration/Spike_plant_shadow1_3.png",(Z,Z), transparente=True),
+        'Veins1':texture("decoration/Veins_shadow1_2.png",(Z,Z), transparente=True),
+        'Veins2':texture("decoration/Veins_shadow1_3.png",(Z,Z), transparente=True),
+        'Veins3':texture("decoration/Veins_shadow1_4.png",(Z,Z), transparente=True),
+    }
     assets['img_arme'] = {
         0: texture("couteau.png",(250,80), transparente= True),
         1: texture("pistolet.png",(250,80), transparente= True),
