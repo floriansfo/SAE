@@ -178,6 +178,9 @@ class Partie:
         self.moteurouvert = False
         self.dialogue = enregistrement.Enregistrement(self.LARGEUR, self.HAUTEUR)
         self.dialogueouvert = False
+        #monstre timer spawn
+        self.monstres_stock=[]
+        self.spawn_delay=0
 
         #Restauration depuis une sauvegarde
         if save:
@@ -411,6 +414,13 @@ class Partie:
             return "MORT"
         
         if not self.ouvertemenu and not self.enpause and not getattr(self,"moteurouvert", False) and not self.menusommeil.cours and not self.boutiqueouverte:
+            
+            #apparition des monstres après le delay
+            if self.spawn_delay>0:
+                self.spawn_delay-=t
+                if self.spawn_delay<=0:
+                    self.monstres.extend(self.monstres_stock)
+                    self.monstres_stock=[]
             #diminution du noir
             self.timer_obscurité+=1
             if self.timer_obscurité>5:
@@ -667,9 +677,10 @@ class Partie:
                             self.objets = generer_objets(self.carte, self.salles, self.multi)
                             self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(etage_choisi, {}))
                     self.niveau_actuel = etage_choisi
-                    
+                    #élimine les monstres de l'étage.
                     self.monstres.clear()
-                    self.monstres.extend(monstre.spawn_metage(self.niveau_actuel, self.salles))
+                    self.monstres_stock= monstre.spawn_metage(self.niveau_actuel, self.salles)
+                    self.spawn_delay=6.7
                     if self.niveau_actuel == 0:
                         self.joueur.lumiereallumee = False
                         filtre.desactive()
