@@ -16,6 +16,10 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
     monstree = "vide"
     if len(monstres)>0:
         monstree = "_".join([f"{int(m.rect.x)}={int(m.rect.y)}={int(m.mort)}" for m in monstres])
+    objetsol = "vide"
+    if hasattr(joueur, 'objetsol') and len(joueur.objetsol) > 0:
+        objetsol = "_".join([f"{o['type']}={o['quantite']}={o['x']}={o['y']}={o['etage']}" for o in joueur.objetsol])
+        joueur.objetsol.clear()
     try:
         #Mort ou pas
         if mort:
@@ -23,9 +27,10 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
         else:
             etatmort = 0
         lumiere = 1 if getattr(joueur, "lumiereallumee", False) else 0
+        dsvaisseau = 1 if getattr(joueur, "dsvaisseau", False) else 0
         #Envoie la position du joueur
         angleactuel = getattr(joueur, "angleactuel", joueur.angle)
-        message = f"{joueur.rect.centerx},{joueur.rect.centery},{niveau_actuel},{joueur.angle},{joueur.animation},{balle},{modifmap},{etatmort},{monstree},{lumiere},{angleactuel}\n"
+        message = f"{joueur.rect.centerx},{joueur.rect.centery},{niveau_actuel},{joueur.angle},{joueur.animation},{balle},{modifmap},{etatmort},{monstree},{lumiere},{angleactuel},{objetsol},{dsvaisseau}\n"
         socket_jeu.send(message.encode('utf-8'))
         data = socket_jeu.recv(4096)
         if data:
@@ -57,6 +62,15 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
                         autre.lumiere = bool(int(v[9]))
                         if len(v)>10:
                             autre.angleactuel = float(v[10])
+                        if len(v)>11 and v[11] != "vide":
+                            if not hasattr(joueur, 'objsol'):
+                                joueur.objsol = []
+                            for obj in v[11].split('_'):
+                                parts = obj.split('=')
+                                if len(parts)==5:
+                                    joueur.objsol.append({'type': parts[0], 'quantite': int(parts[1]), 'x': int(parts[2]), 'y': int(parts[3]), 'etage': int(parts[4])})
+                        if len(v)>12:
+                            autre.dsvaisseau = bool(int(v[12]))
                         #Balles
                         if v[6] != "vide":
                             for m in v[6].split('_'):

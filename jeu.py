@@ -160,9 +160,11 @@ class Partie:
         self.surboutique = False
         self.boutiqueouverte = False
         self.piecessol = []
+        self.objsol = []
         #Parametre temps
         self.jour = 1
         self.heure = 0
+        self.tempspause = False
         self.enpause = False
         #Parametre ascenceur
         self.ouvertemenu = False
@@ -579,6 +581,24 @@ class Partie:
                 else:
                     piecesreste.append(p)
             self.piecessol = piecesreste #Met a jour les pieces restantes
+            solreste = []
+            for s in self.objsol:
+                if s.get("delay", 0) > 0:
+                    s["delay"] -= 1
+                    solreste.append(s)
+                    continue
+                if o['etage']==self.niveau_actuel and self.joueur.rect.colliderect(s['rect']):
+                    reste = self.joueur.quantite(o['type'], o['quantite'])
+                    if isinstance(reste, int) and reste>0:
+                        s['quantite'] = reste
+                        solreste.append(s)
+                else:
+                    solreste.append(s)
+            self.objsol = solreste
+            toutvaisseau = (self.niveau_actuel==0) and all(getattr(j,'dsvaisseau', False) for j in self.joueursup.values())
+            self.joueur.dsvaisseau = (self.niveau_actuel == 0)
+            if not toutvaisseau or not self.connect:
+                self.heure += t*10                      
             #Monstre loot piece
             monstresvivant = []
             for m in self.monstres:
@@ -670,6 +690,10 @@ class Partie:
         if self.connect:
             mort = self.mort or getattr(self, "spectateur", False)
             self.buffer, self.objets, self.joueursup = reseau.connexion(self.socket_jeu, self.joueur, self.monstres, self.objets, self.actionmap, mort, self.niveau_actuel, self.buffer, self.joueursup)   
+            if hasattr(self.joueur, 'objsol'):
+                for o in self.joueur.objsol:
+                    self.objsol.append({'type':o['type'], 'quantite':o['quantite'], 'rect':pygame.Rect(o['x']-20, o['y']-20, 40, 40), 'etage':o['etage'], 'delay':60})
+                    self.joueur.objsol.clear()
         return "CONTINUER"
     
     def menus(self):
@@ -839,6 +863,19 @@ class Partie:
                     pygame.mixer.music.play(-1)
                 filtre.combat = False
         affichage.dessinerjeu(self.ecran, self.LARGEUR, self.HAUTEUR, self.carte, self.joueur, self.objets, self.piecessol, self.monstres, self.joueursup, self.niveau_actuel, self.connect, self.lumieremarche, filtre, getattr(self,"moteurcol", None))
+        camx = (self.LARGEUR//2) - self.joueur.rect.centerx
+        camy = (self.HAUTEUR//2) - self.joueur.rect.centery
+        img = assets.ASSETS.get('img_munition')
+        for o in self.objsol:
+            if o['etage']==self.niveau_actuel:
+                ox = o['rect'].x+camx
+                oy = o['rect'].y+camy
+                if -50<ox<self.LARGEUR and -50<oy<self.HAUTEUR:
+                    imgg = assets.ASSETS.get(f"img_{o['type']}", img)
+                    self.ecran.blit(imgg, (ox, oy))
+                    if o['quantite']>1:
+                        txt = self.font.render(str(o['quantite']), True, (255,255,255))
+                        self.ecran.blit(txt, (ox+22, oy+22))
         if self.menus() == "MENU":
             return "MENU"
         #Overlay
@@ -936,6 +973,10 @@ class Partie:
                         objsur.quantite = qte
                         objsur.delay = 60
                         self.objets.append(objsur)
+                        if self.connect:
+                            if not hasattr(self.joueur, "objsol"):
+                                self.joueur.objsol = []
+                            self.joueur.objsol.append({"type": titem, "quantite": qte, "x": px, "y": py, "etage": self.niveau_actuel})
         pygame.display.flip()
         return "CONTINUER"
     

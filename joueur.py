@@ -62,6 +62,10 @@ class Joueur:
         #Inventaire
         self.inventaire = [{"type": None, "quantite": 0} for _ in range(9)]
         self.inventaire[0] = {"type": "couteau", "quantite": 1}
+        #Multi
+        self.objjete = []
+        self.objsol = []
+        self.dsvaisseau = False
     
     def changerarme(self, num):
         if self.arsenal_achete.get(num, False):
@@ -317,3 +321,15 @@ class Joueur:
                 if quantite == 0:
                     return True
         return quantite == 0
+    
+    def jetobj(self, i, niveau_actuel):
+        case = self.inventaire[i]
+        if case["type"] is None or case["quantite"] == 0:
+            return None
+        if i == 0 and case["type"] == "couteau":
+            return None
+        objjetee = {"type": case["type"], "quantite": case["quantite"], "x": self.rect.centerx, "y": self.rect.centery, "etage": niveau_actuel}
+        case["type"]=None
+        case["quantite"]=0
+        self.objjete.append(objjetee)
+        return objjetee
