@@ -75,16 +75,16 @@ class Partie:
                     #L'hote genere la carte avec seed pour clien est meme
                     self.partie = random.randint(0, 999999)
                     random.seed(self.partie)
-                    self.carte, self.salles, self.pos = generemap()
+                    self.carte, self.salles, self.pos = generer_vaisseau()
                     #Envoie la carte et seed au client
                     data = pickle.dumps({"carte": self.carte, "salles": self.salles, "pos": self.pos, "seed": self.partie})
                     tailledata = len(data).to_bytes(4, byteorder='big')
                     self.socket_jeu.sendall(tailledata + data)
                     #Attend confirme du serv
                     self.socket_jeu.recv(1024)
-                    #Generation objet avec seed similaire
-                    random.seed(self.partie)
-                    self.objets = generer_objets(self.carte, self.salles, self.multi)
+                    self.objets = generer_objets(self.carte, [], 0)
+                    dx, dy = int(self.pos[0]), int(self.pos[1])
+                    self.objets.append(Objet((dx-2)*ZOOM, dy*ZOOM, "img_cassette", "dialogue", size =(ZOOM//2, ZOOM//2)))
                     print("Carte enregistré avec succes")
                 except Exception as e:
                     print(f"Erreur de reseau hote: {e}")
@@ -121,8 +121,9 @@ class Partie:
                     self.pos = donneesmap["pos"]
                     #Application de la seed pour avoir meme objet
                     self.partie = donneesmap["seed"]
-                    random.seed(self.partie)
-                    self.objets = generer_objets(self.carte, self.salles, self.multi)
+                    self.objets = generer_objets(self.carte, [],0)
+                    dx, dy = int(self.pos[0]), int(self.pos[1])
+                    self.objets.append(Objet((dx-2)*ZOOM, dy*ZOOM, "img_cassette", "dialogue", size =(ZOOM//2, ZOOM//2)))
                 except Exception as e:
                     print(f"Erreur de chargement de la carte: {e}")
             if self.socket_jeu:
@@ -235,6 +236,9 @@ class Partie:
         self.cristal_x = None
         self.cristaletage = 6
         self.victoire = False
+        self.spectateur = False
+        self.proche = False
+        self.rectseringue = None
         pygame.time.delay(500)
     
     def evenement(self):
@@ -326,46 +330,65 @@ class Partie:
                     #Ouvre le moteur si on fait E
                     if self.surmoteur:
                         self.moteurouvert = True
+                    if getattr(self, "proche", False) and self.mode!="solo":
+                        s = False
+                        if hasattr(self.joueur, "inventaie"):
+                            for c in self.joueur.inventaire:
+                                if c.get("type")=="seringue":
+                                    s = True
+                        if s:
+                            self.joueur.retirer("seringue", 1)
+                            self.actionmap["REVIVE"]="GO"
+                
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: #Clic gauche
                     self.click = True
                 if event.button == 3: #Clic droit
                     self.clickdroit = True
                 if getattr(self, "boutiqueouverte", False):
-                    pieceav = self.joueur.pieces
-                    munav = self.joueur.munition
-                    arseav = list(self.joueur.arsenal_achete.keys())
-                    self.menuboutique.clique(pygame.mouse.get_pos(), self.bouton_boutique, self.joueur)
-                    if self.joueur.pieces < pieceav:
-                        perte= pieceav - self.joueur.pieces
-                        if hasattr(self.joueur, "retirer"):
-                            self.joueur.retirer("piece", perte)
-                    if self.joueur.munition > munav:
-                        g = self.joueur.munition - munav
-                        self.joueur.munition = munav
-                        if hasattr(self.joueur, "quantite"):
-                            reste = self.joueur.quantite("munition", g)
-                            self.joueur.munition += (g - reste)
-                            if reste > 0:
-                                px = self.joueur.rect.centerx+random.randint(-40,40)
-                                py = self.joueur.rect.centery+random.randint(-40,40)
-                                objsur = Objet(px, py, "img_munition", "munition", size=(40,40))
-                                objsur.quantite = reste
-                                self.objets.append(objsur)
-                    for num in list(self.joueur.arsenal_achete.keys()):
-                        if num not in arseav:
-                            nom = {0: "couteau", 1: "pistolet", 2: "pompe", 3: "fusil"}
-                            armeachete = nom.get(num)
-                            if self.joueur.arsenal == -1:
-                                self.joueur.arsenal = num
-                            if armeachete and hasattr(self.joueur, "quantite"):
-                                reste = self.joueur.quantite(armeachete, 1)
-                                if reste >0:
+                    if self.mode != "solo" and hasattr(self, "rectseringue") and self.rectseringue and self.rectseringue.collidepoint(pygame.mouse.get_pos()):
+                        if self.joueur.pieces>=30:
+                            self.joueur.pieces -= 30
+                            if hasattr(self.joueur, "retirer"):
+                                self.joueur.retirer("piece", 30)
+                            if hasattr(self.joueur, "quantite"):
+                                self.joueur.quantite("seringue", 1)
+                            self.sonmun.play()
+                    else:
+                        pieceav = self.joueur.pieces
+                        munav = self.joueur.munition
+                        arseav = list(self.joueur.arsenal_achete.keys())
+                        self.menuboutique.clique(pygame.mouse.get_pos(), self.bouton_boutique, self.joueur)
+                        if self.joueur.pieces < pieceav:
+                            perte= pieceav - self.joueur.pieces
+                            if hasattr(self.joueur, "retirer"):
+                                self.joueur.retirer("piece", perte)
+                        if self.joueur.munition > munav:
+                            g = self.joueur.munition - munav
+                            self.joueur.munition = munav
+                            if hasattr(self.joueur, "quantite"):
+                                reste = self.joueur.quantite("munition", g)
+                                self.joueur.munition += (g - reste)
+                                if reste > 0:
                                     px = self.joueur.rect.centerx+random.randint(-40,40)
                                     py = self.joueur.rect.centery+random.randint(-40,40)
-                                    objsur = Objet(px, py, f"img_{armeachete}", armeachete, size=(40,40))
-                                    objsur.quantite = 1
+                                    objsur = Objet(px, py, "img_munition", "munition", size=(40,40))
+                                    objsur.quantite = reste
                                     self.objets.append(objsur)
+                        for num in list(self.joueur.arsenal_achete.keys()):
+                            if num not in arseav:
+                                nom = {0: "couteau", 1: "pistolet", 2: "pompe", 3: "fusil"}
+                                armeachete = nom.get(num)
+                                if self.joueur.arsenal == -1:
+                                    self.joueur.arsenal = num
+                                if armeachete and hasattr(self.joueur, "quantite"):
+                                    reste = self.joueur.quantite(armeachete, 1)
+                                    if reste >0:
+                                        px = self.joueur.rect.centerx+random.randint(-40,40)
+                                        py = self.joueur.rect.centery+random.randint(-40,40)
+                                        objsur = Objet(px, py, f"img_{armeachete}", armeachete, size=(40,40))
+                                        objsur.quantite = 1
+                                        self.objets.append(objsur)
 
     def msj(self, t):
         mouse_pos = pygame.mouse.get_pos()
@@ -385,6 +408,36 @@ class Partie:
             if self.click and btn_menu.collidepoint(mouse_pos):
                 return "MENU"
             return "VICTOIRE"
+        
+        if self.joueur.hp <=0:
+            if self.mode!="solo":
+                coop = False
+                for j in self.joueursup.values():
+                    if not getattr(j, "mort", False):
+                        coop = True
+                if coop:
+                    self.mort = False
+                    self.spectateur = True
+                    self.inventaire = False
+                else:
+                    self.spectateur = False
+                    self.mort = True
+            else:
+                self.mort = True
+        
+        if getattr(self, "spectateur", False):
+            allie = None
+            for j in self.joueursup.values():
+                if not getattr(j, "mort", False):
+                    allie = j
+                    break
+            if allie:
+                self.joueur.rect.center = allie.rect.center
+            else:
+                self.spectateur = False
+                self.mort = True
+            if self.joueur.hp >0:
+                self.spectateur = False
             
         #Le joueur est mort
         if self.mort:
@@ -413,8 +466,7 @@ class Partie:
                 return "CONTINUER"
             return "MORT"
         
-        if not self.ouvertemenu and not self.enpause and not getattr(self,"moteurouvert", False) and not self.menusommeil.cours and not self.boutiqueouverte:
-            
+        if not self.ouvertemenu and not self.enpause and not getattr(self,"moteurouvert", False) and not self.menusommeil.cours and not self.boutiqueouverte and not getattr(self,"spectateur", False):
             #apparition des monstres après le delay
             if self.spawn_delay>0:
                 self.spawn_delay-=t
@@ -613,10 +665,30 @@ class Partie:
                             self.joueur.lumiereallumee = False 
             #Reseau
         if self.connect:
-            self.buffer, self.objets, self.joueursup = reseau.connexion(self.socket_jeu, self.joueur, self.monstres, self.objets, self.actionmap, self.mort, self.niveau_actuel, self.buffer, self.joueursup)   
+            mort = self.mort or getattr(self, "spectateur", False)
+            self.buffer, self.objets, self.joueursup = reseau.connexion(self.socket_jeu, self.joueur, self.monstres, self.objets, self.actionmap, mort, self.niveau_actuel, self.buffer, self.joueursup)   
         return "CONTINUER"
     
     def menus(self):
+        #cORPS PAS LOIN
+        self.proche = False
+        if self.mode!="solo" and not getattr(self, "spectateur", False):
+            for a in self.joueursup.values():
+                if getattr(a, "mort", False):
+                    d = math.hypot(self.joueur.rect.centerx - a.rect.centerx, self.joueur.rect.centery - a.rect.centery)
+                    if d < 80:
+                        self.proche = True
+                        s = any(c.get("type")=="seringue" for c in getattr(self.joueur, "inventaire", []))
+                        if s:
+                            txt = "Appuyez sur E pour réanimer"
+                        else:
+                            txt = "Seringue requise"
+                        txxt = self.font.render(txt, True, (255,255,255) if s else (255,100,100))
+                        rect = txxt.get_rect(center=(self.LARGEUR//2, self.HAUTEUR-120))
+                        f = pygame.Surface((rect.width+20, rect.height+10), pygame.SRCALPHA)
+                        f.fill((0,0,0,150))
+                        self.ecran.blit(f, (rect.x-10, rect.y-5))
+                        self.ecran.blit(txxt, rect)
         #Message sur ascenseur
         if self.surascenceur and not self.ouvertemenu:
             txt_rect = self.txtinteragir.get_rect(center=(self.LARGEUR//2, self.HAUTEUR-50))
@@ -713,6 +785,12 @@ class Partie:
                     pygame.event.clear()
         if self.boutiqueouverte and not self.enpause:
             self.bouton_boutique = self.menuboutique.dessiner(self.ecran, self.joueur)
+            if self.mode != "solo":
+                self.rectseringue = pygame.Rect(self.LARGEUR//2-175, self.HAUTEUR-140, 350, 45)
+                pygame.draw.rect(self.ecran, (15,45,25), self.rectseringue, border_radius=6)
+                pygame.draw.rect(self.ecran, (45,90,55), self.rectseringue, 2, border_radius=6)        
+                txtseringue = self.font.render("Seringue: 30Pcs", True, (240,255,240))
+                self.ecran.blit(txtseringue, txtseringue.get_rect(center=self.rectseringue.center))
         #Menu pause
         if self.enpause:
             boutons = self.menupause.dessiner(self.ecran)
@@ -799,6 +877,9 @@ class Partie:
         #texte mode overlay
         if not self.enpause:
             self.overlay.mode_texte(self.ecran, filtre.m_combat, self.enpause,self.inventaire)                                      
+            if getattr(self, "spectateur", False):
+                txtspectateur = self.fonttitre.render("EN ATTENTE DE REANIMATION", True, (255,60,60))
+                self.ecran.blit(txtspectateur, txtspectateur.get_rect(center=(self.LARGEUR//2, 160)))
         if self.menusommeil.cours:
             etat = self.menusommeil.dessine(self.ecran, self.joueur)
             if etat == "REVEIL":

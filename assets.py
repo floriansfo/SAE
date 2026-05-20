@@ -44,6 +44,7 @@ def charger_assets(largeur, hauteur):
     assets['img_fusil'] = texture("fusilinv.png",(80,80), transparente= True)
     assets['img_cristal'] = texture("cristal.png",(80,80), transparente= True)
     assets['img_cristal1'] = texture("cristal1.png",(80,80), transparente= True)
+    assets['img_seringue'] = texture("seringue.png",(80,80), transparente= True)
 
     assets['animationjoueur'] = [
     texture("joueur.png",(100,100), transparente=True),

@@ -7,7 +7,7 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
     #position balle
     balle = "vide"
     if len(joueur.tir) > 0:
-        balle = "_".join([f"{int(b.rect.x)}={int(b.rect.y)}={b.dx:.2f}={b.dy:.2f}" for b in joueur.tir])
+        balle = "_".join([f"{int(b.rect.x)}={int(b.rect.y)}={b.ux:.2f}={b.uy:.2f}={getattr(b, 'id',1)}" for b in joueur.tir])
     #Modification de la map sauvegarde
     modifmap = "vide"
     if len(actionmap) > 0:
@@ -22,87 +22,76 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
             etatmort = 1
         else:
             etatmort = 0
+        lumiere = 1 if getattr(joueur, "lumiereallumee", False) else 0
         #Envoie la position du joueur
-        message = f"{joueur.rect.centerx},{joueur.rect.centery},{niveau_actuel},{joueur.angle},{joueur.animation},{balle},{modifmap},{etatmort},{monstree}\n"
+        angleactuel = getattr(joueur, "angleactuel", joueur.angle)
+        message = f"{joueur.rect.centerx},{joueur.rect.centery},{niveau_actuel},{joueur.angle},{joueur.animation},{balle},{modifmap},{etatmort},{monstree},{lumiere},{angleactuel}\n"
         socket_jeu.send(message.encode('utf-8'))
-    except BlockingIOError: pass
-    except Exception as e: pass
-    #Reçoit la position de l'autre joueur
-    try:
         data = socket_jeu.recv(4096)
         if data:
             buffer += data
             if b"\n" in buffer:
-                texte = buffer.decode('utf-8')
-                paquetss = texte.split("\n")
-                dernier = paquetss[-2] #Isole dernier paquet
-                try:
+                paquet, buffer = buffer.split(b"\n", 1)
+                paquetss = paquet.decode('utf-8').split('|')
+                if len(paquetss) > 1:
                     #On traite les anciens
                     for paquet in paquetss[:-1]:
-                        if paquet:
-                            listejoueur = paquet.split('|')
-                            for j in listejoueur:
-                                if j:
-                                    jid, jinfos = j.split(':', 1)
-                                    v = jinfos.split(',')
-                                    #Si modif de carte
-                                    if len(v)>=7 and v[6] != "vide":
-                                        for m in v[6].split('_'):
-                                            coordonne, etat = m.split('=')
-                                            mx, my = coordonne.split('-')
-                                            mx, my = int(mx), int(my)
-                                            #Maintenant on ajoute la modif sur notre map
-                                            objsup = None
-                                            for obj in objets:
-                                                if obj.rect.x == mx and obj.rect.y == my:
-                                                    if etat == "S":
-                                                        objsup = obj
-                                                    elif etat == "M" and getattr(obj, "type", "") != "munition":
-                                                        #Caisse devient mun
-                                                        obj.type = "munition"
-                                                        obj.texture = assets.ASSETS['img_munition']
-                                                        obj.hitbox = obj.rect
-                                            #Objet ramassé
-                                            if objsup in objets:
-                                                objets.remove(objsup)
-                    #Met a jour pos des joueur
-                    if dernier:
-                        listejoueur = dernier.split('|')
-                        for j in listejoueur:
-                                if j:
-                                    jid, jinfos = j.split(':', 1)
-                                    v = jinfos.split(',')
-                                    if len(v) >= 9:
-                                        #Si nouveau joueur on l'ajoute au dico
-                                        if jid not in joueursup:
-                                            joueursup[jid] = Joueur(int(v[0]), int(v[1]))
-                                        #Met a jour stat
-                                        autre = joueursup[jid]
-                                        autre.rect.centerx = int(v[0])
-                                        autre.rect.centery = int(v[1])
-                                        autre.etage = int(v[2])
-                                        autre.angle = float(v[3])
-                                        autre.animation = int(v[4])
-                                        autre.mort = bool(int(v[7]))
-                                        #Lecture des balles
-                                        autre.balles_reseau = []
-                                        if v[5] != "vide":
-                                            for b in v[5].split('_'):
-                                                parti = b.split('=')
-                                                if len(parti)==4:
-                                                    ballex,balley,balledx,balledy = parti
-                                                    autre.balles_reseau.append((int(ballex), int(balley),float(balledx),float(balledy)))
-                                        #Monstres
-                                        autre.monstres_reseau = []
-                                        if v[8] != "vide":
-                                            for m in v[8].split('_'):
-                                                parts = m.split('=')
-                                                if len(parts)==3:
-                                                    mx,my,mmort = parts
-                                                    autre.monstres_reseau.append((int(mx),int(my), int(mmort)))
-                except Exception as e:
-                    pass
-                buffer = paquetss[-1].encode('utf-8')
+                        if not paquet:
+                            continue
+                        if ';'not in paquet:
+                            continue
+                        idjoueur, reste = paquet.split(';', 1)
+                        v = reste.split(',')
+                        if len(v)<10:
+                            continue
+                        if idjoueur not in joueursup:
+                            joueursup[idjoueur] = Joueur(int(v[0]), int(v[1]))
+                        autre = joueursup[idjoueur]
+                        autre = joueursup[idjoueur]
+                        autre.rect.centerx = int(v[0])
+                        autre.rect.centery = int(v[1])
+                        autre.etage = int(v[2])
+                        autre.angle = float(v[3])
+                        autre.animation = int(v[4])
+                        autre.mort = bool(int(v[7]))
+                        autre.lumiere = bool(int(v[9]))
+                        if len(v)>10:
+                            autre.angleactuel = float(v[10])
+                        #Balles
+                        if v[6] != "vide":
+                            for m in v[6].split('_'):
+                                p = m.split('=')
+                                if len(p)==2:
+                                    coordonne, etat = p
+                                    if coordonne== "REVIVE" and etat == "GO":
+                                        joueur.hp = joueur.hpmax
+                                    else:
+                                        try:            
+                                            mx, my = map(int, coordonne.split('-'))
+                                            if etat == "S":
+                                                objets = [o for o in objets if not (o.rect.x == mx and o.rect.y == my)]
+                                            elif etat == "M":
+                                                for o in objets:
+                                                    if o.rect.x == mx and o.rect.y == my:
+                                                        o.type = "munition"
+                                                        o.texture = assets.ASSETS.get('img_munition', o.texture)
+                                        except ValueError:
+                                            pass
+                        autre.balles_reseau = []
+                        if v[5] != "vide":
+                            for b in v[5].split('_'):
+                                parti = b.split('=')
+                                if len(parti)==5:
+                                    ballex,balley,balledx,balledy,balleid = parti
+                                    autre.balles_reseau.append((int(ballex), int(balley),float(balledx),float(balledy), int(balleid)))
+                        #Monstres
+                        autre.monstres_reseau = []
+                        if v[8] != "vide":
+                            for m in v[8].split('_'):
+                                parts = m.split('=')
+                                if len(parts)==3:
+                                    mx,my,mmort = parts
+                                    autre.monstres_reseau.append((int(mx),int(my), int(mmort)))
     except BlockingIOError: pass
     except Exception: pass
     return buffer, objets, joueursup

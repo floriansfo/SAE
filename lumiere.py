@@ -71,7 +71,7 @@ class Lumiere:
             self.angle = anglerota
         return self.rotation
     
-    def appliquer(self, ecran, joueur, mode_combat=False):
+    def appliquer(self, ecran, joueur, joueursup, camera_x, camera_y, niveau_actuel, mode_combat=False):
         #Si mode combat alors aps de masque noir
         if mode_combat:
             return
@@ -79,14 +79,25 @@ class Lumiere:
         if ecranl != self.largeur or ecranh != self.hauteur:
             self.redimenssione(ecranl, ecranh)
         #Active lampe apres generation map
-        cx,cy = self.largeur//2, self.hauteur//2
         self.masque.fill((*NUIT, NUIT_ALPHA))
+        cx = int(joueur.rect.centerx+camera_x)
+        cy = int(joueur.rect.centery+camera_y)
         rectrond = self.rond.get_rect(center=(cx,cy))
         self.masque.blit(self.rond, rectrond, special_flags=pygame.BLEND_RGBA_SUB)
-        if joueur.lumiereallumee:
+        if getattr(joueur, "lumiereallumee", False):
             cone = self.conerota(joueur.angleactuel)
             rectcone = cone.get_rect(center=(cx,cy))
-            #BLEND_RGBA_SUB ca retire le maque noir
             self.masque.blit(cone, rectcone, special_flags=pygame.BLEND_RGBA_SUB)
-            self.masque.blit(cone, rectcone, special_flags=pygame.BLEND_RGBA_SUB)
+        if joueursup:
+            for idjoueur, autre in joueursup.items():
+                if getattr(autre, "etage", 1) == niveau_actuel and not getattr(autre, "mort", False):
+                    ax = int(autre.rect.centerx+camera_x)
+                    ay = int(autre.rect.centery+camera_y)
+                    if -200<ax<self.largeur+200 and -200<ay<self.hauteur+200:
+                        rectautre = self.rond.get_rect(center=(ax,ay))
+                        self.masque.blit(self.rond, rectautre, special_flags=pygame.BLEND_RGBA_SUB)
+                        if getattr(autre, "lumiere", False):
+                            coneautre = self.conerota(getattr(autre, "angleactuel", autre.angle-90))
+                            rectcone = coneautre.get_rect(center=(ax,ay))
+                            self.masque.blit(coneautre, rectcone, special_flags=pygame.BLEND_RGBA_SUB)
         ecran.blit(self.masque, (0,0))

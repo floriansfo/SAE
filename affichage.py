@@ -129,16 +129,25 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
                                 adessiner.append((pos_y, monstre.larry, (ix,iy)))
                 #Dessine ses balles
                 if hasattr(autre, "balles_reseau"):
-                    for ballex, balley, balledx, balledy in autre.balles_reseau:
+                    for ballex, balley, balledx, balledy, balleid in autre.balles_reseau:
                         ix = ballex+camera_x
                         iy = balley + camera_y
                         if -ZOOM<ix<LARGEUR and -ZOOM<iy<HAUTEUR:
-                            #On crée la balle
-                            anglevol = math.atan2(balledy,balledx)
-                            angle = -math.degrees(anglevol)
-                            balleangle = pygame.transform.rotate(img_ballevol, angle)
-                            rectballe = balleangle.get_rect(center=(ix,iy))
-                            adessiner.append((rectballe.bottom, balleangle, rectballe.topleft))
+                            if balleid == 0:
+                                imgcut = assets.ASSETS.get('img_couteau')
+                                if imgcut:
+                                    anglevol = math.atan2(balledy,balledx)
+                                    angle = -math.degrees(anglevol)
+                                    cutrot = pygame.transform.rotate(imgcut, angle)
+                                    rectcut = cutrot.get_rect(center=(ix,iy))
+                                    adessiner.append((rectcut.bottom, cutrot, rectcut.topleft))
+                                else:      
+                                    #On crée la balle
+                                    anglevol = math.atan2(balledy,balledx)
+                                    angle = -math.degrees(anglevol)
+                                    balleangle = pygame.transform.rotate(img_ballevol, angle)
+                                    rectballe = balleangle.get_rect(center=(ix,iy))
+                                    adessiner.append((rectballe.bottom, balleangle, rectballe.topleft))
                 #Dessine son perso
                 xjoueur2 = autre.rect.centerx + camera_x
                 yjoueur2 = autre.rect.centery + camera_y
@@ -169,7 +178,7 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
 
     #Effet Lumiere quand activé
     if niveau_actuel != 0:
-        lumieremarche.appliquer(ecran, joueur, filtre.m_combat)
+        lumieremarche.appliquer(ecran, joueur, joueursup, camera_x, camera_y, niveau_actuel, filtre.m_combat)
     
     #Viseur adapte a sensi
     if hasattr(joueur, 'sourisx'):
