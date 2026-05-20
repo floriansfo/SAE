@@ -1,10 +1,10 @@
 import pygame
 import math
 import assets
-from prerequis import ZOOM, LARGEURMAP, HAUTEURMAP, SOL, ASCENCEUR, ETOILE, FLAMME, MUR, RACINE
+from prerequis import ZOOM, LARGEURMAP, HAUTEURMAP, SOL, ASCENCEUR, ETOILE, FLAMME, MUR, RACINE, SOL_ROUGE
 from vaisseau import BOUTIQUE, LIT
 import monstre
-
+import random
 def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monstres, joueursup, niveau_actuel, connect, lumieremarche, filtre, moteurcol=None):
     #Suivi joueur
     camera_x = (LARGEUR//2)-joueur.rect.centerx
@@ -17,10 +17,15 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
     maxy = min(HAUTEURMAP, (-camera_y+HAUTEUR)//ZOOM+2)
 
     #Image save
+    if niveau_actuel>=4:
+        img_murtop=assets.ASSETS['img_murtop_rouge']
+        img_murface=assets.ASSETS['img_murface_rouge']
+    else:
+        img_murtop=assets.ASSETS['img_murtop']
+        img_murface=assets.ASSETS['img_murface']
     img_sol=assets.ASSETS['img_sol']
+    img_sol_rouge=assets.ASSETS['img_sol_rouge']
     img_ascenseur=assets.ASSETS['img_ascenseur']
-    img_murtop=assets.ASSETS['img_murtop']
-    img_murface=assets.ASSETS['img_murface']
     img_ballevol=assets.ASSETS['img_ballevol']
     img_piece=assets.ASSETS['img_piece']
     img_etoile = assets.ASSETS['img_etoile']
@@ -40,7 +45,9 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
             screen_x = x * ZOOM + camera_x
             screen_y = y * ZOOM + camera_y
             if case == SOL and img_sol is not None:
-                ecran.blit(img_sol, (screen_x,screen_y))
+               ecran.blit(img_sol, (screen_x, screen_y))
+            elif case == SOL_ROUGE:
+                ecran.blit(img_sol_rouge, (screen_x, screen_y))
             elif case == RACINE:
                 ecran.blit(img_sol, (screen_x,screen_y))
                 ecran.blit(img_racine, (screen_x, screen_y))
@@ -67,7 +74,7 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
                 screen_y = y * ZOOM + camera_y
                 img_mur = img_murtop
                 #On regarsde si il y a du sol en dessous
-                if y+1<HAUTEURMAP and (carte[y+1][x]==SOL or carte[y+1][x] == ASCENCEUR):
+                if y+1<HAUTEURMAP and (carte[y+1][x]==SOL or carte[y+1][x] == ASCENCEUR or carte[y+1][x]==SOL_ROUGE ):
                     img_mur = img_murface
                 if img_mur:
                     adessiner.append((screen_y + ZOOM, img_mur,(screen_x,screen_y)))

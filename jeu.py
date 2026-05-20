@@ -146,8 +146,8 @@ class Partie:
                 self.objets.append(Objet((dx-2)*ZOOM, dy*ZOOM, "img_cassette", "dialogue", size =(ZOOM//2, ZOOM//2)))
             else:
                 random.seed(self.partie+chargeetage)
-                self.carte, self.salles, self.pos = generemap()
-                self.objets = generer_objets(self.carte, self.salles, self.multi)
+                self.carte, self.salles, self.pos = generemap(niveau=chargeetage)
+                self.objets = generer_objets(self.carte, self.salles, self.multi, niveau=chargeetage)
 
         #Assets et menu
         self.animationjoueur = assets.ASSETS['animationjoueur']
@@ -197,8 +197,8 @@ class Partie:
             if save["niveau_actuel"] != 0:
                 self.niveau_actuel = save["niveau_actuel"]
                 random.seed(self.partie + self.niveau_actuel)
-                self.carte, self.salles, self.pos = generemap()
-                self.objets = generer_objets(self.carte, self.salles, self.multi)
+                self.carte, self.salles, self.pos = generemap(niveau=chargeetage)
+                self.objets = generer_objets(self.carte, self.salles, self.multi, niveau=self.niveau_actuel)
                 self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(self.niveau_actuel, {}))
 
         self.monstres = []
@@ -290,6 +290,9 @@ class Partie:
                 #Ouvre inventaire
                 if event.key == pygame.K_LCTRL and not self.enpause:
                     self.inventaire= not self.inventaire
+                if event.key == pygame.K_p:
+                    self.joueur.pieces+=1000
+                    self.joueur.achatjour=0
                 #Larry spawn
                 if event.key == pygame.K_l and self.niveau_actuel != 0:
                     m= monstre.Monstre(self.joueur.rect.centerx+100, self.joueur.rect.centery, 3, 100)
@@ -745,8 +748,8 @@ class Partie:
                         elif 1<= etage_choisi <=6:
                             #Nouvelle carte
                             random.seed(self.partie+etage_choisi)
-                            self.carte, self.salles, self.pos = generemap()
-                            self.objets = generer_objets(self.carte, self.salles, self.multi)
+                            self.carte, self.salles, self.pos = generemap(niveau=etage_choisi)
+                            self.objets = generer_objets(self.carte, self.salles, self.multi, niveau=etage_choisi)
                             self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(etage_choisi, {}))
                     self.niveau_actuel = etage_choisi
                     #élimine les monstres de l'étage.

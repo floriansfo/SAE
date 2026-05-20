@@ -99,7 +99,7 @@ class Monstre:
     
 class Titan(Monstre):
     def __init__(self,x,y):
-        super().__init__(x,y)
+        super().__init__(x,y, speed=1, hp=999999)
         self.rect = pygame.Rect(x,y,80,80) #Hitbox
         self.hitbox = self.rect.inflate(-20,-20)
         self.hp = 99999
@@ -147,7 +147,7 @@ def spawn_metage(niveau, salles):
     monstres=[]
     #choix des nv de spawn des monstres
     if niveau==1:
-        nb_slime=5
+        nb_slime=6
         nb_mimique=0
         nb_nyctobat=0
         nb_errant=0

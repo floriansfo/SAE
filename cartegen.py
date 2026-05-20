@@ -35,7 +35,9 @@ class Objet:
         clecache = (name, size)
         #Si on redimensionne pas
         if clecache not in Objet.texture_cache:
-            image = assets.ASSETS.get(name)
+            image= assets.ASSETS['img_deco'].get(name)
+            if image is None:
+                image = assets.ASSETS.get(name)
             if image is not None:
                 #Redimensionner et sauvegarder
                 Objet.texture_cache[clecache] = pygame.transform.scale(image, (taillew, tailleh))
@@ -79,13 +81,26 @@ def tango(grille, salles, poscristal = None):
         cristalpos = (sx+ZOOM//4, sy-ZOOM//4)
         return objet, cristalpos
 
-def generer_objets(grille, salles, multi = 1.0):
+def generer_objets(grille, salles, multi = 1.0, niveau=1):
     objets = []
     #Dictionnaire des types et probabilité d'affichage des objets
     types = [{'nom': 'img_caisse', 'type': 'meuble', 'proba': 0.2},
             {'nom': 'img_plante', 'type': 'plante', 'proba': 0.2},
             {'nom': 'img_meuble', 'type': 'meuble', 'proba': 0.2},
             {'nom': 'img_munition', 'type': 'munition', 'proba':0.1}]
+    if niveau>=2:
+        types.append({'nom':'rock1','type': 'meuble', 'proba': 0.15 })
+        types.append({'nom':'Veins1','type': 'meuble', 'proba': 0.15 })
+    if niveau>=3:
+        types.append({'nom':'Veins2','type': 'meuble', 'proba': 0.15 })
+    if niveau>=4:
+        types.append({'nom':'rock2','type': 'meuble', 'proba': 0.15 })
+        types.append({'nom':'Veins3','type': 'meuble', 'proba': 0.15 })
+    if niveau >=5:
+        types.append({'nom':'plant1','type': 'meuble', 'proba': 0.15 })
+    if niveau >=6:
+        types.append({'nom':'bones','type': 'meuble', 'proba': 0.15 })
+        types.append({'nom':'plant2','type': 'meuble', 'proba': 0.15 })
     
     for salle in salles:
         for y in range(salle.top, salle.bottom):
@@ -120,17 +135,23 @@ def generer_objets(grille, salles, multi = 1.0):
     return objets
 
 #couloir verticale
-def c_vertical(grille, y1,y2,x):
+def c_vertical(grille, y1,y2,x, niveau=1):
     for y in range(min(y1,y2),max(y1,y2)+1):
-        grille[y][x]=SOL
+        if random.random()<niveau/6:
+            grille[y][x]=SOL_ROUGE
+        else:
+            grille[y][x]=SOL
 
 #couloir horizontal
-def c_horizontal(grille, x1,x2,y):
+def c_horizontal(grille, x1,x2,y, niveau=1):
     for x in range(min(x1,x2),max(x1,x2)+1):
-        grille[y][x]=SOL
+        if random.random()<niveau/6:
+            grille[y][x]=SOL_ROUGE
+        else:
+            grille[y][x]=SOL
 
 #generation map
-def generemap():
+def generemap(niveau=1):
     #Carte rempli de vide
     grille = [[VIDE for i in range(LARGEURMAP)] for k in range(HAUTEURMAP)]
     salles=[]
@@ -175,7 +196,9 @@ def generemap():
             for v in range(nouvelle_salle.left, nouvelle_salle.right):
                 #15% de mettre une racine
                 if random.random() < 0.05:
-                    grille[k][v] = 9
+                    grille[k][v] = RACINE
+                elif random.random()< niveau/6:
+                    grille[k][v] = SOL_ROUGE
                 else:
                     grille[k][v] = SOL
         #Connecte les salle par couloir
@@ -187,11 +210,11 @@ def generemap():
             x2, y2 = int(proc[0]), int(proc[1])
             #On choisis alétoirement si vertical ou pas
             if random.choice([True, False]):
-                c_horizontal(grille, x1, x2, y1)
-                c_vertical(grille, y1, y2, x2)
+                c_horizontal(grille, x1, x2, y1, niveau)
+                c_vertical(grille, y1, y2, x2, niveau)
             else:
-                c_vertical(grille, y1, y2, x1)
-                c_horizontal(grille, x1, x2, y2)
+                c_vertical(grille, y1, y2, x1, niveau)
+                c_horizontal(grille, x1, x2, y2, niveau)
     
     #Placement du point de depart de l'ascnecer
     salle_depart = salles[0]
@@ -205,6 +228,6 @@ def generemap():
             if grille[y][x]==VIDE:
                 #On regarde si case vide touche un sol alors devient MUR
                 voisin = False
-                if grille[y+1][x]==SOL or grille[y-1][x]==SOL or grille[y][x+1]==SOL or grille[y][x-1]==SOL:
+                if grille[y+1][x] in (SOL,SOL_ROUGE) or grille[y-1][x]in (SOL, SOL_ROUGE) or grille[y][x+1]in (SOL, SOL_ROUGE) or grille[y][x-1]in (SOL, SOL_ROUGE):
                     grille_fin[y][x] = MUR
     return grille_fin, salles, salles[0].center
