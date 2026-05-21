@@ -47,7 +47,7 @@ class Objet:
         self.texture=Objet.texture_cache[clecache]
         self.type = type  
         #Reduction hitbox si c'est un meuble
-        if type == "meuble":
+        if type in ("meuble", "deco"):
             self.hitbox = self.rect.inflate(-taillew//4,-tailleh//4)
         else:
             self.hitbox = self.rect.copy()
@@ -83,30 +83,44 @@ def tango(grille, salles, poscristal = None):
 
 def generer_objets(grille, salles, multi = 1.0, niveau=1):
     objets = []
+    densité=(niveau)*0.07
     #Dictionnaire des types et probabilité d'affichage des objets
-    types = [{'nom': 'img_caisse', 'type': 'meuble', 'proba': 0.2},
-            {'nom': 'img_plante', 'type': 'plante', 'proba': 0.2},
-            {'nom': 'img_meuble', 'type': 'meuble', 'proba': 0.2},
-            {'nom': 'img_munition', 'type': 'munition', 'proba':0.1}]
+    types = [{'nom': 'img_caisse', 'type': 'meuble', 'proba': 0.2, 'taille':ZOOM//2 },
+            {'nom': 'img_plante', 'type': 'plante', 'proba': 0.2, 'taille':ZOOM//2},
+            {'nom': 'img_meuble', 'type': 'meuble', 'proba': 0.2, 'taille':ZOOM//2},
+            {'nom': 'img_munition', 'type': 'munition', 'proba':0.1 , 'taille':ZOOM//2}, ]
     if niveau>=2:
-        types.append({'nom':'rock1','type': 'meuble', 'proba': 0.15 })
-        types.append({'nom':'Veins1','type': 'meuble', 'proba': 0.15 })
+        types.append({'nom':'rock1','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM })
+        types.append({'nom':'Veins1','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM})
     if niveau>=3:
-        types.append({'nom':'Veins2','type': 'meuble', 'proba': 0.15 })
+        types.append({'nom':'Eye_plant1','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM})
+        types.append({'nom':'Eye_plant2','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM})
+        types.append({'nom':'Veins2','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM})
     if niveau>=4:
-        types.append({'nom':'rock2','type': 'meuble', 'proba': 0.15 })
-        types.append({'nom':'Veins3','type': 'meuble', 'proba': 0.15 })
+        types.append({'nom':'Eye_plant3','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM })
+        types.append({'nom':'rock2','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM})
+        types.append({'nom':'Veins3','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM})
+        types.append({'nom':'Jaws1','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM})
+        types.append({'nom':'Fetus1','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM})
     if niveau >=5:
-        types.append({'nom':'plant1','type': 'meuble', 'proba': 0.15 })
+        types.append({'nom':'plant1','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM})
+        types.append({'nom':'Jaws2','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'Jaws3','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'Jaws4','type': 'meuble', 'proba': 0.15 +densité,'taille':ZOOM})
+        types.append({'nom':'Fetus2','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
     if niveau >=6:
-        types.append({'nom':'bones','type': 'meuble', 'proba': 0.15 })
-        types.append({'nom':'plant2','type': 'meuble', 'proba': 0.15 })
+        types.append({'nom':'Meat1','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'Meat2','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'Meat3','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'Meat4','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'bones','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'plant2','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
     
     for salle in salles:
         for y in range(salle.top, salle.bottom):
             for x in range(salle.left, salle.right):
                 #On place des objets que sur les sols
-                if grille[y][x] == SOL:
+                if grille[y][x] == SOL or grille[y][x] == SOL_ROUGE :
                     #Detecte les cote du mur
                     cotes = []
                     if grille[y+1][x] == MUR:
@@ -122,7 +136,7 @@ def generer_objets(grille, salles, multi = 1.0, niveau=1):
                         t = random.choice(types)
                         #Verifie proba d'apparition
                         if random.random() < t['proba']:
-                            taillemun = (ZOOM//2, ZOOM//2)
+                            taillemun = (t['taille'], t['taille'])
                             cotebon = random.choice(cotes)
                             #Creation de l'objet
                             obj = Objet(x*ZOOM, y*ZOOM, t['nom'], t['type'], size=taillemun, cote=cotebon)
