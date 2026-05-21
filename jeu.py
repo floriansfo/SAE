@@ -587,8 +587,8 @@ class Partie:
                     s["delay"] -= 1
                     solreste.append(s)
                     continue
-                if o['etage']==self.niveau_actuel and self.joueur.rect.colliderect(s['rect']):
-                    reste = self.joueur.quantite(o['type'], o['quantite'])
+                if s['etage']==self.niveau_actuel and self.joueur.rect.colliderect(s['rect']):
+                    reste = self.joueur.quantite(s['type'], s['quantite'])
                     if isinstance(reste, int) and reste>0:
                         s['quantite'] = reste
                         solreste.append(s)
@@ -596,9 +596,7 @@ class Partie:
                     solreste.append(s)
             self.objsol = solreste
             toutvaisseau = (self.niveau_actuel==0) and all(getattr(j,'dsvaisseau', False) for j in self.joueursup.values())
-            self.joueur.dsvaisseau = (self.niveau_actuel == 0)
-            if not toutvaisseau or not self.connect:
-                self.heure += t*10                      
+            self.joueur.dsvaisseau = (self.niveau_actuel == 0)                   
             #Monstre loot piece
             monstresvivant = []
             for m in self.monstres:
@@ -689,11 +687,14 @@ class Partie:
             #Reseau
         if self.connect:
             mort = self.mort or getattr(self, "spectateur", False)
-            self.buffer, self.objets, self.joueursup = reseau.connexion(self.socket_jeu, self.joueur, self.monstres, self.objets, self.actionmap, mort, self.niveau_actuel, self.buffer, self.joueursup)   
+            self.buffer, self.objets, self.joueursup, heureres, jourres = reseau.connexion(self.socket_jeu, self.joueur, self.monstres, self.objets, self.actionmap, mort, self.niveau_actuel, self.buffer, self.joueursup, self.heure, self.jour)   
+            if self.mode == "client" and heureres is not None:
+                self.heure = heureres
+                self.jour = jourres
             if hasattr(self.joueur, 'objsol'):
                 for o in self.joueur.objsol:
                     self.objsol.append({'type':o['type'], 'quantite':o['quantite'], 'rect':pygame.Rect(o['x']-20, o['y']-20, 40, 40), 'etage':o['etage'], 'delay':60})
-                    self.joueur.objsol.clear()
+                self.joueur.objsol.clear()
         return "CONTINUER"
     
     def menus(self):

@@ -2,7 +2,7 @@ import pygame
 import assets
 from joueur import Joueur
 
-def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actuel, buffer, joueursup):
+def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actuel, buffer, joueursup, heure = 0, jour=1):
     #Reseaux
     #position balle
     balle = "vide"
@@ -17,9 +17,11 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
     if len(monstres)>0:
         monstree = "_".join([f"{int(m.rect.x)}={int(m.rect.y)}={int(m.mort)}" for m in monstres])
     objetsol = "vide"
-    if hasattr(joueur, 'objetsol') and len(joueur.objetsol) > 0:
-        objetsol = "_".join([f"{o['type']}={o['quantite']}={o['x']}={o['y']}={o['etage']}" for o in joueur.objetsol])
-        joueur.objetsol.clear()
+    if hasattr(joueur, 'objsol') and len(joueur.objsol) > 0:
+        objetsol = "_".join([f"{o['type']}={o['quantite']}={o['x']}={o['y']}={o['etage']}" for o in joueur.objsol])
+        joueur.objsol.clear()
+    heureres = None
+    jourres = None
     try:
         #Mort ou pas
         if mort:
@@ -30,7 +32,7 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
         dsvaisseau = 1 if getattr(joueur, "dsvaisseau", False) else 0
         #Envoie la position du joueur
         angleactuel = getattr(joueur, "angleactuel", joueur.angle)
-        message = f"{joueur.rect.centerx},{joueur.rect.centery},{niveau_actuel},{joueur.angle},{joueur.animation},{balle},{modifmap},{etatmort},{monstree},{lumiere},{angleactuel},{objetsol},{dsvaisseau}\n"
+        message = f"{joueur.rect.centerx},{joueur.rect.centery},{niveau_actuel},{joueur.angle},{joueur.animation},{balle},{modifmap},{etatmort},{monstree},{lumiere},{angleactuel},{objetsol},{dsvaisseau},{heure},{jour}\n"
         socket_jeu.send(message.encode('utf-8'))
         data = socket_jeu.recv(4096)
         if data:
@@ -71,6 +73,13 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
                                     joueur.objsol.append({'type': parts[0], 'quantite': int(parts[1]), 'x': int(parts[2]), 'y': int(parts[3]), 'etage': int(parts[4])})
                         if len(v)>12:
                             autre.dsvaisseau = bool(int(v[12]))
+                        if len(v)>13:
+                            try:
+                                heureres = float(v[13])
+                                jourres = int(v[14])
+                            except:
+                                heureres = None
+                                jourres = None
                         #Balles
                         if v[6] != "vide":
                             for m in v[6].split('_'):
@@ -108,4 +117,4 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
                                     autre.monstres_reseau.append((int(mx),int(my), int(mmort)))
     except BlockingIOError: pass
     except Exception: pass
-    return buffer, objets, joueursup
+    return buffer, objets, joueursup, heureres, jourres
