@@ -561,6 +561,19 @@ class Partie:
                 elif obj.type == "dialogue" and self.joueur.rect.colliderect(obj.rect):
                     self.dialogueouvert = True
                     objetsreste.append(obj)
+                elif obj.type == "piece" and self.joueur.rect.colliderect(obj.rect):
+                    qte = getattr(obj, "quantite", 1)
+                    reste = self.joueur.quantite("piece", qte)
+                    ga = qte - reste
+                    self.joueur.pieces += ga
+                    if reste > 0:
+                        obj.quantite = reste
+                        objetsreste.append(obj)
+                    else:
+                        k = f"{obj.rect.x}-{obj.rect.y}"
+                        self.actionmap[k] = "S"
+                        self.modifs_etage.setdefault(self.niveau_actuel, {})[k] = "S"
+                        self.sonmun.play()                
                 else:
                     objetsreste.append(obj)
             self.objets = objetsreste #Met a jour les objets restants
@@ -581,22 +594,10 @@ class Partie:
                 else:
                     piecesreste.append(p)
             self.piecessol = piecesreste #Met a jour les pieces restantes
-            solreste = []
-            for s in self.objsol:
-                if s.get("delay", 0) > 0:
-                    s["delay"] -= 1
-                    solreste.append(s)
-                    continue
-                if s['etage']==self.niveau_actuel and self.joueur.rect.colliderect(s['rect']):
-                    reste = self.joueur.quantite(s['type'], s['quantite'])
-                    if isinstance(reste, int) and reste>0:
-                        s['quantite'] = reste
-                        solreste.append(s)
-                else:
-                    solreste.append(s)
-            self.objsol = solreste
-            toutvaisseau = (self.niveau_actuel==0) and all(getattr(j,'dsvaisseau', False) for j in self.joueursup.values())
-            self.joueur.dsvaisseau = (self.niveau_actuel == 0)                   
+            self.joueur.dsvaisseau = (self.niveau_actuel == 0)
+            toutvaisseau = self.joueur.dsvaisseau and all(getattr(j,'dsvaisseau', False) for j in self.joueursup.values())
+            if not toutvaisseau or not self.connect:
+                self.heure += 60*t
             #Monstre loot piece
             monstresvivant = []
             for m in self.monstres:
@@ -671,19 +672,17 @@ class Partie:
             if self.joueur.hp <=0 and not self.mort:
                 self.mort = True
             #Heure
-            if self.niveau_actuel != 0:
-                self.heure += 60*t
-                if self.heure >= 28800:
-                    if not hasattr(self.joueur, "timernuit"):
-                        self.timernuit = 0
-                    self.timernuit += 60*t
-                    if self.timernuit >= 120:
-                        self.timernuit = 0
-                        self.joueur.hp = self.joueur.hp - 5
-                        if self.joueur.hp <= 0:
-                            self.mort = True
-                            self.joueur.possedelampe = False
-                            self.joueur.lumiereallumee = False 
+            if self.heure >= 28800:
+                if not hasattr(self.joueur, "timernuit"):
+                    self.timernuit = 0
+                self.timernuit += 60*t
+                if self.timernuit >= 120:
+                    self.timernuit = 0
+                    self.joueur.hp = self.joueur.hp - 5
+                    if self.joueur.hp <= 0:
+                        self.mort = True
+                        self.joueur.possedelampe = False
+                        self.joueur.lumiereallumee = False 
             #Reseau
         if self.connect:
             mort = self.mort or getattr(self, "spectateur", False)
@@ -974,10 +973,10 @@ class Partie:
                         objsur.quantite = qte
                         objsur.delay = 60
                         self.objets.append(objsur)
-                        if self.connect:
-                            if not hasattr(self.joueur, "objsol"):
-                                self.joueur.objsol = []
-                            self.joueur.objsol.append({"type": titem, "quantite": qte, "x": px, "y": py, "etage": self.niveau_actuel})
+                    if self.connect:
+                        if not hasattr(self.joueur, "objetsol"):
+                            self.joueur.objetsol = []
+                        self.joueur.objetsol.append({"type": titem, "quantite": qte, "x": px, "y": py, "etage": self.niveau_actuel})
         pygame.display.flip()
         return "CONTINUER"
     
