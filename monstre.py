@@ -153,21 +153,21 @@ def spawn_metage(niveau, salles):
         nb_errant=0
         nb_xeno=0
     elif niveau==2:
-        nb_slime=7
-        nb_mimique=1
-        nb_nyctobat=3
-        nb_errant=1
-        nb_xeno=0
+        nb_slime=8
+        nb_mimique=14
+        nb_nyctobat=14
+        nb_errant=14
+        nb_xeno=14
     elif niveau==3:
-        nb_slime=9
+        nb_slime=10
         nb_mimique=2
-        nb_nyctobat=1
+        nb_nyctobat=3
         nb_errant=0
         nb_xeno=0
     elif niveau==4:
-        nb_slime=8
+        nb_slime=12
         nb_mimique=2
-        nb_nyctobat=2
+        nb_nyctobat=4
         nb_errant=1
         nb_xeno=0
     elif niveau==5:

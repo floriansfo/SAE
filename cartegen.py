@@ -90,31 +90,32 @@ def generer_objets(grille, salles, multi = 1.0, niveau=1):
             {'nom': 'img_meuble', 'type': 'meuble', 'proba': 0.2, 'taille':ZOOM//2},
             {'nom': 'img_munition', 'type': 'munition', 'proba':0.1 , 'taille':ZOOM//2}, ]
     if niveau>=2:
-        types.append({'nom':'rock1','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM })
-        types.append({'nom':'Veins1','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM})
+        types.append({'nom':'rock1','type': 'deco', 'proba': 0.3+densité, 'taille':ZOOM })
+        types.append({'nom':'Veins1','type': 'deco', 'proba': 0.3+densité, 'taille':ZOOM})
     if niveau>=3:
-        types.append({'nom':'Eye_plant1','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM})
-        types.append({'nom':'Eye_plant2','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM})
-        types.append({'nom':'Veins2','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM})
+        types.append({'nom':'Eye_plant1','type': 'deco', 'proba': 0.3+densité, 'taille':ZOOM})
+        types.append({'nom':'Eye_plant2','type': 'deco', 'proba': 0.3+densité,'taille':ZOOM})
+        types.append({'nom':'Veins2','type': 'deco', 'proba': 0.3+densité,'taille':ZOOM})
     if niveau>=4:
-        types.append({'nom':'Eye_plant3','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM })
-        types.append({'nom':'rock2','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM})
-        types.append({'nom':'Veins3','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM})
-        types.append({'nom':'Jaws1','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM})
-        types.append({'nom':'Fetus1','type': 'meuble', 'proba': 0.15+densité, 'taille':ZOOM})
+        types.append({'nom':'Eye_plant3','type': 'deco', 'proba': 0.15+densité, 'taille':ZOOM })
+        types.append({'nom':'rock2','type': 'deco', 'proba': 0.3+densité, 'taille':ZOOM})
+        types.append({'nom':'Veins3','type': 'deco', 'proba': 0.3+densité, 'taille':ZOOM})
+        types.append({'nom':'Jaws1','type': 'deco', 'proba': 0.15+densité, 'taille':ZOOM})
+        types.append({'nom':'Fetus1','type': 'deco', 'proba': 0.15+densité, 'taille':ZOOM})
     if niveau >=5:
-        types.append({'nom':'plant1','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM})
-        types.append({'nom':'Jaws2','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
-        types.append({'nom':'Jaws3','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
-        types.append({'nom':'Jaws4','type': 'meuble', 'proba': 0.15 +densité,'taille':ZOOM})
-        types.append({'nom':'Fetus2','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'plant1','type': 'deco', 'proba': 0.15+densité,'taille':ZOOM})
+        types.append({'nom':'Jaws2','type': 'deco', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'Jaws3','type': 'deco', 'proba': 0.3+densité,'taille':ZOOM })
+        types.append({'nom':'Jaws4','type': 'deco', 'proba': 0.15 +densité,'taille':ZOOM})
+        types.append({'nom':'Fetus2','type': 'deco', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'Oeuil','type': 'deco', 'proba': 0.15+densité,'taille':ZOOM })
     if niveau >=6:
-        types.append({'nom':'Meat1','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
-        types.append({'nom':'Meat2','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
-        types.append({'nom':'Meat3','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
-        types.append({'nom':'Meat4','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
-        types.append({'nom':'bones','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
-        types.append({'nom':'plant2','type': 'meuble', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'Meat1','type': 'deco', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'Meat2','type': 'deco', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'Meat3','type': 'deco', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'Meat4','type': 'deco', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'bones','type': 'deco', 'proba': 0.15+densité,'taille':ZOOM })
+        types.append({'nom':'plant2','type': '', 'proba': 0.15+densité,'taille':ZOOM })
     
     for salle in salles:
         for y in range(salle.top, salle.bottom):

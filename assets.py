@@ -8,7 +8,7 @@ def charger_assets(largeur, hauteur):
     #Charger les textures
     #sol
     assets['img_sol'] = texture("images/sol.png",(Z,Z))
-    assets['img_sol_rouge']= texture("sol/sol_rouge.png", (Z,Z))
+    assets['img_sol_rouge']= texture("sol/solv2.png", (Z,Z))
     assets['img_ascenseur'] = texture("images/ascenseur.png",(Z,Z))
     assets['img_murface'] = texture("images/murface.png", (Z, Z))
     assets['img_murtop'] = texture("images/murtop.png", (Z, Z))
@@ -60,6 +60,7 @@ def charger_assets(largeur, hauteur):
         'Meat2':texture("decoration/Meat_flower_shadow2_1.png",(Z,Z), transparente=True),
         'Meat3':texture("decoration/Meat_flower_shadow2_2.png",(Z,Z), transparente=True),
         'Meat4':texture("decoration/Meat_flower_shadow2_3.png",(Z,Z), transparente=True),
+        'Oeuil':texture("decoration/Bones_shadow1_1.png",(Z,Z), transparente=True),
     }
     assets['img_arme'] = {
         0: texture("images/couteau.png",(250,80), transparente= True),
