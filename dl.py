@@ -9,7 +9,7 @@ def ecran_chargement(fenetre, WIDTH, HEIGHT):
     BLACK = (0, 0, 0)
     WHITE = (255, 255, 255)
     # Police
-    FONT_TITLE = pygame.font.Font("ressource/police.ttf", 70)   
+    FONT_TITLE = pygame.font.Font("ressource/fonts/police.ttf", 70)   
     fenetre.fill(BLACK)
     # Afficher le logo
     fenetre.blit(logo, (0, 0))

@@ -20,7 +20,7 @@ logo = pygame.transform.scale(logoori, (1024, 1024))
 centre_logo = logo.get_rect(center=(WIDTH//2, HEIGHT//2))
 
 #son intro
-intro_son= pygame.mixer.Sound("ressource/introduction.wav")
+intro_son= pygame.mixer.Sound("ressource/audio/introduction.wav")
 
 def demarrage():
     clock = pygame.time.Clock()

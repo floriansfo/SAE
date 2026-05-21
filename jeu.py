@@ -61,7 +61,7 @@ class Partie:
                 print("Mode Hote: Envoi carte au serveur {self.IPSERV}...")
                 #Ecran d'attente
                 self.ecran.fill((0,0,0))
-                font = pygame.font.SysFont("ressource/police.ttf", 36)
+                font = pygame.font.SysFont("ressource/fonts/police.ttf", 36)
                 text = font.render("Generation de la carte...", True, (255,255,255))
                 self.ecran.blit(text, (self.LARGEUR//2 - 200, self.HAUTEUR//2))
                 pygame.display.flip()
@@ -204,8 +204,8 @@ class Partie:
                 self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(self.niveau_actuel, {}))
 
         self.monstres = []
-        self.font = pygame.font.Font("ressource/police.ttf",24)
-        self.fonttitre = pygame.font.Font("ressource/police.ttf",36)
+        self.font = pygame.font.Font("ressource/fonts/police.ttf",24)
+        self.fonttitre = pygame.font.Font("ressource/fonts/police.ttf",36)
         self.fondu = 255
         self.txtvictoire = self.font.render("VICTOIRE RETOUR SUR TERRE", True, (0,255,0))
         self.txtgameover = self.font.render("GAME OVER", True, (255,0,0))

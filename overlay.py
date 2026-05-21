@@ -30,10 +30,10 @@ class Overlay:
         #Echelle image
         self.echelle = self.H/1080.0
         #Redimensionne les polices
-        self.police = pygame.font.Font("ressource/police.ttf", max(12, int(24*self.echelle)))
-        self.arme_police = pygame.font.Font("ressource/police.ttf", max(16, int(40*self.echelle)))
-        self.policemode = pygame.font.Font("ressource/police.ttf", max(24, int(48*self.echelle)))
-        self.policeoxy = pygame.font.Font("ressource/titre.ttf", max(12, int(24*self.echelle)))
+        self.police = pygame.font.Font("ressource/fonts/police.ttf", max(12, int(24*self.echelle)))
+        self.arme_police = pygame.font.Font("ressource/fonts/police.ttf", max(16, int(40*self.echelle)))
+        self.policemode = pygame.font.Font("ressource/fonts/police.ttf", max(24, int(48*self.echelle)))
+        self.policeoxy = pygame.font.Font("ressource/fonts/titre.ttf", max(12, int(24*self.echelle)))
         #Redimensionne les images
         self.imgmode = pygame.transform.scale(self.imgmodebase, (int(self.imgmodebase.get_width()*self.echelle), int(self.imgmodebase.get_height()*self.echelle)))
         self.imginventaire = pygame.transform.scale(self.imginventairebase, (int(self.imginventairebase.get_width()*self.echelle), int(self.imginventairebase.get_height()*self.echelle)))
@@ -229,7 +229,7 @@ class Overlay:
         my = int(20*self.echelle)
         sx = rect.x+int(80*self.echelle)
         sy = rect.y+int(80*self.echelle)
-        police = pygame.font.Font("ressource/police.ttf", max(16, int(22*self.echelle)))
+        police = pygame.font.Font("ressource/fonts/police.ttf", max(16, int(22*self.echelle)))
         action = None
         #Cree les 9 cases
         for i, case in enumerate(joueur.inventaire):

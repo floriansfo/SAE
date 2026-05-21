@@ -12,8 +12,8 @@ class Moteur:
     def __init__(self, largeur, hauteur):
         self.L = largeur
         self.H = hauteur
-        self.texte = pygame.font.Font("ressource/police.ttf", 20)
-        self.titre = pygame.font.Font("ressource/police.ttf", 30)
+        self.texte = pygame.font.Font("ressource/fonts/police.ttf", 20)
+        self.titre = pygame.font.Font("ressource/fonts/police.ttf", 30)
         self.moteur = pygame.Rect(self.L//2-350, self.H//2-200, 450,400)
         self.trou = pygame.Rect(self.L//2-200, self.H//2-60, 120, 120)
         self.inventaire = pygame.Rect(self.L//2+150, self.H//2-100, 200,200)
@@ -33,8 +33,8 @@ class Moteur:
         self.H = H
         self.echelle = self.H/1080.0
         #Police
-        self.texte = pygame.font.Font("ressource/police.ttf", max(12, int(20*self.echelle)))
-        self.titre = pygame.font.Font("ressource/police.ttf", max(18, int(30*self.echelle)))
+        self.texte = pygame.font.Font("ressource/fonts/police.ttf", max(12, int(20*self.echelle)))
+        self.titre = pygame.font.Font("ressource/fonts/police.ttf", max(18, int(30*self.echelle)))
         #Rectangle moteur
         ml,mh = int(450*self.echelle), int(400*self.echelle)
         self.moteur = pygame.Rect(self.L//2-int(350*self.echelle), self.H//2-int(200*self.echelle),ml,mh)

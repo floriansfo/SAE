@@ -22,9 +22,9 @@ class Boutique:
     def __init__(self, largeur, hauteur):
         self.L = largeur
         self.H = hauteur
-        self.titre = pygame.font.Font("ressource/titre.ttf", 32)
-        self.normal = pygame.font.Font("ressource/police.ttf", 20)
-        self.petit = pygame.font.Font("ressource/police.ttf", 16)
+        self.titre = pygame.font.Font("ressource/fonts/titre.ttf", 32)
+        self.normal = pygame.font.Font("ressource/fonts/police.ttf", 20)
+        self.petit = pygame.font.Font("ressource/fonts/police.ttf", 16)
         self.cache()
         
     def update(self, L, H):

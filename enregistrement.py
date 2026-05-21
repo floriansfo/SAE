@@ -13,8 +13,8 @@ DIALOGUE = {
 
 class Enregistrement:
     def __init__(self, largeur, hauteur):
-        self.titre = pygame.font.Font("ressource/polices.ttf", 25)
-        self.texte = pygame.font.Font("ressource/polices.ttf", 20)
+        self.titre = pygame.font.Font("ressource/fonts/polices.ttf", 25)
+        self.texte = pygame.font.Font("ressource/fonts/polices.ttf", 20)
         self.ouvert = False
         self.dialogue = 0
         self.texteentier = ""

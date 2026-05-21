@@ -37,14 +37,14 @@ class Button:
 
 def rejoindre(fenetre, L, H):
     clock = pygame.time.Clock()
-    imgori = pygame.image.load("ressource/option.png").convert()
+    imgori = pygame.image.load("ressource/images/option.png").convert()
     imgfond = pygame.transform.scale(imgori, (L,H))
 
     #Taille texte et police
     taille_titre = max(30, int(H*0.08))
     taille_texte = max(15, int(H*0.035))
-    fontitle = pygame.font.Font("ressource/titre.ttf", taille_titre)
-    fonttexte = pygame.font.Font("ressource/police.ttf", taille_texte)
+    fontitle = pygame.font.Font("ressource/fonts/titre.ttf", taille_titre)
+    fonttexte = pygame.font.Font("ressource/fonts/police.ttf", taille_texte)
 
     #Parametre barre IP
     ip = "51.38.115.211"
@@ -89,8 +89,8 @@ def rejoindre(fenetre, L, H):
                 #Taile texte
                 taille_titre = max(30, int(H*0.08))
                 taille_texte = max(15, int(H*0.035))
-                fontitle = pygame.font.Font("ressource/titre.ttf", taille_titre)
-                fonttexte = pygame.font.Font("ressource/police.ttf", taille_texte)
+                fontitle = pygame.font.Font("ressource/fonts/titre.ttf", taille_titre)
+                fonttexte = pygame.font.Font("ressource/fonts/police.ttf", taille_texte)
         if btn_retour.is_clicked(pos, clique):
             return None
         if btn_valider.is_clicked(pos, clique):

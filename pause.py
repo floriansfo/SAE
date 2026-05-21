@@ -13,7 +13,7 @@ class EcranPause:
         self.largeur = largeur
         self.hauteur = hauteur
         #Police
-        police = os.path.join("ressource", "police.ttf")
+        police = os.path.join("ressource", "fonts/police.ttf")
         self.font_titre = pygame.font.Font(police, 60)
         self.font_option = pygame.font.Font(police, 30)
         #Definition boutons    

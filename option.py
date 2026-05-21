@@ -105,7 +105,7 @@ def option_menu(fenetre, largeur, hauteur):
     pleinecran = (fenetre.get_flags() & pygame.FULLSCREEN) != 0
 
     #Charge image de fond
-    imgori = pygame.image.load("ressource/option.png").convert()
+    imgori = pygame.image.load("ressource/images/option.png").convert()
     imgfond = pygame.transform.scale(imgori, (L, H))
 
     #Créer les boutons
@@ -151,8 +151,8 @@ def option_menu(fenetre, largeur, hauteur):
         #Texte se regle en fonction de la res
         taille_titre = max(30, int(newhauteur*0.08))
         taille_texte = max(15, int(newhauteur*0.03))
-        fonttitle = pygame.font.Font("ressource/titre.ttf", taille_titre)
-        fonttext = pygame.font.Font("ressource/police.ttf", taille_texte)
+        fonttitle = pygame.font.Font("ressource/fonts/titre.ttf", taille_titre)
+        fonttext = pygame.font.Font("ressource/fonts/police.ttf", taille_texte)
         #Bouton se regle en fontion de res
         btnw = max(250, int(newlargeur*0.35))
         btnh = max(40, int(newhauteur*0.07))

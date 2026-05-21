@@ -10,8 +10,8 @@ class Sommeil:
     def __init__(self, largeur, hauteur):
         self.L = largeur
         self.H = hauteur
-        self.fonttitre = pygame.font.Font("ressource/titre.ttf", 36)
-        self.fonttexte = pygame.font.Font("ressource/police.ttf", 22)
+        self.fonttitre = pygame.font.Font("ressource/fonts/titre.ttf", 36)
+        self.fonttexte = pygame.font.Font("ressource/fonts/police.ttf", 22)
         self.ombre = pygame.Surface((self.L, self.H)).convert()
         self.ombre.fill((0,0,0))
         self.cours = False

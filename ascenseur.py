@@ -19,9 +19,9 @@ class Ascenseur:
         self.H = H
         self.echelle = self.H/1080.0
         #police
-        self.font = pygame.font.Font("ressource/police.ttf", max(12, int(18*self.echelle)))
-        self.title = pygame.font.Font("ressource/police.ttf", max(18, int(31*self.echelle)))
-        self.sous_titre = pygame.font.Font("ressource/police.ttf", max(14, int(21*self.echelle)))
+        self.font = pygame.font.Font("ressource/fonts/police.ttf", max(12, int(18*self.echelle)))
+        self.title = pygame.font.Font("ressource/fonts/police.ttf", max(18, int(31*self.echelle)))
+        self.sous_titre = pygame.font.Font("ressource/fonts/police.ttf", max(14, int(21*self.echelle)))
         #taille menu
         self.menuL = int(240*self.echelle)
         self.menuH = int(380*self.echelle)

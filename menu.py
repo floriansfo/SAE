@@ -15,16 +15,16 @@ WIDTH, HEIGHT = fenetre.get_size()
 
 #Titre et logo de la fenêtre
 pygame.display.set_caption("D-RED")
-pygame.display.set_icon(pygame.image.load("ressource/logo.png"))
+pygame.display.set_icon(pygame.image.load("ressource/images/logo.png"))
 
 #Musique de fond
 pygame.mixer.music.load(assets.ASSETS['musique_menu'])
 pygame.mixer.music.play(-1) #Musique en boucle
 
 #image de fond
-backgroundori = pygame.image.load("ressource/images.png").convert()
+backgroundori = pygame.image.load("ressource/images/images.png").convert()
 background = pygame.transform.scale(backgroundori, (WIDTH, HEIGHT)) 
-imgsite = pygame.image.load("ressource/site.png").convert_alpha()
+imgsite = pygame.image.load("ressource/images/site.png").convert_alpha()
 img_site = pygame.transform.scale(imgsite, (WIDTH*0.03, HEIGHT*0.05))
 rect_site = img_site.get_rect()
 
@@ -38,8 +38,8 @@ GOLD_BRILLANT = (218, 179, 10)
 GOLD_TRANSPARENT = (255, 215, 0, 100)
 
 #Police
-FONT_TITLE = pygame.font.Font("ressource/PoliceFarland2.ttf", 80)
-FONT_BUTTON = pygame.font.Font("ressource/police.ttf", 28)
+FONT_TITLE = pygame.font.Font("ressource/fonts/PoliceFarland2.ttf", 80)
+FONT_BUTTON = pygame.font.Font("ressource/fonts/police.ttf", 28)
 
 class Button:
     def __init__(self,text, action):
@@ -106,8 +106,8 @@ def update_resolution(L, H):
     #Taille police par nouvelle resolution
     tailletitre = int(80*H/1080)
     taillebutoon=int(28*H/1080)
-    FONT_TITLE = pygame.font.Font("ressource/PoliceFarland2.ttf", tailletitre)
-    FONT_BUTTON = pygame.font.Font("ressource/police.ttf", taillebutoon)
+    FONT_TITLE = pygame.font.Font("ressource/fonts/PoliceFarland2.ttf", tailletitre)
+    FONT_BUTTON = pygame.font.Font("ressource/fonts/police.ttf", taillebutoon)
     #Redimensionner l'image du site
     rect_site = img_site.get_rect(bottomright=(L-30, H-30))
     #Titre et ombre

@@ -7,34 +7,34 @@ def charger_assets(largeur, hauteur):
     Z = ZOOM+1
     #Charger les textures
     #sol
-    assets['img_sol'] = texture("sol.png",(Z,Z))
+    assets['img_sol'] = texture("images/sol.png",(Z,Z))
     assets['img_sol_rouge']= texture("sol/sol_rouge.png", (Z,Z))
-    assets['img_ascenseur'] = texture("ascenseur.png",(Z,Z))
-    assets['img_murface'] = texture("murface.png", (Z, Z))
-    assets['img_murtop'] = texture("murtop.png", (Z, Z))
+    assets['img_ascenseur'] = texture("images/ascenseur.png",(Z,Z))
+    assets['img_murface'] = texture("images/murface.png", (Z, Z))
+    assets['img_murtop'] = texture("images/murtop.png", (Z, Z))
     #rouge
     assets['img_murtop_rouge'] = texture("sol/murtop_rouge.png", (Z, Z))
     assets['img_murface_rouge'] = texture("sol/murface_rouge.png", (Z, Z))
-    assets['img_lit'] = texture("lit.png", (Z, Z))
-    assets['img_boutique'] = texture("shop.png", (Z, Z))
-    assets['img_logo'] = texture("logov2.png", (Z, Z))
-    assets['img_caisse'] = texture("caisse_loot.png", (Z, Z))
-    assets['img_plante'] = texture("plante.png", (Z, Z))
-    assets['img_meuble'] = texture("meuble.png", (Z, Z))
-    assets['img_lampe'] = texture("lampe.png", (Z, Z))
+    assets['img_lit'] = texture("images/lit.png", (Z, Z))
+    assets['img_boutique'] = texture("images/shop.png", (Z, Z))
+    assets['img_logo'] = texture("images/logov2.png", (Z, Z))
+    assets['img_caisse'] = texture("images/caisse_loot.png", (Z, Z))
+    assets['img_plante'] = texture("images/plante.png", (Z, Z))
+    assets['img_meuble'] = texture("images/meuble.png", (Z, Z))
+    assets['img_lampe'] = texture("images/lampe.png", (Z, Z))
 
-    assets['img_load'] = texture("Chargement.png", (largeur, hauteur))
-    assets['img_piece'] = texture("piece.png", (40,40), transparente=True)
-    assets['img_larry'] = texture("Larryv2.png", (200,200), transparente=True)
-    assets['img_munition'] = texture("munitionoverlay.png", (80,80), transparente=True)
-    assets['img_ballevol'] = texture("balle.png", (45,45), transparente=True)
+    assets['img_load'] = texture("images/Chargement.png", (largeur, hauteur))
+    assets['img_piece'] = texture("images/piece.png", (40,40), transparente=True)
+    assets['img_larry'] = texture("images/Larryv2.png", (200,200), transparente=True)
+    assets['img_munition'] = texture("images/munitionoverlay.png", (80,80), transparente=True)
+    assets['img_ballevol'] = texture("images/balle.png", (45,45), transparente=True)
 
-    assets['mode_combat'] = texture("HUD_mc_V2.png", None, transparente=True)
-    assets['mode_inventaire'] = texture("HUD_inventaire.png", None, transparente=True)
-    assets['coeur_hp'] = texture("coeur_hp.png", (30,30), transparente=True)
-    assets['moteur'] = texture("moteur.png", (ZOOM*3,ZOOM*2), transparente=True)
-    assets['img_cassette']= texture("cassette.png", (ZOOM//2,ZOOM//2), transparente=True)
-    assets['img_racine'] = texture("racine.png", (Z,Z), transparente=True)
+    assets['mode_combat'] = texture("images/HUD_mc_V2.png", None, transparente=True)
+    assets['mode_inventaire'] = texture("images/HUD_inventaire.png", None, transparente=True)
+    assets['coeur_hp'] = texture("images/coeur_hp.png", (30,30), transparente=True)
+    assets['moteur'] = texture("images/moteur.png", (ZOOM*3,ZOOM*2), transparente=True)
+    assets['img_cassette']= texture("images/cassette.png", (ZOOM//2,ZOOM//2), transparente=True)
+    assets['img_racine'] = texture("images/racine.png", (Z,Z), transparente=True)
 
 
     #decoration pour la map
@@ -62,24 +62,24 @@ def charger_assets(largeur, hauteur):
         'Meat4':texture("decoration/Meat_flower_shadow2_3.png",(Z,Z), transparente=True),
     }
     assets['img_arme'] = {
-        0: texture("couteau.png",(250,80), transparente= True),
-        1: texture("pistolet.png",(250,80), transparente= True),
-        2: texture("pompe.png",(250,80), transparente= True),
-        3: texture("fusil.png",(250,80), transparente= True)
+        0: texture("images/couteau.png",(250,80), transparente= True),
+        1: texture("images/pistolet.png",(250,80), transparente= True),
+        2: texture("images/pompe.png",(250,80), transparente= True),
+        3: texture("images/fusil.png",(250,80), transparente= True)
     }
 
-    assets['img_couteau'] = texture("couteauinv.png",(80,80), transparente= True)
-    assets['img_pistolet'] = texture("pistoletinv.png",(80,80), transparente= True)
-    assets['img_pompe'] = texture("pompeinv.png",(80,80), transparente= True)
-    assets['img_fusil'] = texture("fusilinv.png",(80,80), transparente= True)
-    assets['img_cristal'] = texture("cristal.png",(80,80), transparente= True)
-    assets['img_cristal1'] = texture("cristal1.png",(80,80), transparente= True)
-    assets['img_seringue'] = texture("seringue.png",(80,80), transparente= True)
+    assets['img_couteau'] = texture("images/couteauinv.png",(80,80), transparente= True)
+    assets['img_pistolet'] = texture("images/pistoletinv.png",(80,80), transparente= True)
+    assets['img_pompe'] = texture("images/pompeinv.png",(80,80), transparente= True)
+    assets['img_fusil'] = texture("images/fusilinv.png",(80,80), transparente= True)
+    assets['img_cristal'] = texture("images/cristal.png",(80,80), transparente= True)
+    assets['img_cristal1'] = texture("images/cristal1.png",(80,80), transparente= True)
+    assets['img_seringue'] = texture("images/seringue.png",(80,80), transparente= True)
 
     assets['animationjoueur'] = [
-    texture("joueur.png",(100,100), transparente=True),
-    texture("joueurgauche.png",(100,100), transparente=True),
-    texture("joueurdroit.png",(100,100), transparente=True)
+    texture("images/joueur.png",(100,100), transparente=True),
+    texture("images/joueurgauche.png",(100,100), transparente=True),
+    texture("images/joueurdroit.png",(100,100), transparente=True)
     ]
     #slime assets
     assets['slime_face']=[]
@@ -201,10 +201,10 @@ def charger_assets(largeur, hauteur):
 
 
 
-    son_mun = pygame.mixer.Sound("ressource/ESM_Handful_of_Bullet_Shell_Drop_2_Gun_Military_Pistol_Shot_Machine_Rifle_Metal.wav")
-    son_pist = pygame.mixer.Sound("ressource/GunshotRevolver_BW.57313.wav")
-    son_pomp = pygame.mixer.Sound("ressource/STCR2_PHONK_Kit_One_Shot_TurboCharger_Gunshot (1) (mp3cut.net).mp3")
-    son_ass = pygame.mixer.Sound("ressource/GunshotRifle_BW.57890.wav")
+    son_mun = pygame.mixer.Sound("ressource/audio/ESM_Handful_of_Bullet_Shell_Drop_2_Gun_Military_Pistol_Shot_Machine_Rifle_Metal.wav")
+    son_pist = pygame.mixer.Sound("ressource/audio/GunshotRevolver_BW.57313.wav")
+    son_pomp = pygame.mixer.Sound("ressource/audio/STCR2_PHONK_Kit_One_Shot_TurboCharger_Gunshot (1) (mp3cut.net).mp3")
+    son_ass = pygame.mixer.Sound("ressource/audio/GunshotRifle_BW.57890.wav")
 
     son_mun.set_volume(0.8)
     son_pist.set_volume(0.6)
@@ -218,9 +218,9 @@ def charger_assets(largeur, hauteur):
     assets['son_assaut'] = son_ass
     
     #Charger les musiques
-    assets['musique_menu'] = "ressource/Musique.mp3"
-    assets['musique_jeu'] = "ressource/explo.mp3"
-    assets['musique_combat'] = "ressource/horrorfight.mp3"
+    assets['musique_menu'] = "ressource/audio/Musique.mp3"
+    assets['musique_jeu'] = "ressource/audio/explo.mp3"
+    assets['musique_combat'] = "ressource/audio/horrorfight.mp3"
     
     img_etoile = pygame.Surface((Z,Z)).convert()
     img_etoile.fill((5,5,20))
@@ -232,7 +232,7 @@ def charger_assets(largeur, hauteur):
 
     voix = {}
     for i in range(7):
-        chemin = f"ressource/voix{i}.wav"
+        chemin = f"ressource/audio/voix{i}.wav"
         if os.path.exists(chemin):
             voix[i] = pygame.mixer.Sound(chemin)
             voix[i].set_volume(1)
