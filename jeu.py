@@ -452,6 +452,20 @@ class Partie:
                     break
             if allie:
                 self.joueur.rect.center = allie.rect.center
+                allieetage = getattr(allie, "etage", self.niveau_actuel)
+                if self.niveau_actuel != allieetage:
+                    self.niveau_actuel = allieetage
+                    self.monstres.clear()
+                    if allieetage == 0:
+                        self.carte, self.salles, self.pos = generer_vaisseau()
+                        self.objets = generer_objets(self.carte, [], 0)
+                        dx, dy = int(self.pos[0]), int(self.pos[1])
+                        self.objets.append(Objet((dx-2)*ZOOM, dy*ZOOM, "img_cassette", "dialogue", size =(ZOOM//2, ZOOM//2)))
+                    else:
+                        random.seed(self.partie + allieetage)
+                        self.carte, self.salles, self.pos = generemap(niveau=allieetage)
+                        self.objets = generer_objets(self.carte, self.salles, self.multi, niveau=allieetage)
+                        self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(allieetage, {}))
             else:
                 self.spectateur = False
                 self.mort = True

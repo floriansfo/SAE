@@ -133,7 +133,7 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
                             iy = my + camera_y
                             if -ZOOM<ix<LARGEUR and -ZOOM<iy<HAUTEUR:
                                 pos_y = iy + 200
-                                adessiner.append((pos_y, monstre.larry, (ix,iy)))
+                                adessiner.append((pos_y, assets.ASSETS.get('img_larry'), (ix,iy)))
                 #Dessine ses balles
                 if hasattr(autre, "balles_reseau"):
                     for ballex, balley, balledx, balledy, balleid in autre.balles_reseau:
