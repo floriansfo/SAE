@@ -92,7 +92,7 @@ class Monstre:
     
     def take_damage(self, degats):
         self.hp_cur -= degats
-        if self.hp_cur<= 0: #Si pv sont a 0
+        if self.hp_cur<= 0 and not self.mort: #Si pv sont a 0
             self.hp_cur= 0
             self.mort= True #Monstre meurt
             self.loot = random.randint(50, 100) #loot aléatoire entre 50 et 100 pièces

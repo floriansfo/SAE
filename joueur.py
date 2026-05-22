@@ -288,14 +288,15 @@ class Joueur:
     
     def quantite(self, type, quantite):
         for case in self.inventaire:
-            if case["type"] == type and case["quantite"] < 32:
+            if case["type"] == type:
                 dispo = 32-case["quantite"]
-                if quantite <= dispo:
-                    case["quantite"] += quantite
-                    return True
-                else:
-                    case["quantite"] = 32
-                    quantite -= dispo
+                if dispo>0:
+                    if quantite <= dispo:
+                        case["quantite"] += quantite
+                        return 0
+                    else:
+                        case["quantite"] = 32
+                        quantite -= dispo
         if quantite > 0:
             for case in self.inventaire:
                 if case["type"] is None:

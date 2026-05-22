@@ -148,7 +148,7 @@ class Boutique:
         #malachite trade
         malachite_tt=0
         for case in joueur.inventaire:
-            if case["type"]=="malachite":
+            if case["type"]=="minerai":
                 malachite_tt+=case["quantite"]
         artrect = pygame.Rect(x+self.PUSH, posy, self.w, self.ligne)
         dessus = artrect.collidepoint(mouse) and malachite_tt>0
@@ -200,14 +200,14 @@ class Boutique:
     
     def clique(self, mouse_pos, boutons, joueur, nb_joueur=1):
         limite = 2 if nb_joueur <= 2 else 3
-        if joueur.achatjour >= limite:
-            return False
         for rect, article in boutons:
             if not rect.collidepoint(mouse_pos):
                 continue
+            arttype = article["type"]
+            if arttype != "malachite" and joueur.achatjour >= limite:
+                return False
             if joueur.pieces < article["prix"]:
                 return False
-            arttype = article["type"]
             if arttype == "arme":
                 if joueur.arsenal_achete.get(article["id"], False):
                     return False
@@ -221,14 +221,6 @@ class Boutique:
                 joueur.pieces -= article["prix"]
                 joueur.pile = joueur.pilemax
                 joueur.achatjour += 1
-                return True
-            elif arttype =="malachite" :
-                conv=30
-                for case in joueur.inventaire:
-                    if case["type"]=="malachite":
-                        joueur.pieces+=case["quantite"]*conv
-                        case["quantite"]=0
-                        case["type"]=None
                 return True
             elif arttype == "lampe":
                 if joueur.possedelampe:
@@ -247,5 +239,15 @@ class Boutique:
                 joueur.pieces -= article["prix"]
                 joueur.niveaudebloque.add(niv)
                 joueur.achatjour += 1
+                return True
+            elif arttype == "malachite":
+                total = sum(case["quantite"] for case in joueur.inventaire if case["type"]=="minerai")
+                if total<=0:
+                    return False
+                joueur.pieces += total*30
+                for case in joueur.inventaire:
+                    if case["type"]=="minerai":
+                        case["quantite"]=0
+                        case["type"] = None
                 return True
         return False

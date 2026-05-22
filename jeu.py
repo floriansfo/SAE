@@ -297,7 +297,7 @@ class Partie:
                     self.joueur.achatjour=0
                 #Larry spawn
                 if event.key == pygame.K_l and self.niveau_actuel != 0:
-                    m= monstre.Monstre(self.joueur.rect.centerx+100, self.joueur.rect.centery, 3, 100)
+                    m= monstre.Monstre(self.joueur.rect.centerx+100, self.joueur.rect.centery, 3, 1)
                     self.monstres.append(m)
                 #mimique spawn
                 if event.key == pygame.K_m and self.niveau_actuel != 0:
@@ -337,7 +337,7 @@ class Partie:
                         self.moteurouvert = True
                     if getattr(self, "proche", False) and self.mode!="solo":
                         s = False
-                        if hasattr(self.joueur, "inventaie"):
+                        if hasattr(self.joueur, "inventaire"):
                             for c in self.joueur.inventaire:
                                 if c.get("type")=="seringue":
                                     s = True
@@ -368,6 +368,20 @@ class Partie:
                             perte= pieceav - self.joueur.pieces
                             if hasattr(self.joueur, "retirer"):
                                 self.joueur.retirer("piece", perte)
+                        elif self.joueur.pieces > pieceav:
+                            gain = self.joueur.pieces-pieceav
+                            self.joueur.pieces = pieceav
+                            if hasattr(self.joueur, "quantite"):
+                                reste = self.joueur.quantite("piece", gain)
+                                self.joueur.pieces += (gain - reste)
+                                if reste > 0:
+                                    px = self.joueur.rect.centerx+random.randint(-40,40)
+                                    py = self.joueur.rect.centery+random.randint(-40,40)
+                                    self.piecessol.append({"rect": pygame.Rect(px, py, 40, 40), "valeur": reste, "delay": 60})
+                                    if self.connect:
+                                        if not hasattr(self.joueur, "objetsol"):
+                                            self.joueur.objetsol = []
+                                        self.joueur.objetsol.append({"type": "piece", "quantite": reste, "x": px, "y": py,"etage":self.niveau_actuel})
                         if self.joueur.munition > munav:
                             g = self.joueur.munition - munav
                             self.joueur.munition = munav
@@ -573,10 +587,18 @@ class Partie:
                         k = f"{obj.rect.x}-{obj.rect.y}"
                         self.actionmap[k] = "S"
                         self.modifs_etage.setdefault(self.niveau_actuel, {})[k] = "S"
-                        self.sonmun.play()                
-                elif obj.type=="malachite" and self.joueur.rect.colliderect(obj.rect):
-                    self.joueur.quantite("malachite", obj.quantite)
-                    self.sonmun.play()
+                        self.sonmun.play()
+                elif obj.type == "minerai" and self.joueur.rect.colliderect(obj.rect):
+                    qte = getattr(obj, "quantite", 1)
+                    reste = self.joueur.quantite("minerai", qte)
+                    if reste>0:
+                        obj.quantite = reste
+                        objetsreste.append(obj)
+                    else:
+                        k = f"{obj.rect.x}-{obj.rect.y}"
+                        self.actionmap[k] = "S"
+                        self.modifs_etage.setdefault(self.niveau_actuel, {})[k] = "S"
+                        self.sonmun.play()
                 else:
                     objetsreste.append(obj)
             self.objets = objetsreste #Met a jour les objets restants
@@ -597,20 +619,15 @@ class Partie:
                 else:
                     piecesreste.append(p)
             self.piecessol = piecesreste #Met a jour les pieces restantes
-            self.joueur.dsvaisseau = (self.niveau_actuel == 0)
-            toutvaisseau = self.joueur.dsvaisseau and all(getattr(j,'dsvaisseau', False) for j in self.joueursup.values())
-            if not toutvaisseau or not self.connect:
-                self.heure += 60*t
             #Monstre loot piece
             monstresvivant = []
             for m in self.monstres:
                 if m.mort:
-                    if getattr(m, "loot_malachite", 0) > 0:
-                       #self.piecessol.append({"rect": pygame.Rect(m.rect.centerx-20, m.rect.centery-20, 40, 40), "valeur": m.loot})
-                        obj= Objet(m.rect.centerx, m.rect.centery, "img_malachite", "malachite", size=(67,67))
-                        obj.quantite=m.loot_malachite
-                        obj.delay=30
-                        self.objets.append(obj)
+                    if getattr(m, "loot", 0) > 0:
+                        objlot = Objet(m.rect.centerx, m.rect.centery, "img_malachite", "minerai", size=(40,40))
+                        objlot.quantite = 1
+                        objlot.delay = 30
+                        self.objets.append(objlot)
                 else:
                     monstresvivant.append(m)
             self.monstres = monstresvivant
@@ -679,17 +696,29 @@ class Partie:
             if self.joueur.hp <=0 and not self.mort:
                 self.mort = True
             #Heure
-            if self.heure >= 28800:
-                if not hasattr(self.joueur, "timernuit"):
-                    self.timernuit = 0
-                self.timernuit += 60*t
-                if self.timernuit >= 120:
-                    self.timernuit = 0
-                    self.joueur.hp = self.joueur.hp - 5
-                    if self.joueur.hp <= 0:
-                        self.mort = True
-                        self.joueur.possedelampe = False
-                        self.joueur.lumiereallumee = False 
+            toutvaisseau = (self.niveau_actuel == 0)
+            if self.mode!= "solo" and len(self.joueursup)>0:
+                for j in self.joueursup.values():
+                    if getattr(j, "etage", 1)!=0:
+                        toutvaisseau = False
+            if self.mode == "client" and self.connect:
+                for j in self.joueursup.values():
+                    if hasattr(j, "heure"):
+                        self.heure = j.heure
+                        self.jour = j.jour
+            if not toutvaisseau:
+                self.heure += 60*t
+                if self.heure >= 28800:
+                    if not hasattr(self.joueur, "timernuit"):
+                        self.timernuit = 0
+                    self.timernuit += 60*t
+                    if self.timernuit >= 120:
+                        self.timernuit = 0
+                        self.joueur.hp = self.joueur.hp - 5
+                        if self.joueur.hp <= 0:
+                            self.mort = True
+                            self.joueur.possedelampe = False
+                            self.joueur.lumiereallumee = False 
             #Reseau
         if self.connect:
             mort = self.mort or getattr(self, "spectateur", False)
@@ -697,10 +726,6 @@ class Partie:
             if self.mode == "client" and heureres is not None:
                 self.heure = heureres
                 self.jour = jourres
-            if hasattr(self.joueur, 'objsol'):
-                for o in self.joueur.objsol:
-                    self.objsol.append({'type':o['type'], 'quantite':o['quantite'], 'rect':pygame.Rect(o['x']-20, o['y']-20, 40, 40), 'etage':o['etage'], 'delay':60})
-                self.joueur.objsol.clear()
         return "CONTINUER"
     
     def menus(self):
@@ -870,19 +895,6 @@ class Partie:
                     pygame.mixer.music.play(-1)
                 filtre.combat = False
         affichage.dessinerjeu(self.ecran, self.LARGEUR, self.HAUTEUR, self.carte, self.joueur, self.objets, self.piecessol, self.monstres, self.joueursup, self.niveau_actuel, self.connect, self.lumieremarche, filtre, getattr(self,"moteurcol", None))
-        camx = (self.LARGEUR//2) - self.joueur.rect.centerx
-        camy = (self.HAUTEUR//2) - self.joueur.rect.centery
-        img = assets.ASSETS.get('img_munition')
-        for o in self.objsol:
-            if o['etage']==self.niveau_actuel:
-                ox = o['rect'].x+camx
-                oy = o['rect'].y+camy
-                if -50<ox<self.LARGEUR and -50<oy<self.HAUTEUR:
-                    imgg = assets.ASSETS.get(f"img_{o['type']}", img)
-                    self.ecran.blit(imgg, (ox, oy))
-                    if o['quantite']>1:
-                        txt = self.font.render(str(o['quantite']), True, (255,255,255))
-                        self.ecran.blit(txt, (ox+22, oy+22))
         if self.menus() == "MENU":
             return "MENU"
         #Overlay
@@ -976,7 +988,11 @@ class Partie:
                     if titem == "piece":
                         self.piecessol.append({"rect": pygame.Rect(px, py, 40, 40), "valeur": qte, "delay": 60})
                     else:
-                        objsur = Objet(px, py, f"img_{titem}", titem, size=(40,40))
+                        if titem == "minerai":
+                            nom = "img_malachite"
+                        else:
+                            nom = f"img_{titem}"
+                        objsur = Objet(px, py, nom, titem, size=(40,40))
                         objsur.quantite = qte
                         objsur.delay = 60
                         self.objets.append(objsur)

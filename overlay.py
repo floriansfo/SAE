@@ -246,7 +246,10 @@ class Overlay:
                     action = ("DROP", i)
             #Affiche l'item
             if case["type"] is not None:
-                nom = f"img_{case['type']}"
+                if case["type"]=="minerai":
+                    nom = "img_malachite"
+                else:
+                    nom = f"img_{case['type']}"
                 imgitem = assets.ASSETS.get(nom)
                 if imgitem:
                     imgitem = pygame.transform.scale(imgitem, (taille-45, taille-45))
