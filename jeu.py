@@ -747,7 +747,7 @@ class Partie:
                             self.joueur.lumiereallumee = False 
             #Reseau
         if self.connect:
-            mort = self.mort or getattr(self, "spectateur", False)
+            mort = self.mort or getattr(self, "spectateur", False) or self.joueur.hp <= 0
             etageres = getattr(self.joueur, "etage_mort", self.niveau_actuel) if mort else self.niveau_actuel
             self.buffer, self.objets, self.joueursup, heureres, jourres = reseau.connexion(self.socket_jeu, self.joueur, self.monstres, self.objets, self.actionmap, mort, etageres, self.buffer, self.joueursup, self.heure, self.jour)   
             if self.mode == "client" and heureres is not None:
