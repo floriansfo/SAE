@@ -6,9 +6,17 @@ from vaisseau import BOUTIQUE, LIT
 import monstre
 import random
 def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monstres, joueursup, niveau_actuel, connect, lumieremarche, filtre, moteurcol=None):
+    cammortx = joueur.rect.centerx
+    cammorty = joueur.rect.centery
+    if getattr(joueur, "mort", False) or joueur.hp <=0:
+        for a in joueursup.values():
+            if not getattr(a, "mort", False):
+                cammortx = a.rect.centerx
+                cammorty = a.rect.centery
+                break
     #Suivi joueur
-    camera_x = (LARGEUR//2)-joueur.rect.centerx
-    camera_y = (HAUTEUR//2)-joueur.rect.centery
+    camera_x = (LARGEUR//2)-cammortx
+    camera_y = (HAUTEUR//2)-cammorty
 
     #Calcul des limites de camera pour optimiser
     minx = max(0, -camera_x//ZOOM-1)

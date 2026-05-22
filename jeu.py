@@ -335,15 +335,24 @@ class Partie:
                     #Ouvre le moteur si on fait E
                     if self.surmoteur:
                         self.moteurouvert = True
-                    if getattr(self, "proche", False) and self.mode!="solo":
-                        s = False
-                        if hasattr(self.joueur, "inventaire"):
-                            for c in self.joueur.inventaire:
-                                if c.get("type")=="seringue":
-                                    s = True
-                        if s:
-                            self.joueur.retirer("seringue", 1)
-                            self.actionmap["REVIVE"]="GO"
+                    if self.mode != "solo" and not getattr(self, "mort", False):
+                        allieproche = False
+                        for a in self.joueursup.values():
+                            if not getattr(a, "mort", False):
+                                dist = math.hypot(self.joueur.rect.centerx-a.rect.centerx, self.joueur.rect.centery-a.rect)
+                                if dist < 120:
+                                    allieproche = True
+                                    break
+                        if allieproche:
+                            aseringue = False
+                            if hasattr(self.joueur, "inventaire"):
+                                for c in self.joueur.inventaire:
+                                    if c.get("type") == "seringue":
+                                        aseringue = True
+                                        break
+                            if aseringue:
+                                self.joueur.retirer("seringue", 1)
+                                self.actionmap["REVIVE"] = "GO"
                 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1: #Clic gauche
@@ -451,7 +460,6 @@ class Partie:
                     allie = j
                     break
             if allie:
-                self.joueur.rect.center = allie.rect.center
                 allieetage = getattr(allie, "etage", self.niveau_actuel)
                 if self.niveau_actuel != allieetage:
                     self.niveau_actuel = allieetage
@@ -466,11 +474,15 @@ class Partie:
                         self.carte, self.salles, self.pos = generemap(niveau=allieetage)
                         self.objets = generer_objets(self.carte, self.salles, self.multi, niveau=allieetage)
                         self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(allieetage, {}))
+                    posx, posy = int(self.pos[0]), int(self.pos[1])
+                    self.joueur.rect.center = (posx*ZOOM+(ZOOM//2), posy*ZOOM+(ZOOM//2))
             else:
                 self.spectateur = False
                 self.mort = True
             if self.joueur.hp >0:
                 self.spectateur = False
+                self.mort = False
+                self.joueur.lumiereallumee = False
             
         #Le joueur est mort
         if self.mort:
