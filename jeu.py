@@ -338,8 +338,8 @@ class Partie:
                     if self.mode != "solo" and not getattr(self, "mort", False):
                         allieproche = False
                         for a in self.joueursup.values():
-                            if not getattr(a, "mort", False):
-                                dist = math.hypot(self.joueur.rect.centerx-a.rect.centerx, self.joueur.rect.centery-a.rect)
+                            if getattr(a, "mort", False) and getattr(a, "etage", 1)==self.niveau_actuel:
+                                dist = math.hypot(self.joueur.rect.centerx-a.rect.centerx, self.joueur.rect.centery-a.rect.centery)
                                 if dist < 120:
                                     allieproche = True
                                     break
@@ -445,6 +445,8 @@ class Partie:
                         coop = True
                 if coop:
                     self.mort = False
+                    if not getattr(self, "spectateur", False):
+                        self.joueur.etage_mort = self.niveau_actuel
                     self.spectateur = True
                     self.inventaire = False
                 else:
@@ -474,8 +476,6 @@ class Partie:
                         self.carte, self.salles, self.pos = generemap(niveau=allieetage)
                         self.objets = generer_objets(self.carte, self.salles, self.multi, niveau=allieetage)
                         self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(allieetage, {}))
-                    posx, posy = int(self.pos[0]), int(self.pos[1])
-                    self.joueur.rect.center = (posx*ZOOM+(ZOOM//2), posy*ZOOM+(ZOOM//2))
             else:
                 self.spectateur = False
                 self.mort = True
@@ -748,7 +748,8 @@ class Partie:
             #Reseau
         if self.connect:
             mort = self.mort or getattr(self, "spectateur", False)
-            self.buffer, self.objets, self.joueursup, heureres, jourres = reseau.connexion(self.socket_jeu, self.joueur, self.monstres, self.objets, self.actionmap, mort, self.niveau_actuel, self.buffer, self.joueursup, self.heure, self.jour)   
+            etageres = getattr(self.joueur, "etage_mort", self.niveau_actuel) if mort else self.niveau_actuel
+            self.buffer, self.objets, self.joueursup, heureres, jourres = reseau.connexion(self.socket_jeu, self.joueur, self.monstres, self.objets, self.actionmap, mort, etageres, self.buffer, self.joueursup, self.heure, self.jour)   
             if self.mode == "client" and heureres is not None:
                 self.heure = heureres
                 self.jour = jourres
@@ -759,9 +760,9 @@ class Partie:
         self.proche = False
         if self.mode!="solo" and not getattr(self, "spectateur", False):
             for a in self.joueursup.values():
-                if getattr(a, "mort", False):
+                if getattr(a, "mort", False) and getattr(a, "etage", 1) == self.niveau_actuel:
                     d = math.hypot(self.joueur.rect.centerx - a.rect.centerx, self.joueur.rect.centery - a.rect.centery)
-                    if d < 80:
+                    if d < 120:
                         self.proche = True
                         s = any(c.get("type")=="seringue" for c in getattr(self.joueur, "inventaire", []))
                         if s:

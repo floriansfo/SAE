@@ -1,6 +1,7 @@
 import pygame
 import assets
 from joueur import Joueur
+from cartegen import Objet
 
 def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actuel, buffer, joueursup, heure = 0, jour=1):
     #Reseaux
@@ -65,12 +66,18 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
                         if len(v)>10:
                             autre.angleactuel = float(v[10])
                         if len(v)>11 and v[11] != "vide":
-                            if not hasattr(joueur, 'objsol'):
-                                joueur.objsol = []
                             for obj in v[11].split('_'):
                                 parts = obj.split('=')
                                 if len(parts)==5:
-                                    joueur.objsol.append({'type': parts[0], 'quantite': int(parts[1]), 'x': int(parts[2]), 'y': int(parts[3]), 'etage': int(parts[4])})
+                                    otype, oqte, ox, oy, oetage = parts
+                                    if int(oetage)==niveau_actuel:
+                                        nom = "img_malachite"
+                                    else:
+                                        nom = f"img_{otype}"
+                                    objsur = Objet(int(ox), int(oy), nom, otype, size = (40,40))
+                                    objsur.quantite = int (oqte)
+                                    objsur.delay = 60
+                                    objets.append(objsur)                                 
                         if len(v)>12:
                             autre.dsvaisseau = bool(int(v[12]))
                         if len(v)>13:
