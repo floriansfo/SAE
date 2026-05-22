@@ -132,7 +132,7 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
     #Dessin autre joueur
     if connect:
         for idjoueur, autre in joueursup.items():
-            if getattr(autre, "etage", 1) == niveau_actuel:
+            if getattr(autre, "etage", 1) == niveau_actuel or getattr(autre, "mort", False):
                 #Dessine ses balles
                 if hasattr(autre, "monstres_reseau"):
                     for mx,my,mmort in autre.monstres_reseau:
@@ -175,7 +175,7 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
                     else:
                         img_autrejoueur = animationjoueur[0].copy()
                         img_autrejoueur = pygame.transform.rotate(img_autrejoueur, 90)
-                        img_autrejoueur.set_alpha(20)
+                        img_autrejoueur.set_alpha(200)
                     rect_aff = img_autrejoueur.get_rect(center=(xjoueur2, yjoueur2))
                     adessiner.append((rect_aff.bottom, img_autrejoueur, rect_aff.topleft))
     
