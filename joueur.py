@@ -51,6 +51,7 @@ class Joueur:
         self.timeoxy = 0
         #Boutique
         self.pieces = 0
+        self.malachite=0
         self.arsenal_achete = {0: True}
         self.achatjour = 0
         self.niveaudebloque = {1}

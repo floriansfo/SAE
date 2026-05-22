@@ -31,6 +31,7 @@ class Slime (Monstre) :
         self.anim_mort=False
         self.frame_mort=0
         self.time_mort=0
+        self.drop_malachite=[1]
 
        
     

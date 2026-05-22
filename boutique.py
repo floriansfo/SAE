@@ -144,6 +144,27 @@ class Boutique:
         pygame.draw.line(ecran, VERTBORD, (x+self.PUSH, posy), (x+self.menuL-self.PUSH, posy),2)
         posy +=15
         ecran.blit(self.partetage, (x+self.PUSH, posy))
+        
+        #malachite trade
+        malachite_tt=0
+        for case in joueur.inventaire:
+            if case["type"]=="malachite":
+                malachite_tt+=case["quantite"]
+        artrect = pygame.Rect(x+self.PUSH, posy, self.w, self.ligne)
+        dessus = artrect.collidepoint(mouse) and malachite_tt>0
+        if dessus:
+            ecran.blit(self.boutondessus, artrect.topleft)
+        else:
+            ecran.blit(self.boutonnorm, artrect.topleft)
+        nom= self.normal.render(f"Malachite x{malachite_tt}", True, BLANC)
+        description= self.petit.render("Echanger contre des pieces", True, (130, 160, 140))
+        ecran.blit(nom, (artrect.x+15, artrect.y+12))
+        ecran.blit(description, (artrect.x+15, artrect.y+40))
+        couleurprix = VERTPHOSPHORE if malachite_tt>0 else ROUGE
+        prix = self.normal.render(f"+{malachite_tt*30}P", True, couleurprix)
+        ecran.blit(prix, prix.get_rect(midright = (artrect.right-20, artrect.centery)))
+        boutons.append((artrect, {"id":"malachite", "prix":0, "type":"malachite"}))
+        posy+=self.ligne+6
         posy+=30
         #Partie Niveaux
         for idd, (niveau, prix) in enumerate(PRIXNIVEAU.items()):
@@ -200,6 +221,14 @@ class Boutique:
                 joueur.pieces -= article["prix"]
                 joueur.pile = joueur.pilemax
                 joueur.achatjour += 1
+                return True
+            elif arttype =="malachite" :
+                conv=30
+                for case in joueur.inventaire:
+                    if case["type"]=="malachite":
+                        joueur.pieces+=case["quantite"]*conv
+                        case["quantite"]=0
+                        case["type"]=None
                 return True
             elif arttype == "lampe":
                 if joueur.possedelampe:

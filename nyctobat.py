@@ -13,10 +13,12 @@ class Nyctobat(Monstre):
         self.degats= 5
         self.cible=None
         self.direction= Direction.face
+        self.drop_malachite=[2,3]
         #animation
         self.animation=0
         self.time=0
         self.vitesseanim=5
+
 
     
     def deplacement(self, t, joueur_x=None, joueur_y = None):

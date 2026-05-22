@@ -35,8 +35,8 @@ def charger_assets(largeur, hauteur):
     assets['moteur'] = texture("images/moteur.png", (ZOOM*3,ZOOM*2), transparente=True)
     assets['img_cassette']= texture("images/cassette.png", (ZOOM//2,ZOOM//2), transparente=True)
     assets['img_racine'] = texture("images/racine.png", (Z,Z), transparente=True)
-
-
+    #minerai asset
+    assets['img_malachite']=texture("images/malachite.png", (45,45), transparente=True)
     #decoration pour la map
     assets['img_deco']= {
         'bones':texture("decoration/Bones_shadow1_7.png",(Z,Z), transparente=True),

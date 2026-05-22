@@ -18,6 +18,7 @@ class Mimique(Monstre):
         self.time= 0
         self.vitesseanim = 5
         self.angle=0
+        self.drop_malachite=[0]
 
     def deplacement(self, t, joueur_x=None, joueur_y = None):
         kx= self.pos_x * self.speed*60*t

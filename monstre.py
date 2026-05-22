@@ -27,6 +27,8 @@ class Monstre:
         self.texture= assets.ASSETS['img_larry']
         #debloquer les loulous
         self.bloque =False
+        #drop de minerai
+        self.drop_malachite=[1,2,3]
 
     #Calcul du deplacement en fct de la position du joueur
     def deplacement(self, t, joueur_x=None, joueur_y = None):
@@ -94,6 +96,7 @@ class Monstre:
             self.hp_cur= 0
             self.mort= True #Monstre meurt
             self.loot = random.randint(50, 100) #loot aléatoire entre 50 et 100 pièces
+            self.loot_malachite= random.choice(self.drop_malachite)
         else:
             self.loot = 0
     
@@ -154,10 +157,10 @@ def spawn_metage(niveau, salles):
         nb_xeno=0
     elif niveau==2:
         nb_slime=8
-        nb_mimique=14
-        nb_nyctobat=14
-        nb_errant=14
-        nb_xeno=14
+        nb_mimique=1
+        nb_nyctobat=3
+        nb_errant=1
+        nb_xeno=0
     elif niveau==3:
         nb_slime=10
         nb_mimique=2
@@ -165,7 +168,7 @@ def spawn_metage(niveau, salles):
         nb_errant=0
         nb_xeno=0
     elif niveau==4:
-        nb_slime=12
+        nb_slime=8
         nb_mimique=2
         nb_nyctobat=4
         nb_errant=1

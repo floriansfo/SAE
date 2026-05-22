@@ -16,6 +16,7 @@ class Xeno(Monstre):
         self.animation=0
         self.time=0
         self.vitesseanim=5
+        self.drop_malachite=[3,4]
 
     
     def deplacement(self, t, joueur_x=None, joueur_y = None):

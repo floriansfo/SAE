@@ -574,6 +574,9 @@ class Partie:
                         self.actionmap[k] = "S"
                         self.modifs_etage.setdefault(self.niveau_actuel, {})[k] = "S"
                         self.sonmun.play()                
+                elif obj.type=="malachite" and self.joueur.rect.colliderect(obj.rect):
+                    self.joueur.quantite("malachite", obj.quantite)
+                    self.sonmun.play()
                 else:
                     objetsreste.append(obj)
             self.objets = objetsreste #Met a jour les objets restants
@@ -602,8 +605,12 @@ class Partie:
             monstresvivant = []
             for m in self.monstres:
                 if m.mort:
-                    if getattr(m, "loot", 0) > 0:
-                        self.piecessol.append({"rect": pygame.Rect(m.rect.centerx-20, m.rect.centery-20, 40, 40), "valeur": m.loot})
+                    if getattr(m, "loot_malachite", 0) > 0:
+                       #self.piecessol.append({"rect": pygame.Rect(m.rect.centerx-20, m.rect.centery-20, 40, 40), "valeur": m.loot})
+                        obj= Objet(m.rect.centerx, m.rect.centery, "img_malachite", "malachite", size=(67,67))
+                        obj.quantite=m.loot_malachite
+                        obj.delay=30
+                        self.objets.append(obj)
                 else:
                     monstresvivant.append(m)
             self.monstres = monstresvivant

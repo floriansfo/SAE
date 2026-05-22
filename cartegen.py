@@ -73,10 +73,10 @@ def tango(grille, salles, poscristal = None):
     #Apparition cristal
     if poscristal:
         #Objet corps
-        corps = Objet(sx-ZOOM//2, sy-ZOOM//2, "corps.png", 'corps', size =(ZOOM,ZOOM))
+        corps = Objet(sx-ZOOM//2, sy-ZOOM//2, "images/corps.png", 'corps', size =(ZOOM,ZOOM))
         objet.append(corps)
         #Objet cristal
-        cristal = Objet(sx+ZOOM//4, sy-ZOOM//4, "cristal.png", 'cristal', size=(ZOOM//2, ZOOM//2))
+        cristal = Objet(sx+ZOOM//4, sy-ZOOM//4, "images/cristal.png", 'cristal', size=(ZOOM//2, ZOOM//2))
         objet.append(cristal)
         cristalpos = (sx+ZOOM//4, sy-ZOOM//4)
         return objet, cristalpos
