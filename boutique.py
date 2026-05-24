@@ -229,6 +229,8 @@ class Boutique:
                 joueur.possedelampe = True
                 joueur.pile = joueur.pilemax
                 joueur.achatjour += 1
+                if hasattr(joueur, "quantite"):
+                    joueur.quantite("lampe", 1)
                 return True
             elif arttype == "niveau":
                 niv = article["niveau"]

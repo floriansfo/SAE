@@ -305,9 +305,10 @@ class Partie:
                     self.monstres.append(m)
                 #Allume ou eteindre lampe
                 if event.key == pygame.K_h:
-                    self.joueur.toogle_lumiere()
-                    if self.joueur.lumiereallumee and filtre.m_combat:
-                        filtre.m_combat = False
+                    if self.niveau_actuel!=0:
+                        self.joueur.toogle_lumiere()
+                        if self.joueur.lumiereallumee and filtre.m_combat:
+                            filtre.m_combat = False
                 #Pause ou ferme
                 if event.key == pygame.K_ESCAPE:
                     if self.dialogue.ouvert:
@@ -338,7 +339,7 @@ class Partie:
                     if self.mode != "solo" and not getattr(self, "mort", False):
                         allieproche = False
                         for a in self.joueursup.values():
-                            if getattr(a, "mort", False) and getattr(a, "etage", 1)==self.niveau_actuel:
+                            if getattr(a, "mort", False):
                                 dist = math.hypot(self.joueur.rect.centerx-a.rect.centerx, self.joueur.rect.centery-a.rect.centery)
                                 if dist < 120:
                                     allieproche = True
@@ -507,6 +508,8 @@ class Partie:
                 self.monstres= []
                 self.joueur.possedelampe = False
                 self.joueur.lumiereallumee = False
+                if hasattr(self.joueur, "retirer"):
+                    self.joueur.retirer("lampe", 1)
                 filtre.desactive()
                 return "CONTINUER"
             return "MORT"
@@ -601,6 +604,17 @@ class Partie:
                 elif obj.type == "dialogue" and self.joueur.rect.colliderect(obj.rect):
                     self.dialogueouvert = True
                     objetsreste.append(obj)
+                elif obj.type == "lampe" and self.joueur.rect.colliderect(obj.rect):
+                    if hasattr(self.joueur, "quantite"):
+                        reste = self.joueur.quantite("lampe", 1)
+                        if reste > 0:
+                            objetsreste.append(obj)
+                        else:
+                            self.joueur.possedelampe = True
+                            k = f"{obj.rect.x}-{obj.rect.y}"
+                            self.actionmap[k]= "S"
+                            self.modifs_etage.setdefault(self.niveau_actuel, {})[k] = "S"
+                            self.sonmun.play()
                 elif obj.type == "piece" and self.joueur.rect.colliderect(obj.rect):
                     qte = getattr(obj, "quantite", 1)
                     reste = self.joueur.quantite("piece", qte)
@@ -999,6 +1013,9 @@ class Partie:
                         self.joueur.munition -= qte
                     elif titem == "cristal":
                         self.joueur.cristal = False
+                    elif titem == "lampe":
+                        self.joueur.possedelampe = False
+                        self.joueur.lumiereallumee = False
                     case["type"] = None
                     if titem in ["couteau", "pistolet", "pompe", "fusil"]:
                         nom = {"couteau": 0, "pistolet": 1, "pompe": 2, "fusil": 3}

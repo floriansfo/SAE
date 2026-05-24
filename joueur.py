@@ -63,6 +63,7 @@ class Joueur:
         #Inventaire
         self.inventaire = [{"type": None, "quantite": 0} for _ in range(9)]
         self.inventaire[0] = {"type": "couteau", "quantite": 1}
+        self.inventaire[1] = {"type": "lampe", "quantite": 1}        
         #Multi
         self.objjete = []
         self.objsol = []
@@ -273,6 +274,9 @@ class Joueur:
             if self.pile <= 0:
                 self.pile = 0
                 self.lumiereallumee = False
+                self.possedelampe = False
+                if hasattr(self, "retirer"):
+                    self.retirer("lampe", 1)
     
     def updateoxygene(self, niveau_actuel):
         if niveau_actuel != 0:
@@ -289,24 +293,24 @@ class Joueur:
     def quantite(self, type, quantite):
         for case in self.inventaire:
             if case["type"] == type:
-                dispo = 32-case["quantite"]
+                dispo = 64-case["quantite"]
                 if dispo>0:
                     if quantite <= dispo:
                         case["quantite"] += quantite
                         return 0
                     else:
-                        case["quantite"] = 32
+                        case["quantite"] = 64
                         quantite -= dispo
         if quantite > 0:
             for case in self.inventaire:
                 if case["type"] is None:
                     case["type"] = type
-                    if quantite <= 32:
+                    if quantite <= 64:
                         case["quantite"] = quantite
                         return 0
                     else:
-                        case["quantite"] = 32
-                        quantite -= 32
+                        case["quantite"] = 64
+                        quantite -= 64
         return quantite
 
     def retirer(self, type, quantite):

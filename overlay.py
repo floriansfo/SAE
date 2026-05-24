@@ -220,7 +220,7 @@ class Overlay:
         fenetre.blit(textehp, (x+int(45*self.echelle)+(rectnb*int(10*self.echelle)), y-int(4*self.echelle)))
 
     def inventairedessin(self, fenetre, joueur, pos, clique, cliquedroit = False):
-        img = assets.ASSETS.get("mode_inventaire")
+        img = self.imginventaire
         rect = img.get_rect(center=(self.L//2, self.H//2))
         fenetre.blit(img, rect)
         colonne = 3
@@ -252,14 +252,17 @@ class Overlay:
                     nom = f"img_{case['type']}"
                 imgitem = assets.ASSETS.get(nom)
                 if imgitem:
-                    imgitem = pygame.transform.scale(imgitem, (taille-45, taille-45))
+                    mit = int(45*self.echelle)
+                    imgitem = pygame.transform.scale(imgitem, (taille-mit, taille-mit))
                     rectitem = imgitem.get_rect(center=rectcase.center)
                     fenetre.blit(imgitem, rectitem)
                 #aFFICGE NB QUE QUAND >1
                 if case["quantite"] > 1:
+                    d = int(24*self.echelle)
+                    t = int(25*self.echelle)
                     masque = police.render(str(case["quantite"]), True, (0,0,0))
-                    fenetre.blit(masque, (rectcase.right-24, rectcase.bottom-24))
+                    fenetre.blit(masque, (rectcase.right-d, rectcase.bottom-d))
                     #Texte
                     txt = police.render(str(case["quantite"]), True, (255,255,255))
-                    fenetre.blit(txt, (rectcase.right-25, rectcase.bottom-25))
+                    fenetre.blit(txt, (rectcase.right-t, rectcase.bottom-t))
         return action
