@@ -154,8 +154,6 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
                                     img_monstre = assets.ASSETS['errant_face'][0]
                                 elif mtype == "Xeno" and 'xeno_face' in assets.ASSETS:
                                     img_monstre = assets.ASSETS['xeno_face'][0]
-                                elif mtype == "Mimique" and 'mimique_face' in assets.ASSETS:
-                                    img_monstre = assets.ASSETS['mimique_face'][0]
                                 else:
                                     img_monstre = assets.ASSETS.get('img_larry')
                                 adessiner.append((pos_y, img_monstre, (ix,iy)))

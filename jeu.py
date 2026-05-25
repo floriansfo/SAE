@@ -173,7 +173,7 @@ class Partie:
         self.sauvegarde_etage = {}
         self.niveau_actuel = 0
         self.modifs_etage = {}
-        self.sauvegarde_etage[0] = {"carte": self.carte, "salles": self.salles, "objets": self.objets, "pos": self.pos, "piecessoll": self.piecessol}
+        self.sauvegarde_etage[0] = {"carte": self.carte, "salles": self.salles, "objets": self.objets, "pos": self.pos, "piecessol": self.piecessol}
         #Joueur
         px, py = int(self.pos[0]), int(self.pos[1])
         self.joueur = Joueur(px*ZOOM+(ZOOM//2), py*ZOOM+(ZOOM//2))
@@ -392,9 +392,9 @@ class Partie:
                                     py = self.joueur.rect.centery+random.randint(-40,40)
                                     self.piecessol.append({"rect": pygame.Rect(px, py, 40, 40), "valeur": reste, "delay": 60})
                                     if self.connect:
-                                        if not hasattr(self.joueur, "objetsol"):
-                                            self.joueur.objetsol = []
-                                        self.joueur.objetsol.append({"type": "piece", "quantite": reste, "x": px, "y": py,"etage":self.niveau_actuel})
+                                        if not hasattr(self.joueur, "objsol"):
+                                            self.joueur.objsol = []
+                                        self.joueur.objsol.append({"type": "piece", "quantite": reste, "x": px, "y": py,"etage":self.niveau_actuel})
                         if self.joueur.munition > munav:
                             g = self.joueur.munition - munav
                             self.joueur.munition = munav
@@ -678,6 +678,10 @@ class Partie:
                         objlot.quantite = 1
                         objlot.delay = 30
                         self.objets.append(objlot)
+                        if self.connect:
+                            if not hasattr(self.joueur, "objsol"):
+                                self.joueur.objsol = []
+                            self.joueur.objsol.append({"type": "minerai", "quantite": 1, "x": m.rect.centerx, "y": m.rect.centery, "etage": self.niveau_actuel})
                 else:
                     monstresvivant.append(m)
             self.monstres = monstresvivant
@@ -1058,9 +1062,9 @@ class Partie:
                         objsur.delay = 60
                         self.objets.append(objsur)
                     if self.connect:
-                        if not hasattr(self.joueur, "objetsol"):
-                            self.joueur.objetsol = []
-                        self.joueur.objetsol.append({"type": titem, "quantite": qte, "x": px, "y": py, "etage": self.niveau_actuel})
+                        if not hasattr(self.joueur, "objsol"):
+                            self.joueur.objsol = []
+                        self.joueur.objsol.append({"type": titem, "quantite": qte, "x": px, "y": py, "etage": self.niveau_actuel})
         pygame.display.flip()
         return "CONTINUER"
     

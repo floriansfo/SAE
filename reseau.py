@@ -73,9 +73,10 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
                                 if len(parts)==5:
                                     otype, oqte, ox, oy, oetage = parts
                                     if int(oetage)==niveau_actuel:
-                                        nom = "img_malachite"
-                                    else:
-                                        nom = f"img_{otype}"
+                                        if otype == "minerai":
+                                            nom = "img_malachite"
+                                        else:
+                                            nom = f"img_{otype}"
                                     objsur = Objet(int(ox), int(oy), nom, otype, size = (40,40))
                                     objsur.quantite = int (oqte)
                                     objsur.delay = 60
