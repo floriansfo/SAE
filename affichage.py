@@ -135,13 +135,30 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
             if getattr(autre, "etage", 1) == niveau_actuel or getattr(autre, "mort", False):
                 #Dessine ses balles
                 if hasattr(autre, "monstres_reseau"):
-                    for mx,my,mmort in autre.monstres_reseau:
+                    for d in autre.monstres_reseau:
+                        if len(d)==4:
+                            mx,my,mmort,mtype = d
+                        else:
+                            mx,my,mmort = d
+                            mtype = "Titan"
                         if not mmort:
                             ix = mx + camera_x
                             iy = my + camera_y
                             if -ZOOM<ix<LARGEUR and -ZOOM<iy<HAUTEUR:
                                 pos_y = iy + 200
-                                adessiner.append((pos_y, assets.ASSETS.get('img_larry'), (ix,iy)))
+                                if mtype == "Slime" and 'slime_face' in assets.ASSETS:
+                                    img_monstre = assets.ASSETS['slime_face'][0]
+                                elif mtype == "Nyctobat" and 'nyctobat_face' in assets.ASSETS:
+                                    img_monstre = assets.ASSETS['nyctobat_face'][0]
+                                elif mtype == "Errant" and 'errant_face' in assets.ASSETS:
+                                    img_monstre = assets.ASSETS['errant_face'][0]
+                                elif mtype == "Xeno" and 'xeno_face' in assets.ASSETS:
+                                    img_monstre = assets.ASSETS['xeno_face'][0]
+                                elif mtype == "Mimique" and 'mimique_face' in assets.ASSETS:
+                                    img_monstre = assets.ASSETS['mimique_face'][0]
+                                else:
+                                    img_monstre = assets.ASSETS.get('img_larry')
+                                adessiner.append((pos_y, img_monstre, (ix,iy)))
                 #Dessine ses balles
                 if hasattr(autre, "balles_reseau"):
                     for ballex, balley, balledx, balledy, balleid in autre.balles_reseau:

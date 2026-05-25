@@ -1,7 +1,9 @@
 import pygame
 import assets
+import time
 from joueur import Joueur
 from cartegen import Objet
+
 
 def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actuel, buffer, joueursup, heure = 0, jour=1):
     #Reseaux
@@ -16,7 +18,7 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
         actionmap.clear() #Vide liste
     monstree = "vide"
     if len(monstres)>0:
-        monstree = "_".join([f"{int(m.rect.x)}={int(m.rect.y)}={int(m.mort)}" for m in monstres])
+        monstree = "_".join([f"{int(m.rect.x)}={int(m.rect.y)}={int(m.mort)}={type(m).__name__}" for m in monstres])
     objetsol = "vide"
     if hasattr(joueur, 'objsol') and len(joueur.objsol) > 0:
         objetsol = "_".join([f"{o['type']}={o['quantite']}={o['x']}={o['y']}={o['etage']}" for o in joueur.objsol])
@@ -55,7 +57,7 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
                         if idjoueur not in joueursup:
                             joueursup[idjoueur] = Joueur(int(v[0]), int(v[1]))
                         autre = joueursup[idjoueur]
-                        autre = joueursup[idjoueur]
+                        autre.quitte = time.time()
                         autre.rect.centerx = int(v[0])
                         autre.rect.centery = int(v[1])
                         autre.etage = int(v[2])
@@ -119,9 +121,20 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
                         if v[8] != "vide":
                             for m in v[8].split('_'):
                                 parts = m.split('=')
-                                if len(parts)==3:
-                                    mx,my,mmort = parts
-                                    autre.monstres_reseau.append((int(mx),int(my), int(mmort)))
+                                if len(parts)>=3:
+                                    mx,my,mmort = parts[0],parts[1],parts[2]
+                                    if len(parts)>3:
+                                        mtype = parts[3]
+                                    else:
+                                        mtype = "Monstre"
+                                    autre.monstres_reseau.append((int(mx),int(my), int(mmort), mtype))
     except BlockingIOError: pass
     except Exception: pass
+    t = time.time()
+    jsupp = []
+    for idj, j in joueursup.items():
+        if hasattr(j, 'quitte') and t-j.quitte > 2:
+            jsupp.append(idj)
+    for idj in jsupp:
+        del joueursup[idj]
     return buffer, objets, joueursup, heureres, jourres
