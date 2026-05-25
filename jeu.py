@@ -380,7 +380,9 @@ class Partie:
                             nb = 1+len(self.joueursup)
                         else:
                             nb = 1
-                        self.menuboutique.clique(pygame.mouse.get_pos(), self.bouton_boutique, self.joueur, nb)
+                        articleachete = self.menuboutique.clique(pygame.mouse.get_pos(), self.bouton_boutique, self.joueur, nb)
+                        if articleachete and articleachete["type"] == "niveau":
+                            self.actionmap[f"ACHAT-ETAGE-{articleachete['niveau']}"] = "GO"
                         if self.joueur.pieces < pieceav:
                             perte= pieceav - self.joueur.pieces
                             if hasattr(self.joueur, "retirer"):
@@ -504,6 +506,13 @@ class Partie:
                 self.cristal_y = self.joueur.rect.centery
                 if hasattr(self.joueur, "retirer"):
                     self.joueur.retirer("cristal", 1)
+                objsur = Objet(self.cristal_x, self.cristal_y, "img_cristal", "cristal", size=(40,40))
+                objsur.quantite = 1
+                self.objets.append(objsur)
+                if self.connect:
+                    if not hasattr(self.joueur, "objsol"):
+                        self.joueur.objsol = []
+                    self.joueur.objsol.append({"type": "cristal", "quantite": 1, "x": self.cristal_x, "y": self.cristal_y, "etage": self.cristaletage})
             btn_respawn = pygame.Rect(0,0,350,60)
             btn_respawn.center = (self.LARGEUR//2, self.HAUTEUR//2+50)
             pygame.draw.rect(self.ecran, (100,100,100) if btn_respawn.collidepoint(mouse_pos) else (50,50,50), btn_respawn)
@@ -670,6 +679,9 @@ class Partie:
                     if reste > 0:
                         p["valeur"] = reste
                         piecesreste.append(p)
+                    else:
+                        k = f"{p['rect'].x}-{p['rect'].y}"
+                        self.actionmap[k] = "S"
                 else:
                     piecesreste.append(p)
             self.piecessol = piecesreste #Met a jour les pieces restantes
@@ -785,6 +797,8 @@ class Partie:
             if self.mode == "client" and heureres is not None:
                 self.heure = heureres
                 self.jour = jourres
+            if getattr(self.joueur, "gagne", False):
+                return "MENU"
         return "CONTINUER"
     
     def menus(self):
@@ -1020,6 +1034,9 @@ class Partie:
             self.moteur.dessiner(self.ecran, self.joueur, imgdiamant)
             if self.moteur.resolu:
                 self.moteurouvert = False
+                if self.connect:
+                    self.actionmap["VICTOIRE"] = "GO"
+                    self.buffer, self.objets, self.joueursup, heureres, jourres = reseau.connexion(self.socket_jeu, self.joueur, self.monstres, self.objets, self.actionmap, getattr(self, "mort", False), self.niveau_actuel, self.buffer, self.joueursup, self.heure, self.jour)
                 pygame.mixer.music.fadeout(1000)
                 victoire.video("ressource/images/victoire.mp4", "ressource/images/victoire.mp3", self.ecran)
                 return "MENU"
@@ -1059,7 +1076,14 @@ class Partie:
                     px = self.joueur.rect.centerx+random.randint(-40,40)
                     py = self.joueur.rect.centery+random.randint(-40,40)
                     if titem == "piece":
-                        self.piecessol.append({"rect": pygame.Rect(px, py, 40, 40), "valeur": qte, "delay": 60})
+                        objsur = Objet(px, py, "img_piece", "piece", size=(40,40))
+                        objsur.quantite = qte
+                        objsur.delay = 60
+                        self.objets.append(objsur)
+                        if self.connect:
+                            if not hasattr(self.joueur, "objsol"):
+                                self.joueur.objsol = []
+                            self.joueur.objsol.append({"type": "piece", "quantite": qte, "x": px, "y": py, "etage": self.niveau_actuel})
                     else:
                         if titem == "minerai":
                             nom = "img_malachite"
@@ -1069,10 +1093,10 @@ class Partie:
                         objsur.quantite = qte
                         objsur.delay = 60
                         self.objets.append(objsur)
-                    if self.connect:
-                        if not hasattr(self.joueur, "objsol"):
-                            self.joueur.objsol = []
-                        self.joueur.objsol.append({"type": titem, "quantite": qte, "x": px, "y": py, "etage": self.niveau_actuel})
+                        if self.connect:
+                            if not hasattr(self.joueur, "objsol"):
+                                self.joueur.objsol = []
+                            self.joueur.objsol.append({"type": titem, "quantite": qte, "x": px, "y": py, "etage": self.niveau_actuel})
         pygame.display.flip()
         return "CONTINUER"
     

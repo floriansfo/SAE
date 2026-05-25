@@ -216,12 +216,12 @@ class Boutique:
                 joueur.achatjour += 1
                 if article["id"] == 1:
                     joueur.munition = 30
-                return True
+                return article
             elif arttype == "pile":
                 joueur.pieces -= article["prix"]
                 joueur.pile = joueur.pilemax
                 joueur.achatjour += 1
-                return True
+                return article
             elif arttype == "lampe":
                 if joueur.possedelampe:
                     return False
@@ -231,7 +231,7 @@ class Boutique:
                 joueur.achatjour += 1
                 if hasattr(joueur, "quantite"):
                     joueur.quantite("lampe", 1)
-                return True
+                return article
             elif arttype == "niveau":
                 niv = article["niveau"]
                 if niv in joueur.niveaudebloque:
@@ -241,7 +241,7 @@ class Boutique:
                 joueur.pieces -= article["prix"]
                 joueur.niveaudebloque.add(niv)
                 joueur.achatjour += 1
-                return True
+                return article
             elif arttype == "malachite":
                 total = sum(case["quantite"] for case in joueur.inventaire if case["type"]=="minerai")
                 if total<=0:
@@ -251,5 +251,5 @@ class Boutique:
                     if case["type"]=="minerai":
                         case["quantite"]=0
                         case["type"] = None
-                return True
+                return article
         return False

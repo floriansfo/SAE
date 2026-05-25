@@ -1,6 +1,7 @@
 import pygame
 import assets
 import time
+import victoire
 from joueur import Joueur
 from cartegen import Objet
 
@@ -77,10 +78,10 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
                                             nom = "img_malachite"
                                         else:
                                             nom = f"img_{otype}"
-                                    objsur = Objet(int(ox), int(oy), nom, otype, size = (40,40))
-                                    objsur.quantite = int (oqte)
-                                    objsur.delay = 60
-                                    objets.append(objsur)                                 
+                                        objsur = Objet(int(ox), int(oy), nom, otype, size = (40,40))
+                                        objsur.quantite = int (oqte)
+                                        objsur.delay = 60
+                                        objets.append(objsur)                                 
                         if len(v)>12:
                             autre.dsvaisseau = bool(int(v[12]))
                         if len(v)>13:
@@ -98,6 +99,14 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
                                     coordonne, etat = p
                                     if coordonne== "REVIVE" and etat == "GO":
                                         joueur.hp = joueur.hpmax
+                                    elif coordonne == "VICTOIRE" and etat == "GO":
+                                        pygame.mixer.music.fadeout(1000)
+                                        victoire.video("ressource/images/victoire.mp4", "ressource/images/victoire.mp3", pygame.display.get_surface())
+                                        joueur.gagne = True
+                                    elif coordonne.startswith("ACHAT-ETAGE-") and etat == "GO":
+                                        etagedebloque = int(coordonne.split("-")[2])
+                                        if hasattr(joueur, "niveaudebloque"):
+                                            joueur.niveaudebloque.add(etagedebloque)
                                     else:
                                         try:            
                                             mx, my = map(int, coordonne.split('-'))
