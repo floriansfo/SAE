@@ -178,6 +178,11 @@ def dessinerjeu(ecran, LARGEUR, HAUTEUR, carte, joueur, objets, piecessol, monst
                                     balleangle = pygame.transform.rotate(img_ballevol, angle)
                                     rectballe = balleangle.get_rect(center=(ix,iy))
                                     adessiner.append((rectballe.bottom, balleangle, rectballe.topleft))
+                            anglevol = math.atan2(balledy,balledx)
+                            angle = -math.degrees(anglevol)
+                            balleangle = pygame.transform.rotate(img_ballevol, angle)
+                            rectballe = balleangle.get_rect(center=(ix,iy))
+                            adessiner.append((rectballe.bottom, balleangle, rectballe.topleft))
                 #Dessine son perso
                 xjoueur2 = autre.rect.centerx + camera_x
                 yjoueur2 = autre.rect.centery + camera_y

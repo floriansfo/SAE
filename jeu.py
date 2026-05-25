@@ -376,7 +376,11 @@ class Partie:
                         pieceav = self.joueur.pieces
                         munav = self.joueur.munition
                         arseav = list(self.joueur.arsenal_achete.keys())
-                        self.menuboutique.clique(pygame.mouse.get_pos(), self.bouton_boutique, self.joueur)
+                        if self.mode!="solo":
+                            nb = 1+len(self.joueursup)
+                        else:
+                            nb = 1
+                        self.menuboutique.clique(pygame.mouse.get_pos(), self.bouton_boutique, self.joueur, nb)
                         if self.joueur.pieces < pieceav:
                             perte= pieceav - self.joueur.pieces
                             if hasattr(self.joueur, "retirer"):
@@ -901,7 +905,11 @@ class Partie:
                     self.ouvertemenu = False
                     pygame.event.clear()
         if self.boutiqueouverte and not self.enpause:
-            self.bouton_boutique = self.menuboutique.dessiner(self.ecran, self.joueur)
+            if self.mode!= "solo":
+                nb = 1+len(self.joueursup)
+            else:
+                nb = 1
+            self.bouton_boutique = self.menuboutique.dessiner(self.ecran, self.joueur, nb)
             if self.mode != "solo":
                 self.rectseringue = pygame.Rect(self.LARGEUR//2-175, self.HAUTEUR-140, 350, 45)
                 pygame.draw.rect(self.ecran, (15,45,25), self.rectseringue, border_radius=6)
