@@ -199,8 +199,24 @@ def charger_assets(largeur, hauteur):
 
 
 
+    son_pas = pygame.mixer.Sound("ressource/audio/pas.mp3")
+    son_pas.set_volume(0.03)
+    assets['son_pas'] = son_pas
 
+    son_achat = pygame.mixer.Sound("ressource/audio/achat.mp3")
+    son_achat.set_volume(0.02)
+    assets['son_achat'] = son_achat
 
+    son_cut = pygame.mixer.Sound("ressource/audio/cut.mp3")
+    son_cut.set_volume(0.04)
+    assets['son_cut'] = son_cut
+
+    assets['son_xeno'] = pygame.mixer.Sound("ressource/audio/xeno.mp3")
+    assets['son_xeno'].set_volume(0.02)
+    assets['son_errant'] = pygame.mixer.Sound("ressource/audio/errant.mp3")
+    assets['son_errant'].set_volume(0.02)
+    assets['son_slime'] = pygame.mixer.Sound("ressource/audio/slime.mp3")
+    assets['son_slime'].set_volume(0.02)
 
     son_mun = pygame.mixer.Sound("ressource/audio/ESM_Handful_of_Bullet_Shell_Drop_2_Gun_Military_Pistol_Shot_Machine_Rifle_Metal.wav")
     son_pist = pygame.mixer.Sound("ressource/audio/GunshotRevolver_BW.57313.wav")

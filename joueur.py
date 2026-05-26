@@ -45,6 +45,8 @@ class Joueur:
         self.sonpistolet = assets.ASSETS['son_pistolet']
         self.sonpompe = assets.ASSETS['son_pompe']
         self.sonassaut = assets.ASSETS['son_assaut']
+        self.sonpas = assets.ASSETS.get('son_pas')
+        self.soncut = assets.ASSETS.get('son_cut')
         #Oxygne
         self.oxygenemax = 21600
         self.oxygene = self.oxygenemax
@@ -123,10 +125,11 @@ class Joueur:
         #On peut tirer que si on a des balle et que le couldown est fini
         if self.vitessetir <= 0:
             if self.arsenal == 0:
+                if hasattr(self, "soncut") and self.soncut:
+                    self.soncut.play()
                 p = Arme(debutx, debuty, self.angleactuel, id=0)
                 self.tir.append(p)
                 self.vitessetir = 25
-                self.sonassaut.play()
             elif self.munition > 0:
                 if self.arsenal == 1:
                     #Pistolet Classique
@@ -203,6 +206,11 @@ class Joueur:
             if self.time > self.vitesseanim:
                 self.time = 0
                 self.animation = (self.animation+1)%nb_frame
+                mtn = pygame.time.get_ticks()
+                if mtn-getattr(self, "dp",0)>350:
+                    if hasattr(self, 'sonpas') and self.sonpas:
+                        self.sonpas.play()
+                    self.dp = mtn
         else:
             self.animation = 0
             self.time = 0

@@ -172,6 +172,7 @@ class Partie:
         self.ouvertemenu = False
         self.surascenceur = False
         self.sauvegarde_etage = {}
+        self.sonachat = assets.ASSETS.get('son_achat')
         self.niveau_actuel = 0
         self.modifs_etage = {}
         self.sauvegarde_etage[0] = {"carte": self.carte, "salles": self.salles, "objets": self.objets, "pos": self.pos, "piecessol": self.piecessol}
@@ -408,7 +409,8 @@ class Partie:
                                 self.joueur.retirer("piece", 30)
                             if hasattr(self.joueur, "quantite"):
                                 self.joueur.quantite("seringue", 1)
-                            self.sonmun.play()
+                            if self.sonachat:
+                                self.sonachat.play()
                     else:
                         pieceav = self.joueur.pieces
                         munav = self.joueur.munition
@@ -418,6 +420,8 @@ class Partie:
                         else:
                             nb = 1
                         articleachete = self.menuboutique.clique(pygame.mouse.get_pos(), self.bouton_boutique, self.joueur, nb)
+                        if self.joueur.pieces != pieceav or self.sonachat:
+                            self.sonachat.play()
                         if articleachete and articleachete["type"] == "niveau":
                             self.actionmap[f"ACHAT-ETAGE-{articleachete['niveau']}"] = "GO"
                         if self.joueur.pieces < pieceav:
@@ -779,6 +783,17 @@ class Partie:
                                 degat = getattr(m, "degats", 10)
                                 self.joueur.hp -= degat
                                 self.joueur.god= 60
+                                nom = type(m).__name__
+                                if nom == "Xeno":
+                                    son = assets.ASSETS.get('son_xeno')
+                                elif nom == "Errant":
+                                    son = assets.ASSETS.get('son_errant')
+                                elif nom == "Slime":
+                                    son = assets.ASSETS.get('son_slime')
+                                else:
+                                    son = None
+                                if son:
+                                    son.play()
                                 if isinstance(m, Nyctobat):
                                     filtre.obscurité_nv +=40
                                     if filtre.obscurité_nv>255:
