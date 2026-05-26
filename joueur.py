@@ -8,6 +8,33 @@ from prerequis import *
 from prerequis import obstacle, angletrace
 from arme import Arme
 
+class Couteau:
+    def __init__(self, joueur, ux, uy):
+        self.id = 0
+        self.joueur = joueur
+        self.actif = True
+        self.ux = ux
+        self.uy = uy
+        self.angle = -math.degrees(math.atan2(uy,ux))
+        self.imgbase = assets.ASSETS.get('img_couteau')
+        self.image = pygame.transform.rotate(self.imgbase, self.angle)
+        self.rect = self.image.get_rect(center = joueur.rect.center)
+        self.frame = 0
+        self.duree = 15
+        self.porte = 45
+        self.touche = []
+    
+    def update(self):
+        self.frame += 1
+        if self.frame >= self.duree:
+            self.actif = False
+            return
+        prog = math.sin((self.frame/self.duree)*math.pi)
+        ext = prog*self.porte
+        self.rect.centerx = self.joueur.rect.centerx + self.ux*ext
+        self.rect.centery = self.joueur.rect.centery - self.uy*ext
+
+
 class Joueur:
     def __init__(self, x, y):
         #Hitbox et pos
@@ -83,22 +110,32 @@ class Joueur:
         #Mise a jour position des tirs
         tiractuelle = []
         for balle in self.tir:
-            balle.deplacer(t, self)
+            couteau = getattr(balle, "id", 1) == 0
+            if couteau:
+                balle.update()
+                if not balle.actif:
+                    continue
+            else:
+                balle.deplacer(t, self)
             touche_monstre= False
             for m in monstres:
                 if not m.mort and balle.rect.colliderect(m.rect):
-                        if getattr(balle, "id", 1) == 0:
-                            degat = self.couteaudegat
+                        if couteau:
+                            if m not in balle.touche:
+                                m.take_damage(self.couteaudegat)
+                                balle.touche.append(m)
                         else:
-                            degat = 10
-                        m.take_damage(degat)
-                        touche_monstre= True
-                        if getattr(balle, "id", 1) != 0:
+                            m.take_damage(10)
+                            touche_monstre= True
                             break
             touche_objet = False
             for obj in objets:
                 if balle.rect.colliderect(obj.rect) and obj.type in ["caisse", "meuble"]:
+                    if couteau and obj in balle.touche:
+                        continue
                     touche_objet = True
+                    if couteau:
+                        balle.touche.append(obj)
                     if not hasattr(obj, 'hp'):
                         obj.hp = 3
                     obj.hp -= 1
@@ -107,13 +144,14 @@ class Joueur:
                         obj.texture = assets.ASSETS.get('img_munition', obj.texture)
                         obj.hitbox = obj.rect
                         objetcasse.append(obj)
-                    if getattr(balle, "id", 1)!=0:
+                    if not couteau:
                         break
-            touche_mur = balle.collisionoupas(carte, objets)
-            if not touche_monstre and not touche_objet and not touche_mur:
+            if couteau:
                 tiractuelle.append(balle)
-            elif getattr(balle, "id", 1) == 0 and not touche_mur:
-                tiractuelle.append(balle)
+            else:
+                touche_mur = balle.collisionoupas(carte, objets)
+                if not touche_monstre and not touche_objet and not touche_mur:
+                    tiractuelle.append(balle)
         self.tir = tiractuelle
         return objetcasse
 
@@ -127,8 +165,9 @@ class Joueur:
             if self.arsenal == 0:
                 if hasattr(self, "soncut") and self.soncut:
                     self.soncut.play()
-                p = Arme(debutx, debuty, self.angleactuel, id=0)
-                self.tir.append(p)
+                ux = math.cos(pangle)
+                uy = math.sin(pangle)
+                self.tir.append(Couteau(self, ux,uy))
                 self.vitessetir = 25
             elif self.munition > 0:
                 if self.arsenal == 1:
