@@ -779,21 +779,27 @@ class Partie:
                             kx, ky = m.deplacement(t, self.joueur.rect.centerx, self.joueur.rect.centery)
                             m.collision(kx, ky, self.carte, self.objets)
                             #le monstre touche le joueur
+                            dist = math.hypot(m.rect.centerx - self.joueur.rect.centerx, m.rect.centery - self.joueur.rect.centery)
+                            if dist<150:
+                                mtn = pygame.time.get_ticks()
+                                if mtn-getattr(m, "dernier", 0)>2000:
+                                    nom = type(m).__name__
+                                    if nom == "Xeno":
+                                        son = assets.ASSETS.get('son_xeno')
+                                    elif nom == "Errant":
+                                        son = assets.ASSETS.get('son_errant')
+                                    elif nom == "Slime":
+                                        son = assets.ASSETS.get('son_slime')
+                                    else:
+                                        son = None
+                                    if son:
+                                        son.play()
+                                    m.dernier = mtn
+
                             if m.rect.colliderect(self.joueur.rect) and self.joueur.god<=0:
                                 degat = getattr(m, "degats", 10)
                                 self.joueur.hp -= degat
                                 self.joueur.god= 60
-                                nom = type(m).__name__
-                                if nom == "Xeno":
-                                    son = assets.ASSETS.get('son_xeno')
-                                elif nom == "Errant":
-                                    son = assets.ASSETS.get('son_errant')
-                                elif nom == "Slime":
-                                    son = assets.ASSETS.get('son_slime')
-                                else:
-                                    son = None
-                                if son:
-                                    son.play()
                                 if isinstance(m, Nyctobat):
                                     filtre.obscurité_nv +=40
                                     if filtre.obscurité_nv>255:

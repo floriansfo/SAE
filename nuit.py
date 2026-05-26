@@ -32,7 +32,8 @@ class Sommeil:
             return
         self.cours = True
         self.time = pygame.time.get_ticks()
-        if heure <20:
+        heureactu = int((heure//3600)+8)%24
+        if heureactu <20:
             self.mode = "ERREUR"
         else:
             self.mode = "FONDU"
