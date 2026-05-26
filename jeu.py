@@ -11,6 +11,7 @@ import monstre
 import random
 import math
 import sauvegarde
+import menusauvegarde
 import nuit
 import boutique
 import assets
@@ -185,23 +186,59 @@ class Partie:
         self.monstres_stock=[]
         self.spawn_delay=0
 
-        #Restauration depuis une sauvegarde
+        #restau depuis sauvegarde
         if save:
+            
             modifs_etage = {int(k): v for k, v in save["modifs"].items()}
             self.joueur.rect.centerx = save["joueur"]["x"]
             self.joueur.rect.centery = save["joueur"]["y"]
+            
+            
             self.joueur.hp = save["joueur"]["hp"]
+            self.joueur.hpmax = save["joueur"].get("hpmax", self.joueur.hpmax)
+            
+            
             self.joueur.munition = save["joueur"]["munition"]
             self.joueur.arsenal = save["joueur"]["arsenal"]
+            
+            
+            
+            arsenal_save = save["joueur"].get("arsenal_achete", {0: True}) # couteau toujours dispo
+            self.joueur.arsenal_achete = {}
+            for k, v in arsenal_save.items(): # clés to int pour arsenal acheté
+                self.joueur.arsenal_achete[int(k)] = v
+                
             self.joueur.endurance = save["joueur"]["endurance"]
+            self.joueur.pieces = save["joueur"].get("pieces", 0)
+            self.joueur.malachite = save["joueur"].get("malachite", 0)
+            
+            
+            self.joueur.possedelampe = save["joueur"].get("possedelampe", True)
+            self.joueur.pile = save["joueur"].get("pile", self.joueur.pilemax)
+            
+            
+            self.joueur.inventaire = save["joueur"].get("inventaire", self.joueur.inventaire)
+            
+            
+            self.joueur.cristal = save["joueur"].get("cristal", False)
+            self.joueur.niveaudebloque = set(save["joueur"].get("niveaudebloque", [1]))
             self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(0, {}))
             self.sauvegarde_etage[0]["objets"] = self.objets
+            
+            
             if save["niveau_actuel"] != 0:
+                
                 self.niveau_actuel = save["niveau_actuel"]
+                
                 random.seed(self.partie + self.niveau_actuel)
+                
+                
                 self.carte, self.salles, self.pos = generemap(niveau=chargeetage)
                 self.objets = generer_objets(self.carte, self.salles, self.multi, niveau=self.niveau_actuel)
                 self.objets = sauvegarde.appliquer_modifs(self.objets, self.modifs_etage.get(self.niveau_actuel, {}))
+
+
+
 
         self.monstres = []
         self.font = pygame.font.Font("ressource/fonts/police.ttf",24)
@@ -899,12 +936,15 @@ class Partie:
                 if action == "REPRENDRE":
                     self.enpause = False
                 elif action == "SAUVEGARDER":
-                    self.sauvegarde_etage[self.niveau_actuel] = {
-                        "carte": self.carte,
-                        "salles": self.salles,
-                        "objets": self.objets,
-                    }
-                    sauvegarde.sauvegarder(self.partie, self.niveau_actuel, self.modifs_etage, self.joueur)
+                    resultat = menusauvegarde.selectionner_sauvegarde(self.ecran, self.LARGEUR, self.HAUTEUR, mode="sauvegarder")
+                    if resultat:
+                        _, slot = resultat
+                        self.sauvegarde_etage[self.niveau_actuel] = {
+                            "carte": self.carte,
+                            "salles": self.salles,
+                            "objets": self.objets,
+                        }
+                        sauvegarde.sauvegarder(self.partie, self.niveau_actuel, self.modifs_etage, self.joueur, slot)
                 elif action == "OPTIONS":
                     self.ecran = option.option_menu(self.ecran, self.LARGEUR, self.HAUTEUR)
                     self.LARGEUR, self.HAUTEUR = self.ecran.get_size()

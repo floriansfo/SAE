@@ -6,6 +6,7 @@ import option
 import dl
 import rejoindre
 import sauvegarde
+import menusauvegarde
 
 pygame.init()
 
@@ -205,15 +206,25 @@ while running:
                 #Mode Hote
                 jeu.lancer(fenetre, mode = "hote")
                 retourmenu()
-            #Charger Partie
+            #Load partie 
+            
+            
+            
             elif button.action == "load":
-                save = sauvegarde.charger()
-                if save:
-                    pygame.mixer.music.fadeout(500)
+                resultat = menusauvegarde.selectionner_sauvegarde(fenetre, WIDTH, HEIGHT, mode="charger")
+                if resultat: # Si sauvegarde selectg
+                    save, slot = resultat # recup sauvegarde et slot
+                    
+                    
                     dl.ecran_chargement(fenetre, WIDTH, HEIGHT)
                     jeu.lancer(fenetre, mode="solo", save=save)
+                    
+                    
+                    
                     retourmenu()
             #Options
+            
+            
             elif button.action == "options":
                 # Lancer le menu des options
                 fenetre=option.option_menu(fenetre, WIDTH, HEIGHT)

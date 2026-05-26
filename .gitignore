@@ -22,3 +22,6 @@ wheels/
 .venv/
 venv/
 env/
+sauvegarde_1.json
+sauvegarde_2.json
+sauvegarde_3.json
