@@ -1,7 +1,10 @@
 import pygame
 import assets
+import time
+import victoire
 from joueur import Joueur
 from cartegen import Objet
+
 
 def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actuel, buffer, joueursup, heure = 0, jour=1):
     #Reseaux
@@ -16,7 +19,7 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
         actionmap.clear() #Vide liste
     monstree = "vide"
     if len(monstres)>0:
-        monstree = "_".join([f"{int(m.rect.x)}={int(m.rect.y)}={int(m.mort)}" for m in monstres])
+        monstree = "_".join([f"{int(m.rect.x)}={int(m.rect.y)}={int(m.mort)}={type(m).__name__}" for m in monstres])
     objetsol = "vide"
     if hasattr(joueur, 'objsol') and len(joueur.objsol) > 0:
         objetsol = "_".join([f"{o['type']}={o['quantite']}={o['x']}={o['y']}={o['etage']}" for o in joueur.objsol])
@@ -55,7 +58,7 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
                         if idjoueur not in joueursup:
                             joueursup[idjoueur] = Joueur(int(v[0]), int(v[1]))
                         autre = joueursup[idjoueur]
-                        autre = joueursup[idjoueur]
+                        autre.quitte = time.time()
                         autre.rect.centerx = int(v[0])
                         autre.rect.centery = int(v[1])
                         autre.etage = int(v[2])
@@ -71,13 +74,14 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
                                 if len(parts)==5:
                                     otype, oqte, ox, oy, oetage = parts
                                     if int(oetage)==niveau_actuel:
-                                        nom = "img_malachite"
-                                    else:
-                                        nom = f"img_{otype}"
-                                    objsur = Objet(int(ox), int(oy), nom, otype, size = (40,40))
-                                    objsur.quantite = int (oqte)
-                                    objsur.delay = 60
-                                    objets.append(objsur)                                 
+                                        if otype == "minerai":
+                                            nom = "img_malachite"
+                                        else:
+                                            nom = f"img_{otype}"
+                                        objsur = Objet(int(ox), int(oy), nom, otype, size = (40,40))
+                                        objsur.quantite = int (oqte)
+                                        objsur.delay = 60
+                                        objets.append(objsur)                                 
                         if len(v)>12:
                             autre.dsvaisseau = bool(int(v[12]))
                         if len(v)>13:
@@ -95,6 +99,14 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
                                     coordonne, etat = p
                                     if coordonne== "REVIVE" and etat == "GO":
                                         joueur.hp = joueur.hpmax
+                                    elif coordonne == "VICTOIRE" and etat == "GO":
+                                        pygame.mixer.music.fadeout(1000)
+                                        victoire.video("ressource/images/victoire.mp4", "ressource/images/victoire.mp3", pygame.display.get_surface())
+                                        joueur.gagne = True
+                                    elif coordonne.startswith("ACHAT-ETAGE-") and etat == "GO":
+                                        etagedebloque = int(coordonne.split("-")[2])
+                                        if hasattr(joueur, "niveaudebloque"):
+                                            joueur.niveaudebloque.add(etagedebloque)
                                     else:
                                         try:            
                                             mx, my = map(int, coordonne.split('-'))
@@ -119,9 +131,20 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
                         if v[8] != "vide":
                             for m in v[8].split('_'):
                                 parts = m.split('=')
-                                if len(parts)==3:
-                                    mx,my,mmort = parts
-                                    autre.monstres_reseau.append((int(mx),int(my), int(mmort)))
+                                if len(parts)>=3:
+                                    mx,my,mmort = parts[0],parts[1],parts[2]
+                                    if len(parts)>3:
+                                        mtype = parts[3]
+                                    else:
+                                        mtype = "Monstre"
+                                    autre.monstres_reseau.append((int(mx),int(my), int(mmort), mtype))
     except BlockingIOError: pass
     except Exception: pass
+    t = time.time()
+    jsupp = []
+    for idj, j in joueursup.items():
+        if hasattr(j, 'quitte') and t-j.quitte > 2:
+            jsupp.append(idj)
+    for idj in jsupp:
+        del joueursup[idj]
     return buffer, objets, joueursup, heureres, jourres

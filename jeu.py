@@ -19,6 +19,7 @@ import reseau
 import affichage
 import moteur
 import enregistrement
+import victoire
 
 from prerequis import *
 from lumiere import Lumiere
@@ -173,7 +174,7 @@ class Partie:
         self.sauvegarde_etage = {}
         self.niveau_actuel = 0
         self.modifs_etage = {}
-        self.sauvegarde_etage[0] = {"carte": self.carte, "salles": self.salles, "objets": self.objets, "pos": self.pos}
+        self.sauvegarde_etage[0] = {"carte": self.carte, "salles": self.salles, "objets": self.objets, "pos": self.pos, "piecessol": self.piecessol}
         #Joueur
         px, py = int(self.pos[0]), int(self.pos[1])
         self.joueur = Joueur(px*ZOOM+(ZOOM//2), py*ZOOM+(ZOOM//2))
@@ -332,6 +333,10 @@ class Partie:
                 if event.key == pygame.K_p:
                     self.joueur.pieces+=1000
                     self.joueur.achatjour=0
+                if event.key == pygame.K_c:
+                    self.joueur.cristal = True
+                    if hasattr(self.joueur, "quantite"):
+                        self.joueur.quantite("cristal", 1)
                 #Larry spawn
                 if event.key == pygame.K_l and self.niveau_actuel != 0:
                     m= monstre.Monstre(self.joueur.rect.centerx+100, self.joueur.rect.centery, 3, 1)
@@ -344,8 +349,6 @@ class Partie:
                 if event.key == pygame.K_h:
                     if self.niveau_actuel!=0:
                         self.joueur.toogle_lumiere()
-                        if self.joueur.lumiereallumee and filtre.m_combat:
-                            filtre.m_combat = False
                 #Pause ou ferme
                 if event.key == pygame.K_ESCAPE:
                     if self.dialogue.ouvert:
@@ -410,7 +413,13 @@ class Partie:
                         pieceav = self.joueur.pieces
                         munav = self.joueur.munition
                         arseav = list(self.joueur.arsenal_achete.keys())
-                        self.menuboutique.clique(pygame.mouse.get_pos(), self.bouton_boutique, self.joueur)
+                        if self.mode!="solo":
+                            nb = 1+len(self.joueursup)
+                        else:
+                            nb = 1
+                        articleachete = self.menuboutique.clique(pygame.mouse.get_pos(), self.bouton_boutique, self.joueur, nb)
+                        if articleachete and articleachete["type"] == "niveau":
+                            self.actionmap[f"ACHAT-ETAGE-{articleachete['niveau']}"] = "GO"
                         if self.joueur.pieces < pieceav:
                             perte= pieceav - self.joueur.pieces
                             if hasattr(self.joueur, "retirer"):
@@ -426,9 +435,9 @@ class Partie:
                                     py = self.joueur.rect.centery+random.randint(-40,40)
                                     self.piecessol.append({"rect": pygame.Rect(px, py, 40, 40), "valeur": reste, "delay": 60})
                                     if self.connect:
-                                        if not hasattr(self.joueur, "objetsol"):
-                                            self.joueur.objetsol = []
-                                        self.joueur.objetsol.append({"type": "piece", "quantite": reste, "x": px, "y": py,"etage":self.niveau_actuel})
+                                        if not hasattr(self.joueur, "objsol"):
+                                            self.joueur.objsol = []
+                                        self.joueur.objsol.append({"type": "piece", "quantite": reste, "x": px, "y": py,"etage":self.niveau_actuel})
                         if self.joueur.munition > munav:
                             g = self.joueur.munition - munav
                             self.joueur.munition = munav
@@ -504,6 +513,7 @@ class Partie:
                 if self.niveau_actuel != allieetage:
                     self.niveau_actuel = allieetage
                     self.monstres.clear()
+                    self.piecessol = []
                     if allieetage == 0:
                         self.carte, self.salles, self.pos = generer_vaisseau()
                         self.objets = generer_objets(self.carte, [], 0)
@@ -531,6 +541,15 @@ class Partie:
                 self.cristaletage = self.niveau_actuel
                 self.cristal_x = self.joueur.rect.centerx
                 self.cristal_y = self.joueur.rect.centery
+                if hasattr(self.joueur, "retirer"):
+                    self.joueur.retirer("cristal", 1)
+                objsur = Objet(self.cristal_x, self.cristal_y, "img_cristal", "cristal", size=(40,40))
+                objsur.quantite = 1
+                self.objets.append(objsur)
+                if self.connect:
+                    if not hasattr(self.joueur, "objsol"):
+                        self.joueur.objsol = []
+                    self.joueur.objsol.append({"type": "cristal", "quantite": 1, "x": self.cristal_x, "y": self.cristal_y, "etage": self.cristaletage})
             btn_respawn = pygame.Rect(0,0,350,60)
             btn_respawn.center = (self.LARGEUR//2, self.HAUTEUR//2+50)
             pygame.draw.rect(self.ecran, (100,100,100) if btn_respawn.collidepoint(mouse_pos) else (50,50,50), btn_respawn)
@@ -629,15 +648,19 @@ class Partie:
                         self.actionmap[k] = "S"
                         self.modifs_etage.setdefault(self.niveau_actuel, {})[k] = "S"
                 elif obj.type == "cristal" and self.joueur.rect.colliderect(obj.rect):
-                    self.joueur.cristal = True
                     if hasattr(self.joueur, "quantite"):
-                        self.joueur.quantite("cristal", 1)
-                    self.sonmun.play()
-                    key = f"{obj.rect.x}-{obj.rect.y}"
-                    self.actionmap[key]="S"
-                    self.modifs_etage.setdefault(self.niveau_actuel, {})[key]="S"
-                    px,py = int(self.pos[0]), int(self.pos[1])
-                    self.monstres.append(monstre.Titan(px*ZOOM+ZOOM, py*ZOOM+ZOOM))    
+                        reste = self.joueur.quantite("cristal", 1)
+                        if reste > 0:
+                            objetsreste.append(obj)
+                        else:
+                            self.joueur.cristal = True
+                            self.sonmun.play()
+                            key = f"{obj.rect.x}-{obj.rect.y}"
+                            self.actionmap[key]="S"
+                            self.modifs_etage.setdefault(self.niveau_actuel, {})[key]="S"
+                            if self.niveau_actuel != 0:
+                                px,py = int(self.pos[0]), int(self.pos[1])
+                                self.monstres.append(monstre.Titan(px*ZOOM+ZOOM, py*ZOOM+ZOOM))    
                 elif obj.type == "dialogue" and self.joueur.rect.colliderect(obj.rect):
                     self.dialogueouvert = True
                     objetsreste.append(obj)
@@ -693,6 +716,9 @@ class Partie:
                     if reste > 0:
                         p["valeur"] = reste
                         piecesreste.append(p)
+                    else:
+                        k = f"{p['rect'].x}-{p['rect'].y}"
+                        self.actionmap[k] = "S"
                 else:
                     piecesreste.append(p)
             self.piecessol = piecesreste #Met a jour les pieces restantes
@@ -705,6 +731,10 @@ class Partie:
                         objlot.quantite = 1
                         objlot.delay = 30
                         self.objets.append(objlot)
+                        if self.connect:
+                            if not hasattr(self.joueur, "objsol"):
+                                self.joueur.objsol = []
+                            self.joueur.objsol.append({"type": "minerai", "quantite": 1, "x": m.rect.centerx, "y": m.rect.centery, "etage": self.niveau_actuel})
                 else:
                     monstresvivant.append(m)
             self.monstres = monstresvivant
@@ -804,6 +834,8 @@ class Partie:
             if self.mode == "client" and heureres is not None:
                 self.heure = heureres
                 self.jour = jourres
+            if getattr(self.joueur, "gagne", False):
+                return "MENU"
         return "CONTINUER"
     
     def menus(self):
@@ -864,6 +896,7 @@ class Partie:
                         "salles": self.salles,
                         "objets": self.objets,
                         "pos": self.pos,
+                        "piecessol": self.piecessol
                     }
                     self.menu.ecran_charge(self.ecran, assets.ASSETS['img_load'], etage_choisi)
                     #Si l'étage a déjà été visité, on charge la sauvegarde
@@ -872,7 +905,9 @@ class Partie:
                         self.salles = self.sauvegarde_etage[etage_choisi]["salles"]
                         self.objets = self.sauvegarde_etage[etage_choisi]["objets"]
                         self.pos = self.sauvegarde_etage[etage_choisi]["pos"]
+                        self.piecessol = self.sauvegarde_etage[etage_choisi].get("piecessol", [])
                     else:
+                        self.piecessol = []
                         if etage_choisi == 0:
                             #Toujours vaisseau
                             self.carte, self.salles, self.pos = generer_vaisseau()
@@ -900,7 +935,7 @@ class Partie:
                             if objtang:
                                 self.objets.extend(objtang)
                         elif self.cristal_x is not None:
-                            self.objets.append(Objet(self.cristal_x, self.cristal_y, "cristal.png", "cristal", size=(ZOOM//2, ZOOM//2)))
+                            self.objets.append(Objet(self.cristal_x, self.cristal_y, "img_cristal", "cristal", size=(ZOOM//2, ZOOM//2)))
                     #Spawn titan
                     if self.niveau_actuel == 6 and not getattr(self, "titanspawn", False):
                         self.titanspawn = True
@@ -921,7 +956,11 @@ class Partie:
                     self.ouvertemenu = False
                     pygame.event.clear()
         if self.boutiqueouverte and not self.enpause:
-            self.bouton_boutique = self.menuboutique.dessiner(self.ecran, self.joueur)
+            if self.mode!= "solo":
+                nb = 1+len(self.joueursup)
+            else:
+                nb = 1
+            self.bouton_boutique = self.menuboutique.dessiner(self.ecran, self.joueur, nb)
             if self.mode != "solo":
                 self.rectseringue = pygame.Rect(self.LARGEUR//2-175, self.HAUTEUR-140, 350, 45)
                 pygame.draw.rect(self.ecran, (15,45,25), self.rectseringue, border_radius=6)
@@ -943,6 +982,8 @@ class Partie:
                             "carte": self.carte,
                             "salles": self.salles,
                             "objets": self.objets,
+                            "pos": self.pos,
+                            "piecessol": self.piecessol,
                         }
                         sauvegarde.sauvegarder(self.partie, self.niveau_actuel, self.modifs_etage, self.joueur, slot)
                 elif action == "OPTIONS":
@@ -1029,11 +1070,16 @@ class Partie:
                 self.joueur.oxygene = self.joueur.oxygenemax
                 self.joueur.hp += self.menusommeil.soinpris
         if self.moteurouvert:
-            imgdiamant = assets.ASSETS.get('cristal1.png')
+            imgdiamant = assets.ASSETS.get('img_cristal1')
             self.moteur.dessiner(self.ecran, self.joueur, imgdiamant)
             if self.moteur.resolu:
-                self.victoire = True
                 self.moteurouvert = False
+                if self.connect:
+                    self.actionmap["VICTOIRE"] = "GO"
+                    self.buffer, self.objets, self.joueursup, heureres, jourres = reseau.connexion(self.socket_jeu, self.joueur, self.monstres, self.objets, self.actionmap, getattr(self, "mort", False), self.niveau_actuel, self.buffer, self.joueursup, self.heure, self.jour)
+                pygame.mixer.music.fadeout(1000)
+                victoire.video("ressource/images/victoire.mp4", "ressource/images/victoire.mp3", self.ecran)
+                return "MENU"
         if self.dialogue.ouvert:
             self.dialogue.dessiner(self.ecran)
         if getattr(self, "inventaire", False):
@@ -1070,7 +1116,14 @@ class Partie:
                     px = self.joueur.rect.centerx+random.randint(-40,40)
                     py = self.joueur.rect.centery+random.randint(-40,40)
                     if titem == "piece":
-                        self.piecessol.append({"rect": pygame.Rect(px, py, 40, 40), "valeur": qte, "delay": 60})
+                        objsur = Objet(px, py, "img_piece", "piece", size=(40,40))
+                        objsur.quantite = qte
+                        objsur.delay = 60
+                        self.objets.append(objsur)
+                        if self.connect:
+                            if not hasattr(self.joueur, "objsol"):
+                                self.joueur.objsol = []
+                            self.joueur.objsol.append({"type": "piece", "quantite": qte, "x": px, "y": py, "etage": self.niveau_actuel})
                     else:
                         if titem == "minerai":
                             nom = "img_malachite"
@@ -1080,10 +1133,10 @@ class Partie:
                         objsur.quantite = qte
                         objsur.delay = 60
                         self.objets.append(objsur)
-                    if self.connect:
-                        if not hasattr(self.joueur, "objetsol"):
-                            self.joueur.objetsol = []
-                        self.joueur.objetsol.append({"type": titem, "quantite": qte, "x": px, "y": py, "etage": self.niveau_actuel})
+                        if self.connect:
+                            if not hasattr(self.joueur, "objsol"):
+                                self.joueur.objsol = []
+                            self.joueur.objsol.append({"type": titem, "quantite": qte, "x": px, "y": py, "etage": self.niveau_actuel})
         pygame.display.flip()
         return "CONTINUER"
     
@@ -1094,7 +1147,7 @@ def lancer(ecran, mode="solo", ip = None, save=None):
     while running:
         partie.LARGEUR, partie.HAUTEUR = ecran.get_size()
         t = clock.tick(60) / 1000.0
-        menuouv = (partie.enpause or getattr(partie,"moteurouvert", False) or getattr(partie,"boutiqueouverte", False) or getattr(partie,"ouvertemenu", False) or getattr(partie,"inventaire", False) or (hasattr(partie,"menusommeil") and partie.menusommeil.cours))
+        menuouv = (partie.enpause or getattr(partie,"moteurouvert", False) or getattr(partie,"boutiqueouverte", False) or getattr(partie,"ouvertemenu", False) or getattr(partie,"inventaire", False) or (hasattr(partie,"menusommeil") and partie.menusommeil.cours) or getattr(partie, "mort", False) or getattr(partie, "victoire", False))
         pygame.mouse.set_visible(menuouv)
         #Frappe du clavier
         partie.evenement()

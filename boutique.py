@@ -82,7 +82,7 @@ class Boutique:
         pygame.draw.rect(self.surutilise, (20,65,30,180), (0,0,self.btnw,self.btnh), border_radius=4)
         pygame.draw.rect(self.surutilise, VERTPHOSPHORE, (0,0,self.btnw,self.btnh), 1, border_radius=4)
 
-    def dessiner(self, ecran, joueur, nb_joueur=1):
+    def dessiner(self, ecran, joueur, nb_joueur):
         #Resolution
         resl, resh = ecran.get_size()
         if resl != self.L or resh != self.H:
@@ -99,7 +99,7 @@ class Boutique:
         ecran.blit(self.txttitre, self.txttitre.get_rect(center=(x+self.menuL//2, y+35)))
         pygame.draw.line(ecran, VERTBORD, (x+self.PUSH, y+65), (x+self.menuL-self.PUSH, y+65),2)
         #Texte
-        limite = 2 if nb_joueur <= 2 else 3
+        limite = 1 if nb_joueur >1 else 2
         restant = max(0, limite-joueur.achatjour)
         solde = self.normal.render(f"PIECES: {joueur.pieces}", True, ORANGE)
         ecran.blit(solde, (x+self.PUSH, y+80))
@@ -198,8 +198,8 @@ class Boutique:
     
 
     
-    def clique(self, mouse_pos, boutons, joueur, nb_joueur=1):
-        limite = 2 if nb_joueur <= 2 else 3
+    def clique(self, mouse_pos, boutons, joueur, nb_joueur):
+        limite = 1 if nb_joueur >1 else 2
         for rect, article in boutons:
             if not rect.collidepoint(mouse_pos):
                 continue
@@ -216,12 +216,12 @@ class Boutique:
                 joueur.achatjour += 1
                 if article["id"] == 1:
                     joueur.munition = 30
-                return True
+                return article
             elif arttype == "pile":
                 joueur.pieces -= article["prix"]
                 joueur.pile = joueur.pilemax
                 joueur.achatjour += 1
-                return True
+                return article
             elif arttype == "lampe":
                 if joueur.possedelampe:
                     return False
@@ -231,7 +231,7 @@ class Boutique:
                 joueur.achatjour += 1
                 if hasattr(joueur, "quantite"):
                     joueur.quantite("lampe", 1)
-                return True
+                return article
             elif arttype == "niveau":
                 niv = article["niveau"]
                 if niv in joueur.niveaudebloque:
@@ -241,7 +241,7 @@ class Boutique:
                 joueur.pieces -= article["prix"]
                 joueur.niveaudebloque.add(niv)
                 joueur.achatjour += 1
-                return True
+                return article
             elif arttype == "malachite":
                 total = sum(case["quantite"] for case in joueur.inventaire if case["type"]=="minerai")
                 if total<=0:
@@ -251,5 +251,5 @@ class Boutique:
                     if case["type"]=="minerai":
                         case["quantite"]=0
                         case["type"] = None
-                return True
+                return article
         return False

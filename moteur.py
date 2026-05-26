@@ -86,8 +86,11 @@ class Moteur:
                 self.cristal.y = my + self.poy
     
     def victoire(self, joueur):
-        if getattr(joueur, "a_tango", False):
+        if getattr(joueur, "cristal", False):
             self.resolu = True
+            joueur.cristal = False
+            if hasattr(joueur, "retirer"):
+                joueur.retirer("cristal", 1)
 
     def dessiner(self, fenetre, joueur, imgcristal = None):
         #Fond
@@ -115,11 +118,11 @@ class Moteur:
         #Texte
         if self.resolu:
             txt = self.texte.render("SYSTEME ALIMENTE", True, VERTPHOSPHORE)
-        elif not joueur.cristal:
+        elif not joueur.cristal and not self.estla:
             txt = self.texte.render("CRISTAL MANQUANT", True, ROUGE)
         elif not self.estla:
             txt = self.texte.render("INSEREZ LE CRISTAL", True, ORANGE)
-        elif not getattr(joueur, "a_tango", False):
+        elif not getattr(joueur, "cristal", False) and not self.resolu:
             txt = self.texte.render("TANGO DOIT ETRE AVEC TOI", True, ORANGE)
         fenetre.blit(txt, txt.get_rect(center=(self.L//2, self.H-int(100*self.echelle))))
         #Texte commande
