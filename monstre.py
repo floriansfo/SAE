@@ -102,7 +102,7 @@ class Monstre:
     
 class Titan(Monstre):
     def __init__(self,x,y):
-        super().__init__(x,y, speed=1, hp=999999)
+        super().__init__(x,y, speed=2, hp=999999)
         self.rect = pygame.Rect(x,y,80,80) #Hitbox
         self.hitbox = self.rect.inflate(-20,-20)
         self.hp = 99999
@@ -155,42 +155,49 @@ def spawn_metage(niveau, salles):
         nb_nyctobat=0
         nb_errant=0
         nb_xeno=0
+        nb_titan=0
     elif niveau==2:
         nb_slime=8
         nb_mimique=1
         nb_nyctobat=3
         nb_errant=1
         nb_xeno=0
+        nb_titan=0
     elif niveau==3:
         nb_slime=10
         nb_mimique=2
         nb_nyctobat=3
         nb_errant=0
         nb_xeno=0
+        nb_titan=0
     elif niveau==4:
         nb_slime=8
         nb_mimique=2
         nb_nyctobat=4
         nb_errant=1
         nb_xeno=0
+        nb_titan=0
     elif niveau==5:
         nb_slime=11
         nb_mimique=3
         nb_nyctobat=2
         nb_errant=2
         nb_xeno=1
+        nb_titan=0
     elif niveau==6:
         nb_slime=12
         nb_mimique=2
         nb_nyctobat=3
         nb_errant=1
         nb_xeno=2
+        nb_titan=1
     else:
         nb_slime=0
         nb_mimique=0
         nb_nyctobat=0
         nb_errant=0
         nb_xeno=0
+        nb_titan=0
     for i in range(nb_mimique):
         salle=  random.choice(salles)
         mx= salle.centerx * ZOOM
@@ -216,6 +223,11 @@ def spawn_metage(niveau, salles):
         mx= salle.centerx * ZOOM
         my = salle.centery *ZOOM
         monstres.append(Xeno(mx, my))
+    for i in range(nb_titan):
+        salle=  random.choice(salles)
+        mx= salle.centerx * ZOOM
+        my = salle.centery *ZOOM
+        monstres.append(Titan(mx, my))
     return monstres
 
 

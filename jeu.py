@@ -958,19 +958,6 @@ class Partie:
                                 self.objets.extend(objtang)
                         elif self.cristal_x is not None:
                             self.objets.append(Objet(self.cristal_x, self.cristal_y, "img_cristal", "cristal", size=(ZOOM//2, ZOOM//2)))
-                    #Spawn titan
-                    if self.niveau_actuel == 6 and not getattr(self, "titanspawn", False):
-                        self.titanspawn = True
-                        px, py = int(self.pos[0]), int(self.pos[1])
-                        #Spawn a 10 case de l'ascenceur
-                        self.titanla = monstre.Titan(px*ZOOM+ZOOM*10, py*ZOOM+ZOOM*10)
-                    #Titan suit dans les etages
-                    if getattr(self, "titanla", None) is not None and self.niveau_actuel != 0:
-                        px, py= int(self.pos[0]), int(self.pos[1])
-                        #Dans les etages on le change
-                        self.titanla.rect.centerx = px*ZOOM+ZOOM*10
-                        self.titanla.rect.centery = py*ZOOM+ZOOM*10
-                        self.monstres.append(self.titanla)
                     #Repositionne le joueur sur la nouvelle carte a l"ascenseur
                     posx,posy = int(self.pos[0]), int(self.pos[1])
                     self.joueur.rect.center = (posx*ZOOM+(ZOOM//2), posy*ZOOM+(ZOOM//2))
