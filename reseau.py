@@ -99,10 +99,12 @@ def connexion(socket_jeu, joueur, monstres, objets, actionmap, mort, niveau_actu
                                     coordonne, etat = p
                                     if coordonne== "REVIVE" and etat == "GO":
                                         joueur.hp = joueur.hpmax
-                                    elif coordonne == "VICTOIRE" and etat == "GO":
-                                        pygame.mixer.music.fadeout(1000)
-                                        victoire.video("ressource/images/victoire.mp4", "ressource/images/victoire.mp3", pygame.display.get_surface())
-                                        joueur.gagne = True
+                                    elif coordonne.startswith("VICTOIRE-") and etat == "GO":
+                                        seedvict = coordonne.split('-')[1]
+                                        if seedvict == str(getattr(joueur, "partieid", "")):
+                                            pygame.mixer.music.fadeout(1000)
+                                            victoire.video("ressource/images/victoire.mp4", "ressource/images/victoire.mp3", pygame.display.get_surface())
+                                            joueur.gagne = True
                                     elif coordonne.startswith("ACHAT-ETAGE-") and etat == "GO":
                                         etagedebloque = int(coordonne.split("-")[2])
                                         if hasattr(joueur, "niveaudebloque"):

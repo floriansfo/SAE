@@ -179,6 +179,7 @@ class Partie:
         #Joueur
         px, py = int(self.pos[0]), int(self.pos[1])
         self.joueur = Joueur(px*ZOOM+(ZOOM//2), py*ZOOM+(ZOOM//2))
+        self.joueur.partieid = getattr(self, "partie", 0)
         #Moteur vaisseau
         self.moteur = moteur.Moteur(self.LARGEUR, self.HAUTEUR)
         self.moteurouvert = False
@@ -780,7 +781,7 @@ class Partie:
                             m.collision(kx, ky, self.carte, self.objets)
                             #le monstre touche le joueur
                             dist = math.hypot(m.rect.centerx - self.joueur.rect.centerx, m.rect.centery - self.joueur.rect.centery)
-                            if dist<150:
+                            if dist<400:
                                 mtn = pygame.time.get_ticks()
                                 if mtn-getattr(m, "dernier", 0)>2000:
                                     nom = type(m).__name__
@@ -1096,7 +1097,7 @@ class Partie:
             if self.moteur.resolu:
                 self.moteurouvert = False
                 if self.connect:
-                    self.actionmap["VICTOIRE"] = "GO"
+                    self.actionmap["VICTOIRE-{self.partie}"] = "GO"
                     self.buffer, self.objets, self.joueursup, heureres, jourres = reseau.connexion(self.socket_jeu, self.joueur, self.monstres, self.objets, self.actionmap, getattr(self, "mort", False), self.niveau_actuel, self.buffer, self.joueursup, self.heure, self.jour)
                 pygame.mixer.music.fadeout(1000)
                 victoire.video("ressource/images/victoire.mp4", "ressource/images/victoire.mp3", self.ecran)
